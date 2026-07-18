@@ -262,7 +262,16 @@
     <h2>Conditions &amp; Score</h2>
     <details class="help">
       <summary>?</summary>
-      <div class="help-text"><strong>Conditions</strong> pulls together tide, wind, wave, weather, and moon-phase data for a lat/lon and normalizes it into one response (cached server-side). <strong>Score</strong> uses that same data to compute a 0–100 Shelling Score, a confidence level, a best time-of-day window, and a plain-English explanation.</div>
+      <div class="help-text" style="width:300px"><strong>Conditions</strong> pulls together tide, wind, wave, weather, and moon-phase data for a lat/lon and normalizes it into one response (cached server-side). <strong>Score</strong> uses that same data to compute a 0–100 Shelling Score, a confidence level, a best time-of-day window, and a plain-English explanation.
+        <br><br>
+        <strong>External sources:</strong>
+        <ul style="margin:4px 0 0 16px; padding:0">
+          <li>NOAA Tides &amp; Currents — tide level &amp; movement</li>
+          <li>NOAA NDBC buoys — wave height, period, direction</li>
+          <li>OpenWeather — wind, temperature, sunrise/sunset</li>
+          <li>Moon phase — computed locally, no external call</li>
+        </ul>
+      </div>
     </details>
   </div>
   <div class="row">
