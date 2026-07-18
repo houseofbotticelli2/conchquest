@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conchquest API Test Harness</title>
+<style>
+  :root {
+    --bg: #F2ECE4;
+    --surface: #ffffff;
+    --surface-alt: #E7DED0;
+    --text: #0F2A3D;
+    --body: #3A4D57;
+    --muted: #8A7B60;
+    --border: #C9B896;
+    --accent: #D97A82;
+    --accent-deep: #B85862;
+    --ok: #3D6B64;
+    --err: #B85862;
+    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 24px;
+    max-width: 900px;
+    margin-inline: auto;
+  }
+  h1 { font-size: 20px; margin-bottom: 2px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+  }
+  h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent-deep);
+    margin: 0 0 12px;
+  }
+  label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-bottom: 4px;
+    margin-top: 10px;
+  }
+  label:first-child { margin-top: 0; }
+  input, select, textarea {
+    width: 100%;
+    font-size: 13px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+  }
+  .row { display: flex; gap: 10px; }
+  .row > div { flex: 1; }
+  button {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 14px;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    cursor: pointer;
+    margin-top: 12px;
+    margin-right: 8px;
+  }
+  button.secondary { background: var(--surface-alt); color: var(--text); }
+  button.small { padding: 5px 10px; font-size: 11px; margin-top: 0; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .radio-group { display: flex; gap: 14px; font-size: 13px; margin-top: 4px; }
+  .radio-group label { display: flex; align-items: center; gap: 5px; text-transform: none; letter-spacing: 0; color: var(--text); font-size: 13px; margin: 0; }
+  .radio-group input { width: auto; }
+  .session-box {
+    background: var(--surface-alt);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    margin-top: 12px;
+    display: none;
+  }
+  .session-box.visible { display: block; }
+  .session-row { display: flex; justify-content: space-between; padding: 2px 0; }
+  .session-row span:first-child { color: var(--muted); }
+  .note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  #log {
+    max-height: 480px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .entry {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .entry-head {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    margin-bottom: 4px;
+  }
+  .entry-head .status.ok { color: var(--ok); font-weight: 700; }
+  .entry-head .status.err { color: var(--err); font-weight: 700; }
+  .entry pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--body);
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .empty-log { color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>🐚 Conchquest API Test Harness</h1>
+<div class="subtitle">Standalone tool — no install needed, just open this file in a browser. Keep it updated via <code>git pull</code>.</div>
+
+<section>
+  <h2>Environment</h2>
+  <div class="radio-group">
+    <label><input type="radio" name="env" value="railway" checked> Railway (dev)</label>
+    <label><input type="radio" name="env" value="local"> Local (localhost:3000)</label>
+    <label><input type="radio" name="env" value="custom"> Custom</label>
+  </div>
+  <label style="margin-top:10px">API base URL</label>
+  <input id="apiBaseUrl" value="https://conchquest-api-dev.up.railway.app" />
+</section>
+
+<section>
+  <h2>Auth</h2>
+  <div class="row">
+    <div>
+      <label>Email</label>
+      <input id="authEmail" type="email" placeholder="your-shared-test-account@example.com" />
+    </div>
+    <div>
+      <label>Password</label>
+      <input id="authPassword" type="password" />
+    </div>
+  </div>
+  <button onclick="login()">Log in</button>
+  <button class="secondary" onclick="signup()">Sign up (first time only)</button>
+  <button class="secondary" onclick="logout()">Log out</button>
+  <div class="note">Use "Sign up" once to create one shared test account between you two, then always "Log in" with it afterward — signing up repeatedly clutters the real Supabase user list. If email confirmation is required, check the inbox and confirm before logging in.</div>
+  <div id="sessionBox" class="session-box">
+    <div class="session-row"><span>email</span><span id="sessEmail"></span></div>
+    <div class="session-row"><span>user id</span><span id="sessSub"></span></div>
+    <div class="session-row"><span>expires</span><span id="sessExp"></span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Health</h2>
+  <button onclick="callApi('GET', '/health', { auth: false })">GET /health</button>
+</section>
+
+<section>
+  <h2>Conditions &amp; Score</h2>
+  <div class="row">
+    <div>
+      <label>Latitude</label>
+      <input id="lat" value="26.4615" />
+    </div>
+    <div>
+      <label>Longitude</label>
+      <input id="lon" value="-82.1867" />
+    </div>
+  </div>
+  <button class="secondary small" onclick="setPreset(26.4615, -82.1867)">Sanibel Island preset</button>
+  <div>
+    <button onclick="callApi('GET', () => `/api/conditions?lat=${lat()}&lon=${lon()}`)">GET /api/conditions</button>
+    <button onclick="callApi('GET', () => `/api/score?lat=${lat()}&lon=${lon()}`)">GET /api/score</button>
+  </div>
+</section>
+
+<section>
+  <h2>Log a Find</h2>
+  <div class="row">
+    <div>
+      <label>Latitude</label>
+      <input id="findLat" value="26.4615" />
+    </div>
+    <div>
+      <label>Longitude</label>
+      <input id="findLon" value="-82.1867" />
+    </div>
+  </div>
+  <label>Condition</label>
+  <select id="findCondition">
+    <option value="pristine">pristine</option>
+    <option value="good" selected>good</option>
+    <option value="fair">fair</option>
+    <option value="poor">poor</option>
+    <option value="fragment">fragment</option>
+  </select>
+  <label>Notes</label>
+  <textarea id="findNotes" rows="2" placeholder="Optional note...">Test harness find</textarea>
+  <div>
+    <button onclick="submitFind()">POST /api/finds</button>
+    <button class="secondary" onclick="callApi('GET', '/api/finds?limit=20')">GET /api/finds</button>
+  </div>
+  <label style="margin-top:14px">Find ID (for single lookup)</label>
+  <input id="findId" placeholder="paste an id from the list above" />
+  <button class="secondary" onclick="callApi('GET', () => `/api/finds/${document.getElementById('findId').value}`)">GET /api/finds/:id</button>
+</section>
+
+<section>
+  <h2>Activity Log <button class="secondary small" style="float:right" onclick="clearLog()">Clear</button></h2>
+  <div id="log"><div class="empty-log">No requests yet.</div></div>
+</section>
+
+<script>
+const SUPABASE_URL = 'https://qjaafozocrvrmcjqkihz.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_anx_MkqKqM0drTW1K_iKzA_gz-nOhq7';
+
+const ENV_URLS = {
+  railway: 'https://conchquest-api-dev.up.railway.app',
+  local: 'http://localhost:3000',
+};
+
+let session = JSON.parse(localStorage.getItem('conchquest_session') || 'null');
+const logEntries = [];
+
+function lat() { return document.getElementById('lat').value; }
+function lon() { return document.getElementById('lon').value; }
+
+function setPreset(latVal, lonVal) {
+  document.getElementById('lat').value = latVal;
+  document.getElementById('lon').value = lonVal;
+}
+
+document.querySelectorAll('input[name="env"]').forEach((radio) => {
+  radio.addEventListener('change', (e) => {
+    const val = e.target.value;
+    const input = document.getElementById('apiBaseUrl');
+    if (val === 'custom') {
+      input.removeAttribute('readonly');
+      input.focus();
+    } else {
+      input.value = ENV_URLS[val];
+      input.setAttribute('readonly', 'true');
+    }
+  });
+});
+document.getElementById('apiBaseUrl').setAttribute('readonly', 'true');
+
+function decodeJwt(token) {
+  const payload = token.split('.')[1];
+  const padded = payload.replace(/-/g, '+').replace(/_/g, '/');
+  const json = decodeURIComponent(
+    atob(padded)
+      .split('')
+      .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+      .join('')
+  );
+  return JSON.parse(json);
+}
+
+function renderSession() {
+  const box = document.getElementById('sessionBox');
+  if (!session) {
+    box.classList.remove('visible');
+    return;
+  }
+  const claims = decodeJwt(session.access_token);
+  document.getElementById('sessEmail').textContent = claims.email || '(none)';
+  document.getElementById('sessSub').textContent = claims.sub;
+  document.getElementById('sessExp').textContent = new Date(claims.exp * 1000).toLocaleString();
+  box.classList.add('visible');
+}
+renderSession();
+
+async function login() {
+  const email = document.getElementById('authEmail').value;
+  const password = document.getElementById('authPassword').value;
+  const started = performance.now();
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    logRequest('POST', `${SUPABASE_URL}/auth/v1/token`, res.status, data, performance.now() - started);
+    if (res.ok && data.access_token) {
+      session = data;
+      localStorage.setItem('conchquest_session', JSON.stringify(session));
+      renderSession();
+    }
+  } catch (e) {
+    logRequest('POST', `${SUPABASE_URL}/auth/v1/token`, 0, { error: String(e) }, performance.now() - started);
+  }
+}
+
+async function signup() {
+  const email = document.getElementById('authEmail').value;
+  const password = document.getElementById('authPassword').value;
+  const started = performance.now();
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    logRequest('POST', `${SUPABASE_URL}/auth/v1/signup`, res.status, data, performance.now() - started);
+    if (data.access_token) {
+      session = data;
+      localStorage.setItem('conchquest_session', JSON.stringify(session));
+      renderSession();
+    } else if (res.ok) {
+      alert('Signed up — check the inbox to confirm the email, then use Log in.');
+    }
+  } catch (e) {
+    logRequest('POST', `${SUPABASE_URL}/auth/v1/signup`, 0, { error: String(e) }, performance.now() - started);
+  }
+}
+
+function logout() {
+  session = null;
+  localStorage.removeItem('conchquest_session');
+  renderSession();
+}
+
+async function submitFind() {
+  const body = {
+    lat: Number(document.getElementById('findLat').value),
+    lon: Number(document.getElementById('findLon').value),
+    condition: document.getElementById('findCondition').value,
+    notes: document.getElementById('findNotes').value || undefined,
+  };
+  await callApi('POST', '/api/finds', { body });
+}
+
+async function callApi(method, pathOrFn, opts = {}) {
+  const path = typeof pathOrFn === 'function' ? pathOrFn() : pathOrFn;
+  const auth = opts.auth !== false;
+  const baseUrl = document.getElementById('apiBaseUrl').value.replace(/\/$/, '');
+  const url = `${baseUrl}${path}`;
+
+  if (auth && !session) {
+    alert('Log in first — this endpoint requires an access token.');
+    return;
+  }
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth) headers.Authorization = `Bearer ${session.access_token}`;
+
+  const started = performance.now();
+  try {
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = text; }
+    logRequest(method, url, res.status, data, performance.now() - started);
+  } catch (e) {
+    logRequest(method, url, 0, { error: String(e) }, performance.now() - started);
+  }
+}
+
+function logRequest(method, url, status, data, durationMs) {
+  logEntries.push({ method, url, status, data, durationMs, at: new Date() });
+  renderLog();
+}
+
+function renderLog() {
+  const el = document.getElementById('log');
+  if (logEntries.length === 0) {
+    el.innerHTML = '<div class="empty-log">No requests yet.</div>';
+    return;
+  }
+  el.innerHTML = logEntries
+    .map((e) => {
+      const statusClass = e.status >= 200 && e.status < 300 ? 'ok' : 'err';
+      return `
+        <div class="entry">
+          <div class="entry-head">
+            <span>${e.at.toLocaleTimeString()} · ${e.method} ${e.url}</span>
+            <span class="status ${statusClass}">${e.status || 'ERR'} · ${Math.round(e.durationMs)}ms</span>
+          </div>
+          <pre>${escapeHtml(JSON.stringify(e.data, null, 2))}</pre>
+        </div>
+      `;
+    })
+    .join('');
+}
+
+function clearLog() {
+  logEntries.length = 0;
+  renderLog();
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+}
+</script>
+
+</body>
+</html>
