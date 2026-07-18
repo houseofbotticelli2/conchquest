@@ -6,19 +6,17 @@ Node.js + Express backend: environmental data aggregation, deterministic Shellin
 
 - Express + TypeScript
 - PostgreSQL + PostGIS (raw `pg`, no ORM) — hosted on Railway
-- Supabase Auth (JWT verified server-side via `SUPABASE_JWT_SECRET`)
+- Supabase Auth (JWT verified server-side against the project's published JWKS)
 - NOAA Tides & Currents (tide predictions) + NOAA NDBC buoys (wave height) + OpenWeather (wind/weather)
 
 ## Setup
 
 ```bash
 npm install
-cp .env.example .env   # fill in DATABASE_URL, SUPABASE_URL, SUPABASE_JWT_SECRET, OPENWEATHER_API_KEY
+cp .env.example .env   # fill in DATABASE_URL, SUPABASE_URL, OPENWEATHER_API_KEY
 npm run migrate:up     # creates postgis/pgcrypto extensions + all tables
 npm run dev            # http://localhost:3000
 ```
-
-`SUPABASE_JWT_SECRET` is in your Supabase dashboard under Settings → API → JWT Settings.
 
 ## Endpoints
 
@@ -33,7 +31,7 @@ All routes except `/health` require `Authorization: Bearer <supabase-access-toke
 
 ## Deploy (Railway)
 
-`railway.json` is set up for Nixpacks auto-detection. On each deploy it runs `npm run migrate:up` before `npm start`, so schema changes ship automatically with the code — set `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_JWT_SECRET`, and `OPENWEATHER_API_KEY` in the Railway dashboard's environment variables.
+`railway.json` is set up for Nixpacks auto-detection. On each deploy it runs `npm run migrate:up` before `npm start`, so schema changes ship automatically with the code — set `DATABASE_URL`, `SUPABASE_URL`, and `OPENWEATHER_API_KEY` in the Railway dashboard's environment variables.
 
 The Postgres plugin needs the PostGIS extension available; if `CREATE EXTENSION postgis` fails on first migration, enable it from the Railway Postgres plugin settings (or connect as a superuser and run it manually) before redeploying.
 

@@ -20,7 +20,6 @@ export const env = {
   port: optionalNumber('PORT', 3000),
   databaseUrl: required('DATABASE_URL'),
   supabaseUrl: required('SUPABASE_URL'),
-  supabaseJwtSecret: required('SUPABASE_JWT_SECRET'),
   openWeatherApiKey: required('OPENWEATHER_API_KEY'),
   conditionsCacheTtlMinutes: optionalNumber('CONDITIONS_CACHE_TTL_MINUTES', 20),
   noaaStationRefreshDays: optionalNumber('NOAA_STATION_REFRESH_DAYS', 30),
