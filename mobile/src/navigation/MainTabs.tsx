@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { CommonActions } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { MainTabParamList } from './types';
@@ -20,42 +21,56 @@ function EmptyScreen() {
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const TAB_LABELS: Record<keyof MainTabParamList, string> = {
-  ForecastTab: 'FORECAST',
-  MapTab: 'MAP',
-  LogTab: 'LOG',
-  LibraryTab: 'SHELLS',
-  ProfileTab: 'PROFILE',
+  ForecastTab: 'Forecast',
+  MapTab: 'Map',
+  LogTab: 'Log',
+  LibraryTab: 'Shells',
+  ProfileTab: 'Profile',
+};
+
+const TAB_ICONS: Record<keyof MainTabParamList, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
+  ForecastTab: { active: 'sunny', inactive: 'sunny-outline' },
+  MapTab: { active: 'compass', inactive: 'compass-outline' },
+  LogTab: { active: 'add-circle', inactive: 'add-circle-outline' },
+  LibraryTab: { active: 'book', inactive: 'book-outline' },
+  ProfileTab: { active: 'person', inactive: 'person-outline' },
 };
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const { theme: t } = useTheme();
   return (
-    <View style={[styles.bar, { backgroundColor: t.navBg }]}>
-      {state.routes.map((route, index) => {
-        const isActive = state.index === index;
-        const label = TAB_LABELS[route.name as keyof MainTabParamList];
+    <View style={[styles.wrap, { backgroundColor: t.bg }]}>
+      <View style={[styles.bar, { backgroundColor: t.navBg }]}>
+        {state.routes.map((route, index) => {
+          const isActive = state.index === index;
+          const label = TAB_LABELS[route.name as keyof MainTabParamList];
+          const icon = TAB_ICONS[route.name as keyof MainTabParamList];
 
-        const onPress = () => {
-          if (route.name === 'LogTab') {
-            navigation.getParent()?.dispatch(CommonActions.navigate({ name: 'LogModal' }));
-            return;
-          }
-          const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-          if (!isActive && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
+          const onPress = () => {
+            if (route.name === 'LogTab') {
+              navigation.getParent()?.dispatch(CommonActions.navigate({ name: 'LogModal' }));
+              return;
+            }
+            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+            if (!isActive && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
 
-        return (
-          <TouchableOpacity
-            key={route.key}
-            onPress={onPress}
-            style={[styles.item, isActive && { backgroundColor: t.accent }]}
-          >
-            <Text style={[styles.label, { color: isActive ? '#fff' : t.muted }]}>{label}</Text>
-          </TouchableOpacity>
-        );
-      })}
+          return (
+            <TouchableOpacity
+              key={route.key}
+              onPress={onPress}
+              style={[styles.item, isActive && { backgroundColor: t.accent }]}
+            >
+              <Ionicons name={isActive ? icon.active : icon.inactive} size={20} color={isActive ? '#fff' : t.muted} style={styles.icon} />
+              <Text style={[styles.label, { color: isActive ? '#fff' : t.muted }]} numberOfLines={1}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -73,21 +88,34 @@ export function MainTabs() {
 }
 
 const styles = StyleSheet.create({
+  wrap: {
+    paddingHorizontal: 14,
+    paddingBottom: 26,
+  },
   bar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingTop: 8,
-    paddingBottom: 26,
-    paddingHorizontal: 10,
+    alignItems: 'center',
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
   },
   item: {
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+  },
+  icon: {
+    height: 20,
+    lineHeight: 20,
   },
   label: {
     fontFamily: fonts.data,
     fontSize: 9,
-    letterSpacing: 0.5,
+    lineHeight: 12,
+    marginTop: 3,
+    letterSpacing: 0.3,
   },
 });
