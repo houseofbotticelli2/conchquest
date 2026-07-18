@@ -1,3 +1,5 @@
+import type { ShellingScoreResult } from '../lib/api';
+
 export type OnboardingStackParamList = {
   Welcome: undefined;
   Signup: { mode?: 'signup' | 'login' } | undefined;
@@ -7,7 +9,7 @@ export type OnboardingStackParamList = {
 
 export type ForecastStackParamList = {
   Score: undefined;
-  Detail: undefined;
+  Detail: { result: ShellingScoreResult };
 };
 
 export type MapStackParamList = {

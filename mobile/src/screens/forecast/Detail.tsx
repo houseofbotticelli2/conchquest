@@ -7,33 +7,43 @@ import { Card } from '../../components/Card';
 import { Eyebrow } from '../../components/Eyebrow';
 import { NavBar } from '../../components/NavBar';
 import { ForecastStackParamList } from '../../navigation/types';
-import { sampleFactors } from '../../data/sampleData';
 
 type Props = NativeStackScreenProps<ForecastStackParamList, 'Detail'>;
 
-export function Detail({ navigation }: Props) {
+const FACTOR_ICONS: Record<string, string> = {
+  tideLevel: '🌊',
+  tidalMovement: '↕️',
+  windSpeed: '💨',
+  windDirection: '🧭',
+  waveHeight: '🏄',
+  moonPhase: '🌙',
+  timeOfDay: '🕐',
+};
+
+export function Detail({ navigation, route }: Props) {
   const { theme: t } = useTheme();
-  const toneColor = { sea: t.sea, mid: '#D9B36C', muted: t.muted };
+  const { result } = route.params;
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <NavBar title="Score breakdown" left="← Back" onLeft={() => navigation.goBack()} right="Sanibel" />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.factors}>
-          {sampleFactors.map((f) => {
-            const color = toneColor[f.tone];
+          {result.factors.map((f) => {
+            const pct = f.maxPoints > 0 ? (f.points / f.maxPoints) * 100 : 0;
+            const color = pct >= 66 ? t.sea : pct >= 33 ? '#D9B36C' : t.muted;
             return (
-              <View key={f.label}>
+              <View key={f.key}>
                 <View style={styles.factorHeader}>
                   <Text style={[styles.factorLabel, { color: t.text }]}>
-                    {f.icon} {f.label}
+                    {FACTOR_ICONS[f.key] ?? '•'} {f.label}
                   </Text>
-                  <Text style={[styles.factorPts, { color }]}>{f.pts} pts</Text>
+                  <Text style={[styles.factorPts, { color }]}>{f.points} pts</Text>
                 </View>
                 <View style={[styles.barTrack, { backgroundColor: t.surfaceAlt }]}>
-                  <View style={[styles.barFill, { width: `${f.pct}%`, backgroundColor: color }]} />
+                  <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: color }]} />
                 </View>
-                <Text style={[styles.factorNote, { color: t.muted }]}>{f.note}</Text>
+                <Text style={[styles.factorNote, { color: t.muted }]}>{f.explanation}</Text>
               </View>
             );
           })}
@@ -41,16 +51,13 @@ export function Detail({ navigation }: Props) {
 
         <Card style={styles.strategyCard}>
           <Eyebrow>Shelling strategy</Eyebrow>
-          <Text style={[styles.strategyText, { color: t.body }]}>
-            Outgoing tide with offshore wind creates ideal conditions. Swell from the SW suggests productive wrack
-            lines along the mid-beach zone. Head out before 7 AM for best results.
-          </Text>
+          <Text style={[styles.strategyText, { color: t.body }]}>{result.explanation}</Text>
         </Card>
 
         <Card dark>
           <View style={styles.totalRow}>
             <Text style={[styles.totalLabel, { color: t.muted }]}>TOTAL SCORE</Text>
-            <Text style={[styles.totalScore, { color: t.accent }]}>78 / 100</Text>
+            <Text style={[styles.totalScore, { color: t.accent }]}>{result.score} / 100</Text>
           </View>
         </Card>
       </ScrollView>

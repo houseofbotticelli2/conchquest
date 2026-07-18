@@ -1,6 +1,6 @@
 // Placeholder fixtures mirroring the design prototype's sample content.
-// Score/finds screens will be wired to the real API in a later pass —
-// these keep the UI's visual fidelity to the prototype until then.
+// Finds/library/map/profile screens will be wired to the real API in a
+// later pass — Score/Detail are already live (see lib/api.ts).
 
 export const sampleFeatures = [
   { icon: '★', text: 'Shelling Score for any beach' },
@@ -12,16 +12,6 @@ export const sampleBeachOptions = [
   { name: 'Captiva Island', sub: 'Lee County, FL' },
   { name: "Bowman's Beach", sub: 'Sanibel, FL' },
   { name: 'Marco Island', sub: 'Collier County, FL' },
-];
-
-export const sampleScore = 78;
-
-export const sampleFactors = [
-  { icon: '🌊', label: 'Tide', pts: '+22', pct: 88, note: 'Outgoing — ideal for shell exposure', tone: 'sea' as const },
-  { icon: '💨', label: 'Wind', pts: '+18', pct: 72, note: 'SW offshore — pushes shells shoreward', tone: 'sea' as const },
-  { icon: '🌙', label: 'Moon', pts: '+14', pct: 56, note: 'Waxing gibbous — strong tidal range', tone: 'sea' as const },
-  { icon: '🏄', label: 'Waves', pts: '+9', pct: 36, note: '1.8 ft — moderate', tone: 'mid' as const },
-  { icon: '🕐', label: 'Time', pts: '+15', pct: 60, note: 'Early morning — low crowds', tone: 'muted' as const },
 ];
 
 export const sampleMapFinds = [
