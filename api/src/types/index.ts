@@ -54,7 +54,7 @@ export interface MoonConditions {
 
 export interface NormalizedConditions {
   location: { lat: number; lon: number };
-  tide: TideConditions;
+  tide: TideConditions | null;
   wind: WindConditions;
   waves: WaveConditions;
   weather: WeatherConditions;

@@ -58,10 +58,6 @@ export async function getConditions(lat: number, lon: number): Promise<Normalize
     getCurrentWeather(lat, lon),
   ]);
 
-  if (!tide) {
-    throw new Error('No NOAA tide station found near this location');
-  }
-
   const moon = getMoonPhase(now);
   const fetchedAt = now.toISOString();
   const expiresAt = new Date(now.getTime() + env.conditionsCacheTtlMinutes * 60_000).toISOString();
@@ -84,6 +80,6 @@ export async function getConditions(lat: number, lon: number): Promise<Normalize
     meta: { fetchedAt, expiresAt, cacheHit: false },
   };
 
-  await writeCache(lat, lon, conditions, tide.stationId, waves?.stationId ?? null);
+  await writeCache(lat, lon, conditions, tide?.stationId ?? null, waves?.stationId ?? null);
   return conditions;
 }

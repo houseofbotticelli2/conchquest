@@ -21,6 +21,7 @@ const WEIGHTS = {
 
 function closenessToLow(conditions: NormalizedConditions): number {
   const { tide } = conditions;
+  if (!tide) return 50;
   const next = tide.nextEvents[0];
   if (!next || tide.percentToNextExtreme === null) return 50;
 
@@ -31,6 +32,15 @@ function closenessToLow(conditions: NormalizedConditions): number {
 }
 
 function scoreTideLevel(conditions: NormalizedConditions): ScoreFactor {
+  if (!conditions.tide) {
+    return {
+      key: 'tideLevel',
+      label: 'Tide Level',
+      points: Math.round(WEIGHTS.tideLevel * 0.5),
+      maxPoints: WEIGHTS.tideLevel,
+      explanation: 'NOAA tide data is temporarily unavailable — assuming average conditions.',
+    };
+  }
   const closeness = closenessToLow(conditions);
   const points = Math.round((closeness / 100) * WEIGHTS.tideLevel);
   const explanation =
@@ -43,6 +53,15 @@ function scoreTideLevel(conditions: NormalizedConditions): ScoreFactor {
 }
 
 function scoreTidalMovement(conditions: NormalizedConditions): ScoreFactor {
+  if (!conditions.tide) {
+    return {
+      key: 'tidalMovement',
+      label: 'Tidal Movement',
+      points: Math.round(WEIGHTS.tidalMovement * 0.5),
+      maxPoints: WEIGHTS.tidalMovement,
+      explanation: 'NOAA tide data is temporarily unavailable — assuming average conditions.',
+    };
+  }
   const closeness = closenessToLow(conditions);
   const { movement } = conditions.tide;
   let points: number;
@@ -157,7 +176,8 @@ function scoreTimeOfDay(conditions: NormalizedConditions, now: Date): ScoreFacto
 
 function determineConfidence(conditions: NormalizedConditions): ShellingScoreResult['confidence'] {
   let issues = 0;
-  if (conditions.tide.distanceFeet > 164_000) issues += 1; // ~50km
+  if (!conditions.tide) issues += 2;
+  else if (conditions.tide.distanceFeet > 164_000) issues += 1; // ~50km
   if (conditions.waves.heightFt === null) issues += 1;
   else if (conditions.waves.stale) issues += 1;
   if (conditions.waves.distanceFeet !== null && conditions.waves.distanceFeet > 262_000) issues += 1; // ~80km
@@ -168,6 +188,7 @@ function determineConfidence(conditions: NormalizedConditions): ShellingScoreRes
 }
 
 function findBestWindow(conditions: NormalizedConditions): ShellingScoreResult['bestWindow'] {
+  if (!conditions.tide) return null;
   const sunrise = new Date(conditions.weather.sunrise).getTime();
   const sunset = new Date(conditions.weather.sunset).getTime();
 

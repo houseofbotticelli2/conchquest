@@ -46,7 +46,9 @@ export function Score({ navigation }: Props) {
   const chips = result
     ? [
         {
-          label: `TIDE ${result.conditions.tide.movement === 'falling' ? '↓' : result.conditions.tide.movement === 'rising' ? '↑' : '~'}`,
+          label: !result.conditions.tide
+            ? 'TIDE N/A'
+            : `TIDE ${result.conditions.tide.movement === 'falling' ? '↓' : result.conditions.tide.movement === 'rising' ? '↑' : '~'}`,
           color: t.sea,
         },
         { label: `WIND ${Math.round(result.conditions.wind.speedMph)}mph`, color: t.sea },

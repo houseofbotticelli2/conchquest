@@ -11,7 +11,14 @@ function formatDate(date: Date): string {
   return date.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
-async function fetchPredictions(stationId: string, begin: Date, end: Date): Promise<RawPrediction[]> {
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 400;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchPredictionsOnce(stationId: string, begin: Date, end: Date): Promise<RawPrediction[]> {
   const url = new URL('https://api.tidesandcurrents.noaa.gov/api/prod/datagetter');
   url.searchParams.set('station', stationId);
   url.searchParams.set('product', 'predictions');
@@ -35,6 +42,24 @@ async function fetchPredictions(stationId: string, begin: Date, end: Date): Prom
   return body.predictions ?? [];
 }
 
+// NOAA CO-OPS intermittently returns "No Predictions data was found" or times
+// out for stations that reliably have data moments later — a documented,
+// NOAA-side flakiness (confirmed against official docs, not a request-format
+// bug on our end). A short retry with backoff clears most of these transient
+// failures without meaningfully slowing down the request.
+async function fetchPredictions(stationId: string, begin: Date, end: Date): Promise<RawPrediction[]> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      return await fetchPredictionsOnce(stationId, begin, end);
+    } catch (err) {
+      lastError = err;
+      if (attempt < MAX_ATTEMPTS) await sleep(RETRY_DELAY_MS * attempt);
+    }
+  }
+  throw lastError;
+}
+
 function toEvent(p: RawPrediction): TideEvent {
   return {
     type: p.type === 'H' ? 'high' : 'low',
@@ -49,7 +74,15 @@ export async function getTideConditions(lat: number, lon: number, now: Date): Pr
 
   const begin = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const end = new Date(now.getTime() + 48 * 60 * 60 * 1000);
-  const predictions = await fetchPredictions(station.stationId, begin, end);
+
+  let predictions: RawPrediction[];
+  try {
+    predictions = await fetchPredictions(station.stationId, begin, end);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(`NOAA tide predictions unavailable for station ${station.stationId}:`, err instanceof Error ? err.message : err);
+    return null;
+  }
   const events = predictions.map(toEvent).sort((a, b) => a.time.localeCompare(b.time));
 
   const nowMs = now.getTime();
