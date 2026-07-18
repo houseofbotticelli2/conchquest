@@ -190,6 +190,7 @@
     <div class="session-row"><span>user id</span><span id="sessSub"></span></div>
     <div class="session-row"><span>expires</span><span id="sessExp"></span></div>
   </div>
+  <pre id="authResult" class="inline-result"></pre>
 </section>
 
 <section>
@@ -212,9 +213,11 @@
   </div>
   <button class="secondary small" onclick="setPreset(26.4615, -82.1867)">Sanibel Island preset</button>
   <div>
-    <button onclick="callApi('GET', () => `/api/conditions?lat=${lat()}&lon=${lon()}`)">GET /api/conditions</button>
-    <button onclick="callApi('GET', () => `/api/score?lat=${lat()}&lon=${lon()}`)">GET /api/score</button>
+    <button onclick="fetchConditions()">GET /api/conditions</button>
+    <button onclick="fetchScore()">GET /api/score</button>
   </div>
+  <pre id="conditionsResult" class="inline-result"></pre>
+  <pre id="scoreResult" class="inline-result"></pre>
 </section>
 
 <section>
@@ -241,11 +244,14 @@
   <textarea id="findNotes" rows="2" placeholder="Optional note...">Test harness find</textarea>
   <div>
     <button onclick="submitFind()">POST /api/finds</button>
-    <button class="secondary" onclick="callApi('GET', '/api/finds?limit=20')">GET /api/finds</button>
+    <button class="secondary" onclick="listFinds()">GET /api/finds</button>
   </div>
+  <pre id="findPostResult" class="inline-result"></pre>
+  <pre id="findListResult" class="inline-result"></pre>
   <label style="margin-top:14px">Find ID (for single lookup)</label>
   <input id="findId" placeholder="paste an id from the list above" />
-  <button class="secondary" onclick="callApi('GET', () => `/api/finds/${document.getElementById('findId').value}`)">GET /api/finds/:id</button>
+  <button class="secondary" onclick="getFindById()">GET /api/finds/:id</button>
+  <pre id="findGetResult" class="inline-result"></pre>
 </section>
 
 <section>
@@ -326,13 +332,16 @@ async function login() {
     });
     const data = await res.json();
     logRequest('POST', `${SUPABASE_URL}/auth/v1/token`, res.status, data, performance.now() - started);
+    showInlineResult('authResult', { status: res.status, data });
     if (res.ok && data.access_token) {
       session = data;
       localStorage.setItem('conchquest_session', JSON.stringify(session));
       renderSession();
     }
   } catch (e) {
-    logRequest('POST', `${SUPABASE_URL}/auth/v1/token`, 0, { error: String(e) }, performance.now() - started);
+    const data = { error: String(e) };
+    logRequest('POST', `${SUPABASE_URL}/auth/v1/token`, 0, data, performance.now() - started);
+    showInlineResult('authResult', { status: 0, data });
   }
 }
 
@@ -348,6 +357,7 @@ async function signup() {
     });
     const data = await res.json();
     logRequest('POST', `${SUPABASE_URL}/auth/v1/signup`, res.status, data, performance.now() - started);
+    showInlineResult('authResult', { status: res.status, data });
     if (data.access_token) {
       session = data;
       localStorage.setItem('conchquest_session', JSON.stringify(session));
@@ -356,7 +366,9 @@ async function signup() {
       alert('Signed up — check the inbox to confirm the email, then use Log in.');
     }
   } catch (e) {
-    logRequest('POST', `${SUPABASE_URL}/auth/v1/signup`, 0, { error: String(e) }, performance.now() - started);
+    const data = { error: String(e) };
+    logRequest('POST', `${SUPABASE_URL}/auth/v1/signup`, 0, data, performance.now() - started);
+    showInlineResult('authResult', { status: 0, data });
   }
 }
 
@@ -364,6 +376,17 @@ function logout() {
   session = null;
   localStorage.removeItem('conchquest_session');
   renderSession();
+  document.getElementById('authResult').classList.remove('visible');
+}
+
+async function fetchConditions() {
+  const result = await callApi('GET', () => `/api/conditions?lat=${lat()}&lon=${lon()}`);
+  showInlineResult('conditionsResult', result);
+}
+
+async function fetchScore() {
+  const result = await callApi('GET', () => `/api/score?lat=${lat()}&lon=${lon()}`);
+  showInlineResult('scoreResult', result);
 }
 
 async function submitFind() {
@@ -373,7 +396,19 @@ async function submitFind() {
     condition: document.getElementById('findCondition').value,
     notes: document.getElementById('findNotes').value || undefined,
   };
-  await callApi('POST', '/api/finds', { body });
+  const result = await callApi('POST', '/api/finds', { body });
+  showInlineResult('findPostResult', result);
+}
+
+async function listFinds() {
+  const result = await callApi('GET', '/api/finds?limit=20');
+  showInlineResult('findListResult', result);
+}
+
+async function getFindById() {
+  const id = document.getElementById('findId').value;
+  const result = await callApi('GET', () => `/api/finds/${id}`);
+  showInlineResult('findGetResult', result);
 }
 
 async function callApi(method, pathOrFn, opts = {}) {
