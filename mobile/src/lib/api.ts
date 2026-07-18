@@ -51,7 +51,7 @@ export interface NormalizedConditions {
     currentLevelFt: number | null;
     movement: 'rising' | 'falling' | 'slack' | 'unknown';
     nextEvents: TideEvent[];
-  };
+  } | null;
   wind: { speedMph: number; gustMph: number | null; directionDeg: number; directionCompass: string };
   waves: { heightFt: number | null; periodSec: number | null; directionDeg: number | null; stale: boolean };
   weather: { tempF: number | null; conditions: string | null; sunrise: string; sunset: string };
@@ -77,4 +77,127 @@ export interface ShellingScoreResult {
 
 export function getScore(lat: number, lon: number): Promise<ShellingScoreResult> {
   return apiFetch<ShellingScoreResult>(`/api/score?lat=${lat}&lon=${lon}`);
+}
+
+export type FindCondition = 'pristine' | 'good' | 'fair' | 'poor' | 'fragment';
+
+export interface Find {
+  id: string;
+  speciesId: string | null;
+  location: { lat: number; lon: number };
+  foundAt: string;
+  condition: FindCondition | null;
+  notes: string | null;
+  photoUrl: string | null;
+  isPrivate: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateFindInput {
+  lat: number;
+  lon: number;
+  speciesId?: string;
+  condition?: FindCondition;
+  notes?: string;
+  isPrivate?: boolean;
+}
+
+export function createFind(input: CreateFindInput): Promise<Find> {
+  return apiFetch<Find>('/api/finds', { method: 'POST', body: JSON.stringify(input) });
+}
+
+export function listMyFinds(limit = 20): Promise<Find[]> {
+  return apiFetch<Find[]>(`/api/finds?limit=${limit}`);
+}
+
+export type BadgeRarity = 'common' | 'uncommon' | 'rare' | 'very_rare';
+
+export interface NearbyFind {
+  id: string;
+  speciesId: string | null;
+  speciesName: string | null;
+  speciesRarity: BadgeRarity | null;
+  loggedBy: string;
+  location: { lat: number; lon: number };
+  isLocationFuzzed: boolean;
+  foundAt: string;
+  condition: FindCondition | null;
+  notes: string | null;
+  distanceFeet: number;
+}
+
+export function listNearbyFinds(lat: number, lon: number, radiusFeet = 16_000): Promise<NearbyFind[]> {
+  return apiFetch<NearbyFind[]>(`/api/finds/nearby?lat=${lat}&lon=${lon}&radiusFeet=${radiusFeet}`);
+}
+
+export interface Species {
+  id: string;
+  commonName: string;
+  scientificName: string;
+  family: string | null;
+  genus: string | null;
+  rarity: BadgeRarity;
+  description: string | null;
+  habitat: string | null;
+  regionalOccurrence: string[];
+  seasonality: string | null;
+  imageUrl: string | null;
+}
+
+export function listSpecies(params: { search?: string; rarity?: BadgeRarity; region?: string } = {}): Promise<Species[]> {
+  const query = new URLSearchParams();
+  if (params.search) query.set('search', params.search);
+  if (params.rarity) query.set('rarity', params.rarity);
+  if (params.region) query.set('region', params.region);
+  const qs = query.toString();
+  return apiFetch<Species[]>(`/api/species${qs ? `?${qs}` : ''}`);
+}
+
+export function getSpecies(id: string): Promise<Species> {
+  return apiFetch<Species>(`/api/species/${id}`);
+}
+
+export interface SavedLocation {
+  id: string;
+  name: string;
+  location: { lat: number; lon: number };
+  notes: string | null;
+  alertThresholdScore: number | null;
+  isHome: boolean;
+  createdAt: string;
+  score: number;
+  confidence: 'low' | 'medium' | 'high';
+  conditionSummary: string;
+}
+
+export interface CreateSavedLocationInput {
+  name: string;
+  lat: number;
+  lon: number;
+  notes?: string;
+  alertThresholdScore?: number;
+}
+
+export interface UpdateSavedLocationInput {
+  name?: string;
+  notes?: string;
+  alertThresholdScore?: number;
+  isHome?: boolean;
+}
+
+export function listSavedLocations(): Promise<SavedLocation[]> {
+  return apiFetch<SavedLocation[]>('/api/saved-locations');
+}
+
+export function createSavedLocation(input: CreateSavedLocationInput): Promise<SavedLocation> {
+  return apiFetch<SavedLocation>('/api/saved-locations', { method: 'POST', body: JSON.stringify(input) });
+}
+
+export function updateSavedLocation(id: string, input: UpdateSavedLocationInput): Promise<SavedLocation> {
+  return apiFetch<SavedLocation>(`/api/saved-locations/${id}`, { method: 'PATCH', body: JSON.stringify(input) });
+}
+
+export async function deleteSavedLocation(id: string): Promise<void> {
+  await apiFetch<void>(`/api/saved-locations/${id}`, { method: 'DELETE' });
 }

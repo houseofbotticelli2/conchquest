@@ -1,12 +1,13 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Card } from '../../components/Card';
 import { Eyebrow } from '../../components/Eyebrow';
-import { Badge } from '../../components/Badge';
+import { Badge, BadgeType } from '../../components/Badge';
 import { NavBar } from '../../components/NavBar';
-import { sampleSpeciesFacts } from '../../data/sampleData';
+import { Btn } from '../../components/Btn';
+import { getSpecies, Species as SpeciesData } from '../../lib/api';
 
 // Reused across both MapStack and LibraryStack, whose "Species" route shapes
 // are identical but are distinct navigator types — a shared prop type here
@@ -14,53 +15,84 @@ import { sampleSpeciesFacts } from '../../data/sampleData';
 // it actually uses instead of a full NativeStackScreenProps union.
 interface Props {
   navigation: { goBack: () => void };
+  route: { params?: { speciesId?: string } };
 }
 
-export function Species({ navigation }: Props) {
+function toBadgeType(rarity: SpeciesData['rarity']): BadgeType {
+  return rarity === 'very_rare' ? 'rare' : rarity;
+}
+
+export function Species({ navigation, route }: Props) {
   const { theme: t } = useTheme();
+  const speciesId = route.params?.speciesId;
+  const [species, setSpecies] = useState<SpeciesData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!speciesId) {
+      setLoading(false);
+      setError('No shell selected.');
+      return;
+    }
+    getSpecies(speciesId)
+      .then(setSpecies)
+      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load shell'))
+      .finally(() => setLoading(false));
+  }, [speciesId]);
+
+  const facts: [string, string][] = species
+    ? [
+        ['Family', species.family ?? 'Unknown'],
+        ['Region', species.regionalOccurrence.length > 0 ? species.regionalOccurrence.join(', ') : 'Unknown'],
+        ['Best season', species.seasonality ?? 'Unknown'],
+        ['Habitat', species.habitat ?? 'Unknown'],
+      ]
+    : [];
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <NavBar title="Species detail" left="← Library" onLeft={() => navigation.goBack()} right="🔖" />
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.headerRow}>
-          <View style={[styles.icon, { backgroundColor: t.iconRare, borderColor: t.border }]}>
-            <Text style={{ fontSize: 32 }}>🐚</Text>
-          </View>
-          <View>
-            <Text style={[styles.name, { color: t.text }]}>Junonia</Text>
-            <Text style={[styles.sci, { color: t.muted }]}>Scaphella junonia</Text>
-            <Badge type="rare" />
-          </View>
-        </View>
+        {loading && <ActivityIndicator color={t.accent} style={{ marginVertical: 40 }} />}
 
-        <Card style={styles.factsCard}>
-          {sampleSpeciesFacts.map(([k, v], i) => (
-            <View
-              key={k}
-              style={[styles.factRow, i < sampleSpeciesFacts.length - 1 && { borderBottomWidth: 1, borderBottomColor: t.borderSoft }]}
-            >
-              <Text style={[styles.factKey, { color: t.muted }]}>{k.toUpperCase()}</Text>
-              <Text style={[styles.factVal, { color: t.text }]}>{v}</Text>
+        {!loading && error && (
+          <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+            <Text style={[styles.aboutText, { color: t.accentDeep, marginBottom: 12 }]}>{error}</Text>
+            <Btn label="Back" variant="ghost" onPress={() => navigation.goBack()} />
+          </View>
+        )}
+
+        {!loading && species && (
+          <>
+            <View style={styles.headerRow}>
+              <View style={[styles.icon, { backgroundColor: t.iconRare, borderColor: t.border }]}>
+                <Text style={{ fontSize: 32 }}>🐚</Text>
+              </View>
+              <View>
+                <Text style={[styles.name, { color: t.text }]}>{species.commonName}</Text>
+                <Text style={[styles.sci, { color: t.muted }]}>{species.scientificName}</Text>
+                <Badge type={toBadgeType(species.rarity)} />
+              </View>
             </View>
-          ))}
-        </Card>
 
-        <Card style={styles.aboutCard}>
-          <Eyebrow>About</Eyebrow>
-          <Text style={[styles.aboutText, { color: t.body }]}>
-            One of the most sought-after shells on the Gulf Coast. Lives offshore in 30–60 ft of water, washed
-            ashore after storms. White with distinctive brown spots. Finding one is considered extremely lucky.
-          </Text>
-        </Card>
+            <Card style={styles.factsCard}>
+              {facts.map(([k, v], i) => (
+                <View key={k} style={[styles.factRow, i < facts.length - 1 && { borderBottomWidth: 1, borderBottomColor: t.borderSoft }]}>
+                  <Text style={[styles.factKey, { color: t.muted }]}>{k.toUpperCase()}</Text>
+                  <Text style={[styles.factVal, { color: t.text }]}>{v}</Text>
+                </View>
+              ))}
+            </Card>
 
-        <Card dark>
-          <Eyebrow style={{ color: t.accent }}>🌿 Ethical shelling note</Eyebrow>
-          <Text style={[styles.ethicalText, { color: t.muted }]}>
-            Only collect empty shells. Live Junonias are protected — if you find one with an animal inside,
-            photograph it and leave it in place.
-          </Text>
-        </Card>
+            {species.description && (
+              <Card style={styles.aboutCard}>
+                <Eyebrow>About</Eyebrow>
+                <Text style={[styles.aboutText, { color: t.body }]}>{species.description}</Text>
+              </Card>
+            )}
+          </>
+        )}
       </ScrollView>
     </View>
   );
