@@ -38,12 +38,52 @@
     padding: 16px 18px;
     margin-bottom: 16px;
   }
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
   h2 {
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--accent-deep);
-    margin: 0 0 12px;
+    margin: 0;
+  }
+  .help { position: relative; }
+  .help summary {
+    list-style: none;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .help summary::-webkit-details-marker { display: none; }
+  .help[open] summary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .help-text {
+    position: absolute;
+    right: 0;
+    top: 24px;
+    width: 260px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--body);
+    z-index: 10;
+    text-transform: none;
+    letter-spacing: normal;
   }
   label {
     display: block;
@@ -159,7 +199,13 @@
 <div class="subtitle">Standalone tool — no install needed, just open this file in a browser. Keep it updated via <code>git pull</code>.</div>
 
 <section>
-  <h2>Environment</h2>
+  <div class="section-head">
+    <h2>Environment</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text">Picks which running copy of the API this page talks to: your own machine (if you have <code>npm run dev</code> going locally) or the live Railway deployment. Doesn't call anything by itself — it just sets the base URL every button below uses.</div>
+    </details>
+  </div>
   <div class="radio-group">
     <label><input type="radio" name="env" value="railway" checked> Railway (dev)</label>
     <label><input type="radio" name="env" value="local"> Local (localhost:3000)</label>
@@ -170,7 +216,13 @@
 </section>
 
 <section>
-  <h2>Auth</h2>
+  <div class="section-head">
+    <h2>Auth</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text">Logs into Supabase to get an access token — every endpoint below except Health requires one to prove who's calling. "Sign up" creates a brand-new account (only do this once, to make your shared test account), then always use "Log in" after that so you don't clutter the real user list.</div>
+    </details>
+  </div>
   <div class="row">
     <div>
       <label>Email</label>
@@ -194,13 +246,25 @@
 </section>
 
 <section>
-  <h2>Health</h2>
+  <div class="section-head">
+    <h2>Health</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text">The one endpoint that needs no login — it just confirms the API server is actually running and responding. Good first check if something else isn't working.</div>
+    </details>
+  </div>
   <button onclick="checkHealth()">GET /health</button>
   <pre id="healthResult" class="inline-result"></pre>
 </section>
 
 <section>
-  <h2>Conditions &amp; Score</h2>
+  <div class="section-head">
+    <h2>Conditions &amp; Score</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text"><strong>Conditions</strong> pulls together tide, wind, wave, weather, and moon-phase data for a lat/lon and normalizes it into one response (cached server-side). <strong>Score</strong> uses that same data to compute a 0–100 Shelling Score, a confidence level, a best time-of-day window, and a plain-English explanation.</div>
+    </details>
+  </div>
   <div class="row">
     <div>
       <label>Latitude</label>
@@ -221,7 +285,13 @@
 </section>
 
 <section>
-  <h2>Log a Find</h2>
+  <div class="section-head">
+    <h2>Log a Find</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text"><strong>POST</strong> records a shell find (location, condition, notes) tied to whoever's logged in. <strong>GET /api/finds</strong> lists your own logged finds. <strong>GET /api/finds/:id</strong> looks up one specific find — copy an id from the list result first.</div>
+    </details>
+  </div>
   <div class="row">
     <div>
       <label>Latitude</label>
@@ -255,7 +325,16 @@
 </section>
 
 <section>
-  <h2>Activity Log <button class="secondary small" style="float:right" onclick="clearLog()">Clear</button></h2>
+  <div class="section-head">
+    <h2>Activity Log</h2>
+    <div style="display:flex; gap:8px; align-items:center">
+      <details class="help">
+        <summary>?</summary>
+        <div class="help-text">Every request made from this page, most recent first — method, URL, status code, timing, and the raw response body. Useful for comparing calls side by side with the inline result boxes above.</div>
+      </details>
+      <button class="secondary small" onclick="clearLog()">Clear</button>
+    </div>
+  </div>
   <div id="log"><div class="empty-log">No requests yet.</div></div>
 </section>
 
