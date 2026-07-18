@@ -394,6 +394,14 @@ function decodeJwt(token) {
   return JSON.parse(json);
 }
 
+function isExpired(token) {
+  try {
+    return decodeJwt(token).exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+}
+
 function renderSession() {
   const box = document.getElementById('sessionBox');
   if (!session) {
@@ -401,12 +409,37 @@ function renderSession() {
     return;
   }
   const claims = decodeJwt(session.access_token);
+  const expired = isExpired(session.access_token);
   document.getElementById('sessEmail').textContent = claims.email || '(none)';
   document.getElementById('sessSub').textContent = claims.sub;
-  document.getElementById('sessExp').textContent = new Date(claims.exp * 1000).toLocaleString();
+  document.getElementById('sessExp').textContent =
+    new Date(claims.exp * 1000).toLocaleString() + (expired ? '  ⚠ EXPIRED' : '');
+  document.getElementById('sessExp').style.color = expired ? 'var(--err)' : '';
   box.classList.add('visible');
 }
 renderSession();
+setInterval(renderSession, 15000);
+
+async function refreshSession() {
+  if (!session || !session.refresh_token) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: session.refresh_token }),
+    });
+    const data = await res.json();
+    if (res.ok && data.access_token) {
+      session = data;
+      localStorage.setItem('conchquest_session', JSON.stringify(session));
+      renderSession();
+      return true;
+    }
+  } catch (e) {
+    // fall through to return false
+  }
+  return false;
+}
 
 async function login() {
   const email = document.getElementById('authEmail').value;
@@ -508,6 +541,17 @@ async function callApi(method, pathOrFn, opts = {}) {
   if (auth && !session) {
     alert('Log in first — this endpoint requires an access token.');
     return null;
+  }
+
+  if (auth && isExpired(session.access_token)) {
+    const refreshed = await refreshSession();
+    if (!refreshed) {
+      alert('Your session expired and could not be refreshed automatically — please log in again.');
+      session = null;
+      localStorage.removeItem('conchquest_session');
+      renderSession();
+      return null;
+    }
   }
 
   const headers = { 'Content-Type': 'application/json' };
