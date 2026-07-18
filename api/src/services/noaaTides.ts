@@ -22,6 +22,7 @@ async function fetchPredictions(stationId: string, begin: Date, end: Date): Prom
   url.searchParams.set('format', 'json');
   url.searchParams.set('begin_date', formatDate(begin));
   url.searchParams.set('end_date', formatDate(end));
+  url.searchParams.set('application', 'Conchquest');
 
   const response = await fetch(url.toString());
   if (!response.ok) {
