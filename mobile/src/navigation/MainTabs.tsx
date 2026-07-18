@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { MainTabParamList } from './types';
@@ -38,8 +39,9 @@ const TAB_ICONS: Record<keyof MainTabParamList, { active: keyof typeof Ionicons.
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
-    <View style={[styles.wrap, { backgroundColor: t.bg }]}>
+    <View style={[styles.wrap, { backgroundColor: t.bg, paddingBottom: Math.max(insets.bottom, 8) + 12 }]}>
       <View style={[styles.bar, { backgroundColor: t.navBg }]}>
         {state.routes.map((route, index) => {
           const isActive = state.index === index;
@@ -90,7 +92,6 @@ export function MainTabs() {
 const styles = StyleSheet.create({
   wrap: {
     paddingHorizontal: 14,
-    paddingBottom: 26,
   },
   bar: {
     flexDirection: 'row',
