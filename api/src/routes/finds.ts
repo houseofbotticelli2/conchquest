@@ -14,6 +14,8 @@ const MAX_NEARBY_RADIUS_FEET = 160_000; // ~30mi
 interface FindRow {
   id: string;
   species_id: string | null;
+  species_name: string | null;
+  species_rarity: string | null;
   lat: number;
   lon: number;
   found_at: Date;
@@ -29,6 +31,8 @@ function toResponse(row: FindRow) {
   return {
     id: row.id,
     speciesId: row.species_id,
+    speciesName: row.species_name,
+    speciesRarity: row.species_rarity,
     location: { lat: row.lat, lon: row.lon },
     foundAt: row.found_at,
     condition: row.condition,
@@ -41,9 +45,11 @@ function toResponse(row: FindRow) {
 }
 
 const SELECT_COLUMNS = `
-  id, species_id, ST_Y(geog::geometry) AS lat, ST_X(geog::geometry) AS lon,
-  found_at, condition, notes, photo_url, is_private, created_at, updated_at
+  sf.id, sf.species_id, ss.common_name AS species_name, ss.rarity AS species_rarity,
+  ST_Y(sf.geog::geometry) AS lat, ST_X(sf.geog::geometry) AS lon,
+  sf.found_at, sf.condition, sf.notes, sf.photo_url, sf.is_private, sf.created_at, sf.updated_at
 `;
+const FROM_CLAUSE = `FROM shell_finds sf LEFT JOIN shell_species ss ON ss.id = sf.species_id`;
 
 findsRouter.post('/', async (req, res, next) => {
   try {
@@ -58,12 +64,16 @@ findsRouter.post('/', async (req, res, next) => {
       return;
     }
 
-    const result = await pool.query<FindRow>(
+    const inserted = await pool.query<{ id: string }>(
       `INSERT INTO shell_finds (user_id, species_id, geog, found_at, condition, notes, photo_url, is_private)
        VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, COALESCE($5, now()), $6, $7, $8, COALESCE($9, true))
-       RETURNING ${SELECT_COLUMNS}`,
+       RETURNING id`,
       [req.user!.id, speciesId ?? null, lon, lat, foundAt ?? null, condition ?? null, notes ?? null, photoUrl ?? null, isPrivate ?? null]
     );
+
+    const result = await pool.query<FindRow>(`SELECT ${SELECT_COLUMNS} ${FROM_CLAUSE} WHERE sf.id = $1`, [
+      inserted.rows[0].id,
+    ]);
 
     res.status(201).json(toResponse(result.rows[0]));
   } catch (err) {
@@ -77,9 +87,9 @@ findsRouter.get('/', async (req, res, next) => {
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     const result = await pool.query<FindRow>(
-      `SELECT ${SELECT_COLUMNS} FROM shell_finds
-       WHERE user_id = $1
-       ORDER BY found_at DESC
+      `SELECT ${SELECT_COLUMNS} ${FROM_CLAUSE}
+       WHERE sf.user_id = $1
+       ORDER BY sf.found_at DESC
        LIMIT $2 OFFSET $3`,
       [req.user!.id, limit, offset]
     );
@@ -170,7 +180,7 @@ findsRouter.get('/nearby', async (req, res, next) => {
 findsRouter.get('/:id', async (req, res, next) => {
   try {
     const result = await pool.query<FindRow>(
-      `SELECT ${SELECT_COLUMNS} FROM shell_finds WHERE id = $1 AND user_id = $2`,
+      `SELECT ${SELECT_COLUMNS} ${FROM_CLAUSE} WHERE sf.id = $1 AND sf.user_id = $2`,
       [req.params.id, req.user!.id]
     );
 

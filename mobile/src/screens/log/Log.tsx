@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
 import { Btn } from '../../components/Btn';
 import { NavBar } from '../../components/NavBar';
 import { LogStackParamList } from '../../navigation/types';
-import { createFind, FindCondition } from '../../lib/api';
+import { createFind, listSpecies, FindCondition, Species } from '../../lib/api';
 
 type Props = NativeStackScreenProps<LogStackParamList, 'Log'>;
 
@@ -30,6 +31,32 @@ export function Log({ navigation }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [speciesQuery, setSpeciesQuery] = useState('');
+  const [speciesResults, setSpeciesResults] = useState<Species[]>([]);
+  const [speciesSearching, setSpeciesSearching] = useState(false);
+  const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
+
+  useEffect(() => {
+    if (!speciesQuery.trim()) {
+      setSpeciesResults([]);
+      return;
+    }
+    setSpeciesSearching(true);
+    const timeout = setTimeout(() => {
+      listSpecies({ search: speciesQuery.trim() })
+        .then(setSpeciesResults)
+        .catch(() => setSpeciesResults([]))
+        .finally(() => setSpeciesSearching(false));
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [speciesQuery]);
+
+  function selectSpecies(species: Species) {
+    setSelectedSpecies(species);
+    setSpeciesQuery('');
+    setSpeciesResults([]);
+  }
+
   async function handleSubmit() {
     setError(null);
     setSubmitting(true);
@@ -37,6 +64,7 @@ export function Log({ navigation }: Props) {
       await createFind({
         lat: DEFAULT_LOCATION.lat,
         lon: DEFAULT_LOCATION.lon,
+        speciesId: selectedSpecies?.id,
         condition,
         notes: notes || undefined,
         isPrivate,
@@ -73,10 +101,44 @@ export function Log({ navigation }: Props) {
 
           <View>
             <Eyebrow>Shell species</Eyebrow>
-            <View style={[styles.inputRow, { backgroundColor: t.inputBg, borderColor: t.border }]}>
-              <Text style={{ color: t.muted }}>🔍</Text>
-              <Text style={[styles.inputText, { color: t.muted }]}>Search library... (coming soon)</Text>
-            </View>
+            {selectedSpecies ? (
+              <View style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+                <View style={{ flexShrink: 1 }}>
+                  <Text style={[styles.inputText, { color: t.text }]}>{selectedSpecies.commonName}</Text>
+                  <Text style={[styles.speciesSci, { color: t.muted }]}>{selectedSpecies.scientificName}</Text>
+                </View>
+                <TouchableOpacity onPress={() => setSelectedSpecies(null)}>
+                  <Ionicons name="close-circle" size={20} color={t.muted} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                <View style={[styles.inputRow, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+                  <Text style={{ color: t.muted }}>🔍</Text>
+                  <TextInput
+                    value={speciesQuery}
+                    onChangeText={setSpeciesQuery}
+                    placeholder="Search the shell library..."
+                    placeholderTextColor={t.muted}
+                    style={[styles.inputText, styles.speciesInput, { color: t.text }]}
+                  />
+                  {speciesSearching && <ActivityIndicator size="small" color={t.accent} />}
+                </View>
+                {speciesResults.length > 0 && (
+                  <View style={[styles.resultsBox, { backgroundColor: t.surface, borderColor: t.border }]}>
+                    {speciesResults.map((s) => (
+                      <TouchableOpacity key={s.id} style={[styles.resultRow, { borderBottomColor: t.borderSoft }]} onPress={() => selectSpecies(s)}>
+                        <Text style={[styles.inputText, { color: t.text }]}>{s.commonName}</Text>
+                        <Text style={[styles.speciesSci, { color: t.muted }]}>{s.scientificName}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+                {!speciesSearching && speciesQuery.trim().length > 0 && speciesResults.length === 0 && (
+                  <Text style={[styles.speciesEmpty, { color: t.muted }]}>No shells match "{speciesQuery.trim()}".</Text>
+                )}
+              </>
+            )}
           </View>
 
           <View>
@@ -154,4 +216,9 @@ const styles = StyleSheet.create({
   conditionChip: { borderRadius: 6, paddingVertical: 7, paddingHorizontal: 13, borderWidth: 1 },
   notesBox: { fontFamily: fonts.body, fontSize: 12, borderWidth: 1, borderRadius: 6, padding: 11, height: 44 },
   submitBtn: { marginBottom: 20 },
+  speciesInput: { flex: 1 },
+  speciesSci: { fontFamily: fonts.displayItalic, fontSize: 11, marginTop: 1 },
+  resultsBox: { borderWidth: 1, borderRadius: 6, marginTop: 6, overflow: 'hidden' },
+  resultRow: { paddingVertical: 9, paddingHorizontal: 12, borderBottomWidth: 1 },
+  speciesEmpty: { fontFamily: fonts.body, fontSize: 12, marginTop: 6 },
 });

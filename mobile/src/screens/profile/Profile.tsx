@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
 import { Btn } from '../../components/Btn';
 import { FindRow } from '../../components/FindRow';
+import { BadgeType } from '../../components/Badge';
+import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { ProfileStackParamList } from '../../navigation/types';
 import { sampleProfileStats } from '../../data/sampleData';
 import { useAuth } from '../../auth/AuthProvider';
@@ -17,12 +20,26 @@ function formatFindDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
+  return rarity === 'very_rare' ? 'rare' : rarity ?? 'common';
+}
+
+const HELP_ITEMS = [
+  { icon: '🌊', title: 'Forecast', body: 'Get a Shelling Score for a beach based on tide, wind, waves, and moon phase.' },
+  { icon: '🧭', title: 'Map', body: 'Browse shells the community has logged nearby.' },
+  { icon: '➕', title: 'Log', body: 'Log a find with its species, condition, and whether the location is shown publicly.' },
+  { icon: '📖', title: 'Shells', body: 'Browse the shell species library.' },
+  { icon: '👤', title: 'Profile', body: 'Your recent finds, stats, and saved beaches.' },
+];
+
 export function Profile({ navigation }: Props) {
   const { theme: t } = useTheme();
   const { signOut } = useAuth();
   const statColor = { text: t.text, accentDeep: t.accentDeep };
   const [finds, setFinds] = useState<Find[]>([]);
   const [loading, setLoading] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
     listMyFinds(5)
@@ -42,10 +59,39 @@ export function Profile({ navigation }: Props) {
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: t.text }]}>Profile</Text>
-        <TouchableOpacity onPress={confirmSignOut}>
-          <Text style={{ fontSize: 16, color: t.text }}>⚙</Text>
-        </TouchableOpacity>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity onPress={() => setHelpOpen(true)}>
+            <Ionicons name="help-circle-outline" size={26} color={t.text} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setSettingsOpen(true)}>
+            <Ionicons name="settings-outline" size={22} color={t.text} />
+          </TouchableOpacity>
+        </View>
       </View>
+
+      <SlideUpSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} title="Settings">
+        <TouchableOpacity
+          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
+          onPress={() => {
+            setSettingsOpen(false);
+            confirmSignOut();
+          }}
+        >
+          <Text style={[styles.sheetRowText, { color: t.accentDeep }]}>Log out</Text>
+        </TouchableOpacity>
+      </SlideUpSheet>
+
+      <SlideUpSheet visible={helpOpen} onClose={() => setHelpOpen(false)} title="How Conchquest works">
+        {HELP_ITEMS.map((item) => (
+          <View key={item.title} style={styles.helpRow}>
+            <Text style={{ fontSize: 20 }}>{item.icon}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.helpTitle, { color: t.text }]}>{item.title}</Text>
+              <Text style={[styles.helpBody, { color: t.muted }]}>{item.body}</Text>
+            </View>
+          </View>
+        ))}
+      </SlideUpSheet>
       <ScrollView>
         <View style={[styles.userRow, { borderBottomColor: t.border }]}>
           <View style={[styles.avatar, { backgroundColor: t.navBg }]}>
@@ -82,9 +128,9 @@ export function Profile({ navigation }: Props) {
                 key={f.id}
                 icon="🐚"
                 bg={t.surfaceAlt}
-                name="Unidentified shell"
+                name={f.speciesName ?? 'Unidentified shell'}
                 sub={`${formatFindDate(f.foundAt)}${f.condition ? ` · ${f.condition}` : ''}`}
-                badge="common"
+                badge={toBadgeType(f.speciesRarity)}
               />
             ))}
         </View>
@@ -100,7 +146,13 @@ export function Profile({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
+  sheetRow: { paddingVertical: 14 },
+  sheetRowText: { fontFamily: fonts.bodySemiBold, fontSize: 15 },
+  helpRow: { flexDirection: 'row', gap: 12, paddingVertical: 10, alignItems: 'flex-start' },
+  helpTitle: { fontFamily: fonts.bodySemiBold, fontSize: 14, marginBottom: 2 },
+  helpBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
   userRow: { paddingHorizontal: 18, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1 },
   avatar: { width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontFamily: fonts.display, fontSize: 18, fontWeight: '600' },

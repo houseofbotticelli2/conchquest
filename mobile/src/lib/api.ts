@@ -84,6 +84,8 @@ export type FindCondition = 'pristine' | 'good' | 'fair' | 'poor' | 'fragment';
 export interface Find {
   id: string;
   speciesId: string | null;
+  speciesName: string | null;
+  speciesRarity: BadgeRarity | null;
   location: { lat: number; lon: number };
   foundAt: string;
   condition: FindCondition | null;
