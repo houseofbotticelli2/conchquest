@@ -25,7 +25,11 @@ export function RootNavigator() {
         {session ? (
           <>
             <Stack.Screen name="Main" component={MainTabs} />
-            <Stack.Screen name="LogModal" component={LogStack} options={{ presentation: 'modal' }} />
+            <Stack.Screen
+              name="LogModal"
+              component={LogStack}
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
           </>
         ) : (
           <Stack.Screen name="Onboarding" component={OnboardingStack} />

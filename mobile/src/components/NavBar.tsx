@@ -1,26 +1,37 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 
 interface NavBarProps {
   title: string;
   left?: string;
+  leftIcon?: keyof typeof Ionicons.glyphMap;
   onLeft?: () => void;
   right?: string;
+  rightIcon?: keyof typeof Ionicons.glyphMap;
   onRight?: () => void;
 }
 
-export function NavBar({ title, left, onLeft, right, onRight }: NavBarProps) {
+export function NavBar({ title, left, leftIcon, onLeft, right, rightIcon, onRight }: NavBarProps) {
   const { theme: t } = useTheme();
   return (
     <View style={[styles.base, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
       <TouchableOpacity onPress={onLeft} disabled={!onLeft} style={styles.side}>
-        <Text style={[styles.leftLabel, { color: t.accent }]}>{left}</Text>
+        {leftIcon ? (
+          <Ionicons name={leftIcon} size={22} color={t.accent} />
+        ) : (
+          <Text style={[styles.leftLabel, { color: t.accent }]}>{left}</Text>
+        )}
       </TouchableOpacity>
       <Text style={[styles.title, { color: t.text }]}>{title}</Text>
       <TouchableOpacity onPress={onRight} disabled={!onRight} style={[styles.side, styles.sideRight]}>
-        <Text style={[styles.rightLabel, { color: t.body }]}>{right}</Text>
+        {rightIcon ? (
+          <Ionicons name={rightIcon} size={22} color={t.body} />
+        ) : (
+          <Text style={[styles.rightLabel, { color: t.body }]}>{right}</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
