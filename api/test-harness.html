@@ -134,6 +134,23 @@
     overflow-y: auto;
   }
   .empty-log { color: var(--muted); font-size: 12px; }
+  .inline-result {
+    display: none;
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+  .inline-result.visible { display: block; }
+  .inline-result.ok { border-color: var(--ok); }
+  .inline-result.err { border-color: var(--err); color: var(--err); }
 </style>
 </head>
 <body>
@@ -177,7 +194,8 @@
 
 <section>
   <h2>Health</h2>
-  <button onclick="callApi('GET', '/health', { auth: false })">GET /health</button>
+  <button onclick="checkHealth()">GET /health</button>
+  <pre id="healthResult" class="inline-result"></pre>
 </section>
 
 <section>
@@ -366,7 +384,7 @@ async function callApi(method, pathOrFn, opts = {}) {
 
   if (auth && !session) {
     alert('Log in first — this endpoint requires an access token.');
-    return;
+    return null;
   }
 
   const headers = { 'Content-Type': 'application/json' };
@@ -383,9 +401,25 @@ async function callApi(method, pathOrFn, opts = {}) {
     let data;
     try { data = JSON.parse(text); } catch { data = text; }
     logRequest(method, url, res.status, data, performance.now() - started);
+    return { status: res.status, data };
   } catch (e) {
-    logRequest(method, url, 0, { error: String(e) }, performance.now() - started);
+    const data = { error: String(e) };
+    logRequest(method, url, 0, data, performance.now() - started);
+    return { status: 0, data };
   }
+}
+
+function showInlineResult(elementId, result) {
+  const el = document.getElementById(elementId);
+  if (!result) return;
+  const ok = result.status >= 200 && result.status < 300;
+  el.textContent = JSON.stringify(result.data, null, 2);
+  el.className = `inline-result visible ${ok ? 'ok' : 'err'}`;
+}
+
+async function checkHealth() {
+  const result = await callApi('GET', '/health', { auth: false });
+  showInlineResult('healthResult', result);
 }
 
 function logRequest(method, url, status, data, durationMs) {
