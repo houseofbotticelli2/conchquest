@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
@@ -7,15 +7,29 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { Btn } from '../../components/Btn';
 import { FindRow } from '../../components/FindRow';
 import { ProfileStackParamList } from '../../navigation/types';
-import { sampleProfileStats, sampleProfileFinds } from '../../data/sampleData';
+import { sampleProfileStats } from '../../data/sampleData';
 import { useAuth } from '../../auth/AuthProvider';
+import { listMyFinds, Find } from '../../lib/api';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
+
+function formatFindDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
 export function Profile({ navigation }: Props) {
   const { theme: t } = useTheme();
   const { signOut } = useAuth();
   const statColor = { text: t.text, accentDeep: t.accentDeep };
+  const [finds, setFinds] = useState<Find[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    listMyFinds(5)
+      .then(setFinds)
+      .catch(() => setFinds([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   function confirmSignOut() {
     Alert.alert('Log out?', undefined, [
@@ -58,9 +72,21 @@ export function Profile({ navigation }: Props) {
             <Eyebrow style={{ marginBottom: 0 }}>Recent finds</Eyebrow>
             <Text style={[styles.seeAll, { color: t.accent }]}>SEE ALL</Text>
           </View>
-          {sampleProfileFinds.map((f) => (
-            <FindRow key={f.name} icon={f.icon} bg={f.bg ?? t.surfaceAlt} name={f.name} sub={f.sub} badge={f.badge} />
-          ))}
+          {loading && <ActivityIndicator color={t.accent} style={{ marginVertical: 12 }} />}
+          {!loading && finds.length === 0 && (
+            <Text style={[styles.emptyText, { color: t.muted }]}>No finds logged yet.</Text>
+          )}
+          {!loading &&
+            finds.map((f) => (
+              <FindRow
+                key={f.id}
+                icon="🐚"
+                bg={t.surfaceAlt}
+                name="Unidentified shell"
+                sub={`${formatFindDate(f.foundAt)}${f.condition ? ` · ${f.condition}` : ''}`}
+                badge="common"
+              />
+            ))}
         </View>
 
         <View style={styles.footer}>
@@ -88,5 +114,6 @@ const styles = StyleSheet.create({
   findsSection: { paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 },
   findsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   seeAll: { fontFamily: fonts.data, fontSize: 11 },
+  emptyText: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 12 },
   footer: { marginHorizontal: 18, marginTop: 8, marginBottom: 18 },
 });

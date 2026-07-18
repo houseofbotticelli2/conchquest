@@ -1,20 +1,47 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Svg, { Rect, Circle, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
 import { FindRow } from '../../components/FindRow';
+import { BadgeType } from '../../components/Badge';
 import { MapStackParamList } from '../../navigation/types';
-import { sampleMapFinds } from '../../data/sampleData';
+import { listNearbyFinds, NearbyFind } from '../../lib/api';
 
 type Props = NativeStackScreenProps<MapStackParamList, 'Map'>;
 
 const FILTERS = ['All finds', 'Rare', 'Today', 'Mine'];
 
+// Same fixed Sanibel Island location used by Score/Log — no GPS yet.
+const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867 };
+
+function toBadgeType(rarity: NearbyFind['speciesRarity']): BadgeType {
+  if (rarity === 'rare' || rarity === 'very_rare') return 'rare';
+  if (rarity === 'uncommon') return 'uncommon';
+  return 'common';
+}
+
+function formatRelativeTime(iso: string): string {
+  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
+  if (minutes < 60) return `${Math.max(minutes, 1)}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
 export function MapScreen({ navigation }: Props) {
   const { theme: t } = useTheme();
+  const [finds, setFinds] = useState<NearbyFind[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    listNearbyFinds(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lon)
+      .then(setFinds)
+      .catch(() => setFinds([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
@@ -89,17 +116,22 @@ export function MapScreen({ navigation }: Props) {
           <Eyebrow>Recent finds nearby</Eyebrow>
         </View>
         <View style={styles.list}>
-          {sampleMapFinds.map((f) => (
-            <FindRow
-              key={f.name}
-              icon={f.icon}
-              bg={f.bg ?? t.surfaceAlt}
-              name={f.name}
-              sub={f.sub}
-              badge={f.badge}
-              onPress={() => navigation.navigate('FindDetail', undefined)}
-            />
-          ))}
+          {loading && <ActivityIndicator color={t.accent} style={{ marginVertical: 12 }} />}
+          {!loading && finds.length === 0 && (
+            <Text style={[styles.emptyText, { color: t.muted }]}>No community finds nearby yet.</Text>
+          )}
+          {!loading &&
+            finds.map((f) => (
+              <FindRow
+                key={f.id}
+                icon="🐚"
+                bg={t.surfaceAlt}
+                name={f.speciesName ?? 'Unidentified shell'}
+                sub={`~${(f.distanceFeet / 5280).toFixed(1)} mi · ${formatRelativeTime(f.foundAt)}`}
+                badge={toBadgeType(f.speciesRarity)}
+                onPress={() => navigation.navigate('FindDetail', { findId: f.id })}
+              />
+            ))}
         </View>
       </ScrollView>
     </View>
@@ -119,4 +151,5 @@ const styles = StyleSheet.create({
   filterChip: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4, borderWidth: 1, borderRadius: 20, paddingVertical: 4, paddingHorizontal: 10, overflow: 'hidden' },
   sectionHeader: { paddingHorizontal: 14, paddingBottom: 4 },
   list: { paddingHorizontal: 14, paddingBottom: 16 },
+  emptyText: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 12 },
 });
