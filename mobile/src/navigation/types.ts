@@ -1,6 +1,6 @@
 export type OnboardingStackParamList = {
   Welcome: undefined;
-  Signup: undefined;
+  Signup: { mode?: 'signup' | 'login' } | undefined;
   Perms: undefined;
   Beach: undefined;
 };

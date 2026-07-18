@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
@@ -8,18 +8,29 @@ import { Btn } from '../../components/Btn';
 import { FindRow } from '../../components/FindRow';
 import { ProfileStackParamList } from '../../navigation/types';
 import { sampleProfileStats, sampleProfileFinds } from '../../data/sampleData';
+import { useAuth } from '../../auth/AuthProvider';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
 
 export function Profile({ navigation }: Props) {
   const { theme: t } = useTheme();
+  const { signOut } = useAuth();
   const statColor = { text: t.text, accentDeep: t.accentDeep };
+
+  function confirmSignOut() {
+    Alert.alert('Log out?', undefined, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log out', style: 'destructive', onPress: () => signOut() },
+    ]);
+  }
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: t.text }]}>Profile</Text>
-        <Text style={{ fontSize: 16, color: t.text }}>⚙</Text>
+        <TouchableOpacity onPress={confirmSignOut}>
+          <Text style={{ fontSize: 16, color: t.text }}>⚙</Text>
+        </TouchableOpacity>
       </View>
       <ScrollView>
         <View style={[styles.userRow, { borderBottomColor: t.border }]}>

@@ -34,8 +34,8 @@ export function Welcome({ navigation }: Props) {
         </Card>
 
         <View style={styles.actions}>
-          <Btn label="Get started" onPress={() => navigation.navigate('Signup')} />
-          <Btn label="Log in" variant="ghost" onPress={() => navigation.navigate('Signup')} />
+          <Btn label="Get started" onPress={() => navigation.navigate('Signup', { mode: 'signup' })} />
+          <Btn label="Log in" variant="ghost" onPress={() => navigation.navigate('Signup', { mode: 'login' })} />
         </View>
       </ScrollView>
       <Dots step={0} />

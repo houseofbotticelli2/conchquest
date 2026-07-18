@@ -7,6 +7,7 @@ import { useFonts, Fraunces_400Regular, Fraunces_400Regular_Italic, Fraunces_600
 import { PublicSans_400Regular, PublicSans_500Medium, PublicSans_600SemiBold } from '@expo-google-fonts/public-sans';
 import { IBMPlexMono_500Medium, IBMPlexMono_600SemiBold } from '@expo-google-fonts/ibm-plex-mono';
 import { ThemeProvider } from './src/theme/ThemeProvider';
+import { AuthProvider } from './src/auth/AuthProvider';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
 export default function App() {
@@ -29,8 +30,10 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <StatusBar style="auto" />
-        <RootNavigator />
+        <AuthProvider>
+          <StatusBar style="auto" />
+          <RootNavigator />
+        </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

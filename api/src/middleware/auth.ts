@@ -22,10 +22,13 @@ const jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
 
 async function upsertUserRecord(user: AuthenticatedUser): Promise<void> {
   await pool.query(
-    `INSERT INTO users (id, email)
-     VALUES ($1, $2)
-     ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, updated_at = now()`,
-    [user.id, user.email]
+    `INSERT INTO users (id, email, display_name)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (id) DO UPDATE
+     SET email = EXCLUDED.email,
+         display_name = COALESCE(EXCLUDED.display_name, users.display_name),
+         updated_at = now()`,
+    [user.id, user.email, user.displayName]
   );
 }
 
@@ -45,7 +48,17 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    const user: AuthenticatedUser = { id: payload.sub, email: typeof payload.email === 'string' ? payload.email : '' };
+    const userMetadata = payload.user_metadata;
+    const displayName =
+      typeof userMetadata === 'object' && userMetadata !== null && typeof (userMetadata as Record<string, unknown>).display_name === 'string'
+        ? ((userMetadata as Record<string, unknown>).display_name as string)
+        : null;
+
+    const user: AuthenticatedUser = {
+      id: payload.sub,
+      email: typeof payload.email === 'string' ? payload.email : '',
+      displayName,
+    };
     await upsertUserRecord(user);
     req.user = user;
     next();
