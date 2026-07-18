@@ -28,12 +28,17 @@ All routes except `/health` require `Authorization: Bearer <supabase-access-toke
 - `POST /api/finds` — log a find: `{ lat, lon, speciesId?, foundAt?, condition?, notes?, photoUrl?, isPrivate? }`
 - `GET /api/finds?limit=&offset=` — list the current user's finds
 - `GET /api/finds/:id` — a single find owned by the current user
+- `GET /api/finds/nearby?lat=&lon=&radiusFeet=&limit=` — community finds within a radius (everyone's, not just the caller's). Private finds get their location fuzzed by a configurable radius (`app_config` table, keys `fuzz_radius_standard_feet` / `fuzz_radius_rare_feet`) rather than hidden entirely; rare/very_rare species are always fuzzed regardless of their own privacy setting
+
+All distances in requests/responses are **feet**, never meters or km — PostGIS/geo-math still operate in meters internally where the underlying functions require it, converted at the API boundary.
 
 ## Deploy (Railway)
 
 `railway.json` is set up for Nixpacks auto-detection. On each deploy it runs `npm run migrate:up` before `npm start`, so schema changes ship automatically with the code — set `DATABASE_URL`, `SUPABASE_URL`, and `OPENWEATHER_API_KEY` in the Railway dashboard's environment variables.
 
 The Postgres plugin needs the PostGIS extension available; if `CREATE EXTENSION postgis` fails on first migration, enable it from the Railway Postgres plugin settings (or connect as a superuser and run it manually) before redeploying.
+
+**`DATABASE_URL` should reference the Postgres service's `DATABASE_PRIVATE_URL` variable** (`${{<postgres-service-name>.DATABASE_PRIVATE_URL}}`), not its public/proxy connection string — the API and database both run inside the same Railway project, so the connection should stay on Railway's private network (no egress fees, not exposed to the public internet). The public connection string is still useful for connecting from outside Railway (psql, a GUI client, etc.) — just don't wire it into the API service itself.
 
 ## Not in Phase 1
 
