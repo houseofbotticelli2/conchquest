@@ -295,10 +295,10 @@
 
 <section>
   <div class="section-head">
-    <h2>Log a Find</h2>
+    <h2>Finds</h2>
     <details class="help">
       <summary>?</summary>
-      <div class="help-text"><strong>POST</strong> records a shell find (location, condition, notes) tied to whoever's logged in. <strong>GET /api/finds</strong> lists your own logged finds. <strong>GET /api/finds/:id</strong> looks up one specific find — copy an id from the list result first.</div>
+      <div class="help-text" style="width:300px"><strong>POST</strong> records a shell find (location, condition, notes) tied to whoever's logged in. <strong>GET /api/finds</strong> lists your own logged finds. <strong>GET /api/finds/:id</strong> looks up one specific find — copy an id from the list result first. <strong>GET /api/finds/nearby</strong> is the community view — everyone's finds within a radius, not just yours. Private finds show a fuzzed location instead of the exact spot, and rare-species finds are always fuzzed even if marked public — so don't be surprised if the returned coordinates don't exactly match what was logged.</div>
     </details>
   </div>
   <div class="row">
@@ -331,6 +331,11 @@
   <input id="findId" placeholder="paste an id from the list above" />
   <button class="secondary" onclick="getFindById()">GET /api/finds/:id</button>
   <pre id="findGetResult" class="inline-result"></pre>
+
+  <label style="margin-top:14px">Search radius (meters, for nearby search)</label>
+  <input id="nearbyRadius" value="5000" />
+  <button class="secondary" onclick="fetchNearby()">GET /api/finds/nearby</button>
+  <pre id="findNearbyResult" class="inline-result"></pre>
 </section>
 
 <section>
@@ -530,6 +535,14 @@ async function getFindById() {
   const id = document.getElementById('findId').value;
   const result = await callApi('GET', () => `/api/finds/${id}`);
   showInlineResult('findGetResult', result);
+}
+
+async function fetchNearby() {
+  const findLat = document.getElementById('findLat').value;
+  const findLon = document.getElementById('findLon').value;
+  const radius = document.getElementById('nearbyRadius').value;
+  const result = await callApi('GET', () => `/api/finds/nearby?lat=${findLat}&lon=${findLon}&radiusMeters=${radius}`);
+  showInlineResult('findNearbyResult', result);
 }
 
 async function callApi(method, pathOrFn, opts = {}) {
