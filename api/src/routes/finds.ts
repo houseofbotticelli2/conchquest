@@ -150,6 +150,7 @@ findsRouter.get('/nearby', async (req, res, next) => {
         id: row.id,
         speciesId: row.species_id,
         speciesName: row.species_name,
+        speciesRarity: row.species_rarity,
         loggedBy: row.logged_by,
         location,
         isLocationFuzzed: fuzzRadiusFeet > 0,
