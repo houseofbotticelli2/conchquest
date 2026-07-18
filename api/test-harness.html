@@ -217,6 +217,18 @@
 
 <section>
   <div class="section-head">
+    <h2>Health</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text">The one endpoint that needs no login — it just confirms the API server (whichever one is selected above in Environment) is actually running and responding. Good first check if something else isn't working.</div>
+    </details>
+  </div>
+  <button onclick="checkHealth()">GET /health</button>
+  <pre id="healthResult" class="inline-result"></pre>
+</section>
+
+<section>
+  <div class="section-head">
     <h2>Auth</h2>
     <details class="help">
       <summary>?</summary>
@@ -243,18 +255,6 @@
     <div class="session-row"><span>expires</span><span id="sessExp"></span></div>
   </div>
   <pre id="authResult" class="inline-result"></pre>
-</section>
-
-<section>
-  <div class="section-head">
-    <h2>Health</h2>
-    <details class="help">
-      <summary>?</summary>
-      <div class="help-text">The one endpoint that needs no login — it just confirms the API server is actually running and responding. Good first check if something else isn't working.</div>
-    </details>
-  </div>
-  <button onclick="checkHealth()">GET /health</button>
-  <pre id="healthResult" class="inline-result"></pre>
 </section>
 
 <section>
@@ -332,8 +332,8 @@
   <button class="secondary" onclick="getFindById()">GET /api/finds/:id</button>
   <pre id="findGetResult" class="inline-result"></pre>
 
-  <label style="margin-top:14px">Search radius (meters, for nearby search)</label>
-  <input id="nearbyRadius" value="5000" />
+  <label style="margin-top:14px">Search radius (feet, for nearby search)</label>
+  <input id="nearbyRadius" value="16000" />
   <button class="secondary" onclick="fetchNearby()">GET /api/finds/nearby</button>
   <pre id="findNearbyResult" class="inline-result"></pre>
 </section>
@@ -541,7 +541,7 @@ async function fetchNearby() {
   const findLat = document.getElementById('findLat').value;
   const findLon = document.getElementById('findLon').value;
   const radius = document.getElementById('nearbyRadius').value;
-  const result = await callApi('GET', () => `/api/finds/nearby?lat=${findLat}&lon=${findLon}&radiusMeters=${radius}`);
+  const result = await callApi('GET', () => `/api/finds/nearby?lat=${findLat}&lon=${findLon}&radiusFeet=${radius}`);
   showInlineResult('findNearbyResult', result);
 }
 

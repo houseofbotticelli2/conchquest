@@ -12,7 +12,7 @@ export interface TideEvent {
 export interface TideConditions {
   stationId: string;
   stationName: string;
-  distanceKm: number;
+  distanceFeet: number;
   currentLevelFt: number | null;
   percentToNextExtreme: number | null; // 0 = at previous extreme, 100 = at next
   movement: 'rising' | 'falling' | 'slack' | 'unknown';
@@ -31,7 +31,7 @@ export interface WaveConditions {
   periodSec: number | null;
   directionDeg: number | null;
   stationId: string | null;
-  distanceKm: number | null;
+  distanceFeet: number | null;
   observedAt: string | null;
   stale: boolean;
 }

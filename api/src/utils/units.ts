@@ -12,12 +12,12 @@ export function metersToFeet(m: number): number {
   return m * 3.28084;
 }
 
-export function mpsToMph(mps: number): number {
-  return mps * 2.23694;
+export function feetToMeters(ft: number): number {
+  return ft / 3.28084;
 }
 
-export function metersToKm(m: number): number {
-  return m / 1000;
+export function mpsToMph(mps: number): number {
+  return mps * 2.23694;
 }
 
 export function round(value: number, decimals = 2): number {

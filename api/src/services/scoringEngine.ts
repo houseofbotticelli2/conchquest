@@ -157,10 +157,10 @@ function scoreTimeOfDay(conditions: NormalizedConditions, now: Date): ScoreFacto
 
 function determineConfidence(conditions: NormalizedConditions): ShellingScoreResult['confidence'] {
   let issues = 0;
-  if (conditions.tide.distanceKm > 50) issues += 1;
+  if (conditions.tide.distanceFeet > 164_000) issues += 1; // ~50km
   if (conditions.waves.heightFt === null) issues += 1;
   else if (conditions.waves.stale) issues += 1;
-  if (conditions.waves.distanceKm !== null && conditions.waves.distanceKm > 80) issues += 1;
+  if (conditions.waves.distanceFeet !== null && conditions.waves.distanceFeet > 262_000) issues += 1; // ~80km
 
   if (issues === 0) return 'high';
   if (issues <= 2) return 'medium';

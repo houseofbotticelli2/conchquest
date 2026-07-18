@@ -75,7 +75,7 @@ export async function getConditions(lat: number, lon: number): Promise<Normalize
       periodSec: null,
       directionDeg: null,
       stationId: null,
-      distanceKm: null,
+      distanceFeet: null,
       observedAt: null,
       stale: true,
     },

@@ -2,13 +2,14 @@ import { Router } from 'express';
 import { pool } from '../config/db';
 import { getConfigNumber } from '../services/appConfig';
 import { fuzzLocation } from '../utils/fuzzLocation';
+import { feetToMeters, metersToFeet } from '../utils/units';
 
 export const findsRouter = Router();
 
 const VALID_CONDITIONS = ['pristine', 'good', 'fair', 'poor', 'fragment'];
 const RARE_RARITIES = ['rare', 'very_rare'];
-const DEFAULT_NEARBY_RADIUS_M = 5000;
-const MAX_NEARBY_RADIUS_M = 50_000;
+const DEFAULT_NEARBY_RADIUS_FEET = 16_000; // ~3mi
+const MAX_NEARBY_RADIUS_FEET = 160_000; // ~30mi
 
 interface FindRow {
   id: string;
@@ -113,12 +114,12 @@ findsRouter.get('/nearby', async (req, res, next) => {
       return;
     }
 
-    const radiusMeters = Math.min(Number(req.query.radiusMeters) || DEFAULT_NEARBY_RADIUS_M, MAX_NEARBY_RADIUS_M);
+    const radiusFeet = Math.min(Number(req.query.radiusFeet) || DEFAULT_NEARBY_RADIUS_FEET, MAX_NEARBY_RADIUS_FEET);
     const limit = Math.min(Number(req.query.limit) || 100, 200);
 
-    const [standardFuzzRadius, rareFuzzRadius] = await Promise.all([
-      getConfigNumber('fuzz_radius_standard_meters', 91.44),
-      getConfigNumber('fuzz_radius_rare_meters', 1609.34),
+    const [standardFuzzRadiusFeet, rareFuzzRadiusFeet] = await Promise.all([
+      getConfigNumber('fuzz_radius_standard_feet', 300),
+      getConfigNumber('fuzz_radius_rare_feet', 5280),
     ]);
 
     const result = await pool.query<NearbyFindRow>(
@@ -134,14 +135,16 @@ findsRouter.get('/nearby', async (req, res, next) => {
        WHERE ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
        ORDER BY sf.found_at DESC
        LIMIT $4`,
-      [lon, lat, radiusMeters, limit]
+      [lon, lat, feetToMeters(radiusFeet), limit]
     );
 
     const finds = result.rows.map((row) => {
       const isRare = row.species_rarity !== null && RARE_RARITIES.includes(row.species_rarity);
-      const fuzzRadius = isRare ? rareFuzzRadius : row.is_private ? standardFuzzRadius : 0;
+      const fuzzRadiusFeet = isRare ? rareFuzzRadiusFeet : row.is_private ? standardFuzzRadiusFeet : 0;
       const location =
-        fuzzRadius > 0 ? fuzzLocation({ lat: row.lat, lon: row.lon }, row.id, fuzzRadius) : { lat: row.lat, lon: row.lon };
+        fuzzRadiusFeet > 0
+          ? fuzzLocation({ lat: row.lat, lon: row.lon }, row.id, feetToMeters(fuzzRadiusFeet))
+          : { lat: row.lat, lon: row.lon };
 
       return {
         id: row.id,
@@ -149,11 +152,11 @@ findsRouter.get('/nearby', async (req, res, next) => {
         speciesName: row.species_name,
         loggedBy: row.logged_by,
         location,
-        isLocationFuzzed: fuzzRadius > 0,
+        isLocationFuzzed: fuzzRadiusFeet > 0,
         foundAt: row.found_at,
         condition: row.condition,
         notes: row.notes,
-        distanceMeters: Math.round(row.distance_m),
+        distanceFeet: Math.round(metersToFeet(row.distance_m)),
       };
     });
 

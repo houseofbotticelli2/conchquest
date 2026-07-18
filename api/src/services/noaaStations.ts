@@ -1,5 +1,6 @@
 import { pool } from '../config/db';
 import { env } from '../config/env';
+import { metersToFeet } from '../utils/units';
 
 const NOAA_TIDE_STATIONS_URL =
   'https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json?type=tidepredictions';
@@ -8,7 +9,7 @@ const NDBC_ACTIVE_STATIONS_URL = 'https://www.ndbc.noaa.gov/activestations.xml';
 interface NearestStation {
   stationId: string;
   name: string;
-  distanceKm: number;
+  distanceFeet: number;
 }
 
 async function isStale(table: 'noaa_tide_stations' | 'ndbc_buoy_stations'): Promise<boolean> {
@@ -112,7 +113,7 @@ export async function findNearestTideStation(lat: number, lon: number): Promise<
   );
   const row = result.rows[0];
   if (!row) return null;
-  return { stationId: row.station_id, name: row.name, distanceKm: row.distance_m / 1000 };
+  return { stationId: row.station_id, name: row.name, distanceFeet: metersToFeet(row.distance_m) };
 }
 
 export async function findNearestBuoyStation(lat: number, lon: number): Promise<NearestStation | null> {
@@ -126,5 +127,5 @@ export async function findNearestBuoyStation(lat: number, lon: number): Promise<
   );
   const row = result.rows[0];
   if (!row) return null;
-  return { stationId: row.station_id, name: row.name, distanceKm: row.distance_m / 1000 };
+  return { stationId: row.station_id, name: row.name, distanceFeet: metersToFeet(row.distance_m) };
 }

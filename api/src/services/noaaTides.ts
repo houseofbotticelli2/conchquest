@@ -86,7 +86,7 @@ export async function getTideConditions(lat: number, lon: number, now: Date): Pr
   return {
     stationId: station.stationId,
     stationName: station.name,
-    distanceKm: station.distanceKm,
+    distanceFeet: station.distanceFeet,
     currentLevelFt,
     percentToNextExtreme,
     movement,
