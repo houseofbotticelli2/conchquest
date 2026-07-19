@@ -14,12 +14,6 @@ export const sampleBeachOptions = [
   { name: 'Marco Island', sub: 'Collier County, FL' },
 ];
 
-export const sampleProfileStats = [
-  { val: '47', label: 'Total finds', tone: 'text' as const },
-  { val: '3', label: 'Rare finds', tone: 'accentDeep' as const },
-  { val: '12', label: 'Species', tone: 'text' as const },
-];
-
 export const sampleFindConditions = [
   { val: '78', label: 'Score' },
   { val: 'Low ↓', label: 'Tide' },

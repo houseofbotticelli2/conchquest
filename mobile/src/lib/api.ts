@@ -167,6 +167,16 @@ export function listMyFinds(limit = 20): Promise<Find[]> {
   return apiFetch<Find[]>(`/api/finds?limit=${limit}`);
 }
 
+export interface FindStats {
+  totalFinds: number;
+  rareFinds: number;
+  speciesCount: number;
+}
+
+export function getFindStats(): Promise<FindStats> {
+  return apiFetch<FindStats>('/api/finds/stats');
+}
+
 export type BadgeRarity = 'common' | 'uncommon' | 'rare' | 'very_rare';
 
 export interface NearbyFind {

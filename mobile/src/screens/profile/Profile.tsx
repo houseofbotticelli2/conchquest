@@ -10,9 +10,8 @@ import { FindRow } from '../../components/FindRow';
 import { BadgeType } from '../../components/Badge';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { ProfileStackParamList } from '../../navigation/types';
-import { sampleProfileStats } from '../../data/sampleData';
 import { useAuth } from '../../auth/AuthProvider';
-import { listMyFinds, listSavedLocations, getAppConfig, Find, SavedLocation } from '../../lib/api';
+import { listMyFinds, listSavedLocations, getAppConfig, getFindStats, Find, SavedLocation, FindStats } from '../../lib/api';
 
 const DEFAULT_RECENT_FINDS_LIMIT = 7;
 const DEFAULT_RECENT_BEACHES_LIMIT = 3;
@@ -41,6 +40,7 @@ export function Profile({ navigation }: Props) {
   const statColor = { text: t.text, accentDeep: t.accentDeep };
   const [finds, setFinds] = useState<Find[]>([]);
   const [beaches, setBeaches] = useState<SavedLocation[]>([]);
+  const [stats, setStats] = useState<FindStats>({ totalFinds: 0, rareFinds: 0, speciesCount: 0 });
   const [loading, setLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -66,12 +66,24 @@ export function Profile({ navigation }: Props) {
         } catch {
           setFinds([]);
           setBeaches([]);
-        } finally {
-          setLoading(false);
         }
+
+        try {
+          setStats(await getFindStats());
+        } catch {
+          setStats({ totalFinds: 0, rareFinds: 0, speciesCount: 0 });
+        }
+
+        setLoading(false);
       })();
     }, [])
   );
+
+  const statItems: { val: string; label: string; tone: 'text' | 'accentDeep' }[] = [
+    { val: String(stats.totalFinds), label: 'Total finds', tone: 'text' },
+    { val: String(stats.rareFinds), label: 'Rare finds', tone: 'accentDeep' },
+    { val: String(stats.speciesCount), label: 'Species', tone: 'text' },
+  ];
 
   function confirmSignOut() {
     Alert.alert('Log out?', undefined, [
@@ -139,8 +151,8 @@ export function Profile({ navigation }: Props) {
         </View>
 
         <View style={[styles.statsRow, { borderBottomColor: t.border }]}>
-          {sampleProfileStats.map((s, i) => (
-            <View key={s.label} style={[styles.statItem, i < sampleProfileStats.length - 1 && { borderRightWidth: 1, borderRightColor: t.border }]}>
+          {statItems.map((s, i) => (
+            <View key={s.label} style={[styles.statItem, i < statItems.length - 1 && { borderRightWidth: 1, borderRightColor: t.border }]}>
               <Text style={[styles.statVal, { color: statColor[s.tone] }]}>{s.val}</Text>
               <Text style={[styles.statLabel, { color: t.muted }]}>{s.label.toUpperCase()}</Text>
             </View>

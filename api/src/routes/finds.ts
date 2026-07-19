@@ -136,6 +136,30 @@ findsRouter.get('/', async (req, res, next) => {
   }
 });
 
+findsRouter.get('/stats', async (req, res, next) => {
+  try {
+    const result = await pool.query<{ total_finds: string; rare_finds: string; species_count: string }>(
+      `SELECT
+         COUNT(*) AS total_finds,
+         COUNT(*) FILTER (WHERE ss.rarity IN ('rare', 'very_rare')) AS rare_finds,
+         COUNT(DISTINCT sf.species_id) AS species_count
+       FROM shell_finds sf
+       LEFT JOIN shell_species ss ON ss.id = sf.species_id
+       WHERE sf.user_id = $1`,
+      [req.user!.id]
+    );
+
+    const row = result.rows[0];
+    res.json({
+      totalFinds: Number(row.total_finds),
+      rareFinds: Number(row.rare_finds),
+      speciesCount: Number(row.species_count),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 interface NearbyFindRow {
   id: string;
   species_id: string | null;
