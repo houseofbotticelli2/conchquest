@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,7 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { FindRow } from '../../components/FindRow';
 import { BadgeType } from '../../components/Badge';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { ProfileStackParamList } from '../../navigation/types';
 import { useAuth } from '../../auth/AuthProvider';
 import { listMyFinds, listSavedLocations, getAppConfig, getFindStats, Find, SavedLocation, FindStats } from '../../lib/api';
@@ -85,11 +86,10 @@ export function Profile({ navigation }: Props) {
     { val: String(stats.speciesCount), label: 'Species', tone: 'text' },
   ];
 
+  const [logoutConfirmVisible, setLogoutConfirmVisible] = useState(false);
+
   function confirmSignOut() {
-    Alert.alert('Log out?', undefined, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log out', style: 'destructive', onPress: () => signOut() },
-    ]);
+    setLogoutConfirmVisible(true);
   }
 
   return (
@@ -207,6 +207,16 @@ export function Profile({ navigation }: Props) {
             ))}
         </View>
       </ScrollView>
+
+      <ConfirmDialog
+        visible={logoutConfirmVisible}
+        title="Log out?"
+        buttons={[
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Log out', style: 'destructive', onPress: () => signOut() },
+        ]}
+        onClose={() => setLogoutConfirmVisible(false)}
+      />
     </View>
   );
 }

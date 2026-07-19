@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { fonts } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
 import { Btn } from '../../components/Btn';
 import { NavBar } from '../../components/NavBar';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { LogStackParamList } from '../../navigation/types';
 import {
   createFind,
@@ -54,6 +55,9 @@ export function Log({ navigation, route }: Props) {
   const [photo, setPhoto] = useState<{ uri: string; contentType: PhotoContentType } | null>(null);
   const existingPhotoUrl = editingFind?.photoUrl ?? null;
 
+  const [discardVisible, setDiscardVisible] = useState(false);
+  const [photoPermVisible, setPhotoPermVisible] = useState(false);
+
   useEffect(() => {
     if (editingFind?.speciesId) {
       getSpecies(editingFind.speciesId)
@@ -80,16 +84,13 @@ export function Log({ navigation, route }: Props) {
       navigation.getParent()?.goBack();
       return;
     }
-    Alert.alert('Discard changes?', 'Your changes to this find have not been saved.', [
-      { text: 'Keep editing', style: 'cancel' },
-      { text: 'Discard', style: 'destructive', onPress: () => navigation.getParent()?.goBack() },
-    ]);
+    setDiscardVisible(true);
   }
 
   async function handlePickPhoto() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Photo access needed', 'Enable photo library access in Settings to add a photo to your find.');
+      setPhotoPermVisible(true);
       return;
     }
 
@@ -303,6 +304,24 @@ export function Log({ navigation, route }: Props) {
           )}
         </View>
       </ScrollView>
+
+      <ConfirmDialog
+        visible={discardVisible}
+        title="Discard changes?"
+        message="Your changes to this find have not been saved."
+        buttons={[
+          { text: 'Keep editing', style: 'cancel' },
+          { text: 'Discard', style: 'destructive', onPress: () => navigation.getParent()?.goBack() },
+        ]}
+        onClose={() => setDiscardVisible(false)}
+      />
+      <ConfirmDialog
+        visible={photoPermVisible}
+        title="Photo access needed"
+        message="Enable photo library access in Settings to add a photo to your find."
+        buttons={[{ text: 'OK' }]}
+        onClose={() => setPhotoPermVisible(false)}
+      />
     </View>
   );
 }

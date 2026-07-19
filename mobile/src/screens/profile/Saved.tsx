@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
 import { NavBar } from '../../components/NavBar';
 import { Btn } from '../../components/Btn';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { ProfileStackParamList } from '../../navigation/types';
 import { listSavedLocations, createSavedLocation, updateSavedLocation, deleteSavedLocation, SavedLocation } from '../../lib/api';
 
@@ -28,6 +29,9 @@ export function Saved({ navigation }: Props) {
   const [editName, setEditName] = useState('');
   const [editAlert, setEditAlert] = useState(0);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [addErrorMsg, setAddErrorMsg] = useState<string | null>(null);
+  const [saveErrorMsg, setSaveErrorMsg] = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<SavedLocation | null>(null);
 
   const fetchBeaches = useCallback(async () => {
     setLoading(true);
@@ -54,7 +58,7 @@ export function Saved({ navigation }: Props) {
       setAdding(false);
       await fetchBeaches();
     } catch (e) {
-      Alert.alert('Could not add beach', e instanceof Error ? e.message : 'Please try again.');
+      setAddErrorMsg(e instanceof Error ? e.message : 'Please try again.');
     } finally {
       setSaving(false);
     }
@@ -87,24 +91,20 @@ export function Saved({ navigation }: Props) {
       await fetchBeaches();
       setEditingId(null);
     } catch (e) {
-      Alert.alert('Could not save changes', e instanceof Error ? e.message : 'Please try again.');
+      setSaveErrorMsg(e instanceof Error ? e.message : 'Please try again.');
     } finally {
       setSavingEdit(false);
     }
   }
 
   function confirmRemove(beach: SavedLocation) {
-    Alert.alert(`Remove ${beach.name}?`, undefined, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteSavedLocation(beach.id);
-          fetchBeaches();
-        },
-      },
-    ]);
+    setRemoveTarget(beach);
+  }
+
+  async function handleConfirmedRemove() {
+    if (!removeTarget) return;
+    await deleteSavedLocation(removeTarget.id);
+    fetchBeaches();
   }
 
   return (
@@ -223,6 +223,30 @@ export function Saved({ navigation }: Props) {
             </View>
           ))}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={!!addErrorMsg}
+        title="Could not add beach"
+        message={addErrorMsg ?? undefined}
+        buttons={[{ text: 'OK' }]}
+        onClose={() => setAddErrorMsg(null)}
+      />
+      <ConfirmDialog
+        visible={!!saveErrorMsg}
+        title="Could not save changes"
+        message={saveErrorMsg ?? undefined}
+        buttons={[{ text: 'OK' }]}
+        onClose={() => setSaveErrorMsg(null)}
+      />
+      <ConfirmDialog
+        visible={!!removeTarget}
+        title={removeTarget ? `Remove ${removeTarget.name}?` : ''}
+        buttons={[
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Remove', style: 'destructive', onPress: handleConfirmedRemove },
+        ]}
+        onClose={() => setRemoveTarget(null)}
+      />
     </View>
   );
 }
