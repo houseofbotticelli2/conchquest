@@ -14,7 +14,7 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'Saved'>;
 // No location picker/GPS yet — same fixed Sanibel Island location used
 // elsewhere in the app (Score, Log) is used as the "current" spot to save.
 const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867, label: 'Sanibel Island' };
-const ALERT_STEP = 5;
+const ALERT_STEP = 1;
 
 export function Saved({ navigation }: Props) {
   const { theme: t } = useTheme();
@@ -26,7 +26,8 @@ export function Saved({ navigation }: Props) {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [savingName, setSavingName] = useState(false);
+  const [editAlert, setEditAlert] = useState(0);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const fetchBeaches = useCallback(async () => {
     setLoading(true);
@@ -64,27 +65,31 @@ export function Saved({ navigation }: Props) {
     fetchBeaches();
   }
 
-  async function handleAdjustAlert(beach: SavedLocation, delta: number) {
-    const next = Math.max(0, Math.min(100, (beach.alertThresholdScore ?? beach.score) + delta));
-    await updateSavedLocation(beach.id, { alertThresholdScore: next });
-    fetchBeaches();
+  function adjustDraftAlert(delta: number) {
+    setEditAlert((prev) => Math.max(0, Math.min(100, prev + delta)));
   }
 
   function startEditing(beach: SavedLocation) {
     setEditingId(beach.id);
     setEditName(beach.name);
+    setEditAlert(beach.alertThresholdScore ?? beach.score);
   }
 
-  async function handleSaveName(id: string) {
+  function cancelEditing() {
+    setEditingId(null);
+  }
+
+  async function handleDoneEditing(id: string) {
     if (!editName.trim()) return;
-    setSavingName(true);
+    setSavingEdit(true);
     try {
-      await updateSavedLocation(id, { name: editName.trim() });
+      await updateSavedLocation(id, { name: editName.trim(), alertThresholdScore: editAlert });
       await fetchBeaches();
+      setEditingId(null);
     } catch (e) {
-      Alert.alert('Could not rename beach', e instanceof Error ? e.message : 'Please try again.');
+      Alert.alert('Could not save changes', e instanceof Error ? e.message : 'Please try again.');
     } finally {
-      setSavingName(false);
+      setSavingEdit(false);
     }
   }
 
@@ -165,32 +170,21 @@ export function Saved({ navigation }: Props) {
                 <View style={[styles.editPanel, { backgroundColor: t.surfaceAlt, borderTopColor: t.borderSoft }]}>
                   <View style={styles.editSection}>
                     <Text style={[styles.editLabel, { color: t.muted }]}>NAME</Text>
-                    <View style={styles.nameEditRow}>
-                      <TextInput
-                        value={editName}
-                        onChangeText={setEditName}
-                        style={[styles.nameInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
-                      />
-                      {savingName ? (
-                        <ActivityIndicator color={t.accent} />
-                      ) : (
-                        <TouchableOpacity onPress={() => handleSaveName(b.id)} style={[styles.saveNameBtn, { backgroundColor: t.accent }]}>
-                          <Text style={styles.saveNameBtnText}>Save</Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
+                    <TextInput
+                      value={editName}
+                      onChangeText={setEditName}
+                      style={[styles.nameInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+                    />
                   </View>
 
                   <View style={styles.editSection}>
                     <Text style={[styles.editLabel, { color: t.muted }]}>ALERT THRESHOLD</Text>
                     <View style={styles.alertStepperRow}>
-                      <TouchableOpacity onPress={() => handleAdjustAlert(b, -ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
+                      <TouchableOpacity onPress={() => adjustDraftAlert(-ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
                         <Ionicons name="remove-circle-outline" size={26} color={t.text} />
                       </TouchableOpacity>
-                      <Text style={[styles.alertText, { color: t.sea }]}>
-                        🔔 Alert at score {b.alertThresholdScore ?? b.score}+
-                      </Text>
-                      <TouchableOpacity onPress={() => handleAdjustAlert(b, ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
+                      <Text style={[styles.alertText, { color: t.sea }]}>🔔 Alert at score {editAlert}+</Text>
+                      <TouchableOpacity onPress={() => adjustDraftAlert(ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
                         <Ionicons name="add-circle-outline" size={26} color={t.text} />
                       </TouchableOpacity>
                     </View>
@@ -205,9 +199,18 @@ export function Saved({ navigation }: Props) {
                     <TouchableOpacity onPress={() => confirmRemove(b)} hitSlop={8}>
                       <Text style={[styles.editText, { color: t.accentDeep }]}>REMOVE</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setEditingId(null)} hitSlop={8} style={{ marginLeft: 'auto' }}>
-                      <Text style={[styles.editText, { color: t.accent }]}>DONE</Text>
-                    </TouchableOpacity>
+                    {savingEdit ? (
+                      <ActivityIndicator color={t.accent} style={{ marginLeft: 'auto' }} />
+                    ) : (
+                      <View style={{ flexDirection: 'row', gap: 16, marginLeft: 'auto' }}>
+                        <TouchableOpacity onPress={cancelEditing} hitSlop={8}>
+                          <Text style={[styles.editText, { color: t.muted }]}>CANCEL</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleDoneEditing(b.id)} hitSlop={8}>
+                          <Text style={[styles.editText, { color: t.accent }]}>DONE</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
                 </View>
               ) : (
@@ -248,10 +251,7 @@ const styles = StyleSheet.create({
   editPanel: { borderTopWidth: 1, padding: 14, gap: 14 },
   editSection: { gap: 6 },
   editLabel: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4 },
-  nameEditRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  nameInput: { flex: 1, fontFamily: fonts.body, fontSize: 13, borderWidth: 1, borderRadius: 6, paddingVertical: 8, paddingHorizontal: 10 },
-  saveNameBtn: { borderRadius: 6, paddingVertical: 9, paddingHorizontal: 14 },
-  saveNameBtnText: { fontFamily: fonts.bodySemiBold, fontSize: 12, color: '#fff' },
+  nameInput: { fontFamily: fonts.body, fontSize: 13, borderWidth: 1, borderRadius: 6, paddingVertical: 8, paddingHorizontal: 10 },
   alertStepperRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   stepperBtn: { padding: 2 },
   editActionsRow: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingTop: 2 },

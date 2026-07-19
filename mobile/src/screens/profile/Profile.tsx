@@ -120,7 +120,6 @@ export function Profile({ navigation }: Props) {
         <View style={styles.findsSection}>
           <View style={styles.findsHeader}>
             <Eyebrow style={{ marginBottom: 0 }}>Recent finds</Eyebrow>
-            <Text style={[styles.seeAll, { color: t.accent }]}>SEE ALL</Text>
           </View>
           {loading && <ActivityIndicator color={t.accent} style={{ marginVertical: 12 }} />}
           {!loading && finds.length === 0 && (
@@ -170,7 +169,6 @@ const styles = StyleSheet.create({
   statLabel: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4 },
   findsSection: { paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 },
   findsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  seeAll: { fontFamily: fonts.data, fontSize: 11 },
   emptyText: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 12 },
   footer: { marginHorizontal: 18, marginTop: 8, marginBottom: 18 },
 });
