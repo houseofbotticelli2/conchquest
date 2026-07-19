@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 },
   title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
-  searchRow: { paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', gap: 8 },
+  searchRow: { paddingHorizontal: 14, paddingBottom: 8, flexDirection: 'row', gap: 8 },
   searchBox: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12 },
   searchText: { flex: 1, fontFamily: fonts.body, fontSize: 13 },
   gearBox: { borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 11, alignItems: 'center', justifyContent: 'center' },
