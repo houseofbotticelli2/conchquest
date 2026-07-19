@@ -64,6 +64,10 @@ findsRouter.post('/', async (req, res, next) => {
       res.status(400).json({ error: `condition must be one of: ${VALID_CONDITIONS.join(', ')}` });
       return;
     }
+    if (typeof photoKey !== 'string' || !photoKey.trim()) {
+      res.status(400).json({ error: 'photoKey is required' });
+      return;
+    }
 
     const inserted = await pool.query<{ id: string }>(
       `INSERT INTO shell_finds (user_id, species_id, geog, found_at, condition, notes, photo_key, is_private)

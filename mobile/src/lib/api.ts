@@ -102,7 +102,7 @@ export interface CreateFindInput {
   speciesId?: string;
   condition?: FindCondition;
   notes?: string;
-  photoKey?: string;
+  photoKey: string;
   isPrivate?: boolean;
 }
 

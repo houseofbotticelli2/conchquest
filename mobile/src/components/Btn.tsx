@@ -10,9 +10,10 @@ interface BtnProps {
   variant?: Variant;
   onPress?: (e: GestureResponderEvent) => void;
   style?: StyleProp<ViewStyle>;
+  disabled?: boolean;
 }
 
-export function Btn({ label, variant = 'primary', onPress, style }: BtnProps) {
+export function Btn({ label, variant = 'primary', onPress, style, disabled }: BtnProps) {
   const { theme: t } = useTheme();
 
   const variantStyle: Record<Variant, { background: string; color: string; border?: string }> = {
@@ -26,9 +27,11 @@ export function Btn({ label, variant = 'primary', onPress, style }: BtnProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
+      disabled={disabled}
       style={[
         styles.base,
         { backgroundColor: v.background, borderWidth: v.border ? 1.5 : 0, borderColor: v.border },
+        disabled && styles.disabled,
         style,
       ]}
     >
@@ -50,4 +53,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodySemiBold,
     fontSize: 15,
   },
+  disabled: { opacity: 0.5 },
 });

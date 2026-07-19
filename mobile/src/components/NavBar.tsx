@@ -12,10 +12,12 @@ interface NavBarProps {
   right?: string;
   rightIcon?: keyof typeof Ionicons.glyphMap;
   onRight?: () => void;
+  rightDisabled?: boolean;
 }
 
-export function NavBar({ title, left, leftIcon, onLeft, right, rightIcon, onRight }: NavBarProps) {
+export function NavBar({ title, left, leftIcon, onLeft, right, rightIcon, onRight, rightDisabled }: NavBarProps) {
   const { theme: t } = useTheme();
+  const rightColor = rightDisabled ? t.muted : t.body;
   return (
     <View style={[styles.base, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
       <TouchableOpacity onPress={onLeft} disabled={!onLeft} style={styles.side}>
@@ -26,11 +28,11 @@ export function NavBar({ title, left, leftIcon, onLeft, right, rightIcon, onRigh
         )}
       </TouchableOpacity>
       <Text style={[styles.title, { color: t.text }]}>{title}</Text>
-      <TouchableOpacity onPress={onRight} disabled={!onRight} style={[styles.side, styles.sideRight]}>
+      <TouchableOpacity onPress={onRight} disabled={!onRight || rightDisabled} style={[styles.side, styles.sideRight]}>
         {rightIcon ? (
-          <Ionicons name={rightIcon} size={22} color={t.body} />
+          <Ionicons name={rightIcon} size={22} color={rightColor} />
         ) : (
-          <Text style={[styles.rightLabel, { color: t.body }]}>{right}</Text>
+          <Text style={[styles.rightLabel, { color: rightColor }]}>{right}</Text>
         )}
       </TouchableOpacity>
     </View>

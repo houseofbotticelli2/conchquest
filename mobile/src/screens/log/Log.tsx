@@ -88,15 +88,16 @@ export function Log({ navigation }: Props) {
   }
 
   async function handleSubmit() {
+    if (!photo) {
+      setError('Add a photo to log this find.');
+      return;
+    }
+
     setError(null);
     setSubmitting(true);
     try {
-      let photoKey: string | undefined;
-      if (photo) {
-        const { uploadUrl, key } = await requestPhotoUploadUrl(photo.contentType);
-        await uploadPhoto(uploadUrl, photo.uri, photo.contentType);
-        photoKey = key;
-      }
+      const { uploadUrl, key } = await requestPhotoUploadUrl(photo.contentType);
+      await uploadPhoto(uploadUrl, photo.uri, photo.contentType);
 
       await createFind({
         lat: DEFAULT_LOCATION.lat,
@@ -104,7 +105,7 @@ export function Log({ navigation }: Props) {
         speciesId: selectedSpecies?.id,
         condition,
         notes: notes || undefined,
-        photoKey,
+        photoKey: key,
         isPrivate,
       });
       navigation.navigate('LogConfirm');
@@ -123,6 +124,7 @@ export function Log({ navigation }: Props) {
         onLeft={() => navigation.getParent()?.goBack()}
         rightIcon={submitting ? 'ellipsis-horizontal' : 'checkmark'}
         onRight={submitting ? undefined : handleSubmit}
+        rightDisabled={!photo}
       />
       <ScrollView>
         {photo ? (
@@ -138,7 +140,7 @@ export function Log({ navigation }: Props) {
             onPress={handlePickPhoto}
           >
             <Text style={{ fontSize: 28 }}>📷</Text>
-            <Text style={[styles.photoText, { color: t.muted }]}>Tap to add photo</Text>
+            <Text style={[styles.photoText, { color: t.muted }]}>Tap to add photo (required)</Text>
           </TouchableOpacity>
         )}
 
@@ -244,7 +246,7 @@ export function Log({ navigation }: Props) {
               <ActivityIndicator color={t.accent} />
             </View>
           ) : (
-            <Btn label="Log this find" onPress={handleSubmit} style={styles.submitBtn} />
+            <Btn label="Log this find" onPress={handleSubmit} disabled={!photo} style={styles.submitBtn} />
           )}
         </View>
       </ScrollView>
