@@ -4,16 +4,18 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
-import { fonts } from '../../theme/tokens';
+import { fonts, scoreColor } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
-import { Btn } from '../../components/Btn';
 import { FindRow } from '../../components/FindRow';
 import { BadgeType } from '../../components/Badge';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { ProfileStackParamList } from '../../navigation/types';
 import { sampleProfileStats } from '../../data/sampleData';
 import { useAuth } from '../../auth/AuthProvider';
-import { listMyFinds, Find } from '../../lib/api';
+import { listMyFinds, listSavedLocations, getAppConfig, Find, SavedLocation } from '../../lib/api';
+
+const DEFAULT_RECENT_FINDS_LIMIT = 7;
+const DEFAULT_RECENT_BEACHES_LIMIT = 3;
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
 
@@ -38,6 +40,7 @@ export function Profile({ navigation }: Props) {
   const { signOut } = useAuth();
   const statColor = { text: t.text, accentDeep: t.accentDeep };
   const [finds, setFinds] = useState<Find[]>([]);
+  const [beaches, setBeaches] = useState<SavedLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -45,10 +48,28 @@ export function Profile({ navigation }: Props) {
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
-      listMyFinds(5)
-        .then(setFinds)
-        .catch(() => setFinds([]))
-        .finally(() => setLoading(false));
+      (async () => {
+        let recentFindsLimit = DEFAULT_RECENT_FINDS_LIMIT;
+        let recentBeachesLimit = DEFAULT_RECENT_BEACHES_LIMIT;
+        try {
+          const config = await getAppConfig();
+          recentFindsLimit = config.recentFindsLimit;
+          recentBeachesLimit = config.recentBeachesLimit;
+        } catch {
+          // use defaults
+        }
+
+        try {
+          const [findsResult, beachesResult] = await Promise.all([listMyFinds(recentFindsLimit), listSavedLocations()]);
+          setFinds(findsResult);
+          setBeaches(beachesResult.slice(0, recentBeachesLimit));
+        } catch {
+          setFinds([]);
+          setBeaches([]);
+        } finally {
+          setLoading(false);
+        }
+      })();
     }, [])
   );
 
@@ -74,6 +95,15 @@ export function Profile({ navigation }: Props) {
       </View>
 
       <SlideUpSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} title="Settings">
+        <TouchableOpacity
+          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
+          onPress={() => {
+            setSettingsOpen(false);
+            navigation.navigate('Saved');
+          }}
+        >
+          <Text style={[styles.sheetRowText, { color: t.text }]}>Manage saved beaches</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
           onPress={() => {
@@ -139,8 +169,30 @@ export function Profile({ navigation }: Props) {
             ))}
         </View>
 
-        <View style={styles.footer}>
-          <Btn label="🔖  Manage saved beaches" variant="ghost" onPress={() => navigation.navigate('Saved')} />
+        <View style={styles.findsSection}>
+          <View style={styles.findsHeader}>
+            <Eyebrow style={{ marginBottom: 0 }}>Recent beaches</Eyebrow>
+          </View>
+          {loading && <ActivityIndicator color={t.accent} style={{ marginVertical: 12 }} />}
+          {!loading && beaches.length === 0 && (
+            <Text style={[styles.emptyText, { color: t.muted }]}>No saved beaches yet.</Text>
+          )}
+          {!loading &&
+            beaches.map((b) => (
+              <View key={b.id} style={[styles.beachRow, { borderBottomColor: t.borderSoft }]}>
+                <View style={styles.beachRowBody}>
+                  <View style={styles.beachRowNameLine}>
+                    <Text style={[styles.beachRowName, { color: t.text }]}>{b.name}</Text>
+                    {b.isHome && (
+                      <Text style={[styles.homeBadge, { backgroundColor: t.surfaceAlt, color: t.text, borderColor: t.border }]}>
+                        HOME
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                <Text style={[styles.beachRowScore, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
+              </View>
+            ))}
         </View>
       </ScrollView>
     </View>
@@ -170,5 +222,25 @@ const styles = StyleSheet.create({
   findsSection: { paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 },
   findsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   emptyText: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 12 },
-  footer: { marginHorizontal: 18, marginTop: 8, marginBottom: 18 },
+  beachRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  beachRowBody: { flex: 1 },
+  beachRowNameLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  beachRowName: { fontFamily: fonts.bodySemiBold, fontSize: 14 },
+  beachRowScore: { fontFamily: fonts.displayBold, fontSize: 18 },
+  homeBadge: {
+    fontFamily: fonts.data,
+    fontSize: 9,
+    letterSpacing: 0.4,
+    borderRadius: 10,
+    paddingVertical: 2,
+    paddingHorizontal: 7,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
 });

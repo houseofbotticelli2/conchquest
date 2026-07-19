@@ -161,9 +161,6 @@ export function Saved({ navigation }: Props) {
                     <Text style={[styles.scoreLabel, { color: t.muted }]}>SCORE NOW</Text>
                   </View>
                 </View>
-                <View style={[styles.conditionBox, { backgroundColor: t.surfaceAlt, borderColor: t.border }]}>
-                  <Text style={[styles.conditionText, { color: t.body }]}>{b.conditionSummary}</Text>
-                </View>
               </View>
 
               {editingId === b.id ? (
@@ -245,8 +242,6 @@ const styles = StyleSheet.create({
   scoreWrap: { alignItems: 'flex-end' },
   scoreVal: { fontFamily: fonts.displayBold, fontSize: 28, lineHeight: 30 },
   scoreLabel: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4 },
-  conditionBox: { borderRadius: 6, paddingVertical: 7, paddingHorizontal: 10, borderWidth: 1 },
-  conditionText: { fontFamily: fonts.data, fontSize: 11 },
   beachFooter: { borderTopWidth: 1, paddingVertical: 8, paddingHorizontal: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   editPanel: { borderTopWidth: 1, padding: 14, gap: 14 },
   editSection: { gap: 6 },

@@ -82,6 +82,7 @@ export function getScore(lat: number, lon: number): Promise<ShellingScoreResult>
 export type FindCondition = 'pristine' | 'good' | 'fair' | 'poor' | 'fragment';
 
 export interface Find {
+  isOwner: true;
   id: string;
   speciesId: string | null;
   speciesName: string | null;
@@ -96,6 +97,23 @@ export interface Find {
   updatedAt: string;
 }
 
+export interface CommunityFind {
+  isOwner: false;
+  id: string;
+  speciesId: string | null;
+  speciesName: string | null;
+  speciesRarity: BadgeRarity | null;
+  loggedBy: string;
+  location: { lat: number; lon: number };
+  isLocationFuzzed: boolean;
+  foundAt: string;
+  condition: FindCondition | null;
+  notes: string | null;
+  photoUrl: string | null;
+}
+
+export type FindDetail = Find | CommunityFind;
+
 export interface CreateFindInput {
   lat: number;
   lon: number;
@@ -106,8 +124,24 @@ export interface CreateFindInput {
   isPrivate?: boolean;
 }
 
+export interface UpdateFindInput {
+  speciesId?: string;
+  condition?: FindCondition;
+  notes?: string;
+  photoKey?: string;
+  isPrivate?: boolean;
+}
+
 export function createFind(input: CreateFindInput): Promise<Find> {
   return apiFetch<Find>('/api/finds', { method: 'POST', body: JSON.stringify(input) });
+}
+
+export function updateFind(id: string, input: UpdateFindInput): Promise<Find> {
+  return apiFetch<Find>(`/api/finds/${id}`, { method: 'PATCH', body: JSON.stringify(input) });
+}
+
+export function getFind(id: string): Promise<FindDetail> {
+  return apiFetch<FindDetail>(`/api/finds/${id}`);
 }
 
 const ALLOWED_PHOTO_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/webp'] as const;
@@ -223,4 +257,13 @@ export function updateSavedLocation(id: string, input: UpdateSavedLocationInput)
 
 export async function deleteSavedLocation(id: string): Promise<void> {
   await apiFetch<void>(`/api/saved-locations/${id}`, { method: 'DELETE' });
+}
+
+export interface AppConfig {
+  recentFindsLimit: number;
+  recentBeachesLimit: number;
+}
+
+export function getAppConfig(): Promise<AppConfig> {
+  return apiFetch<AppConfig>('/api/config');
 }
