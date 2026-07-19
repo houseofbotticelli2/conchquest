@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, TextInput, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -9,11 +9,17 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { FindRow } from '../../components/FindRow';
 import { BadgeType } from '../../components/Badge';
 import { MapStackParamList } from '../../navigation/types';
+import { useAuth } from '../../auth/AuthProvider';
 import { listNearbyFinds, NearbyFind } from '../../lib/api';
 
 type Props = NativeStackScreenProps<MapStackParamList, 'Map'>;
 
-const FILTERS = ['All finds', 'Rare', 'Today', 'Mine'];
+const FILTERS: { label: string; rare?: boolean; today?: boolean; mine?: boolean }[] = [
+  { label: 'All finds' },
+  { label: 'Rare', rare: true },
+  { label: 'Today', today: true },
+  { label: 'Mine', mine: true },
+];
 
 // Same fixed Sanibel Island location used by Score/Log — no GPS yet.
 const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867 };
@@ -32,10 +38,18 @@ function formatRelativeTime(iso: string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+function isToday(iso: string): boolean {
+  const d = new Date(iso);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+
 export function MapScreen({ navigation }: Props) {
   const { theme: t } = useTheme();
+  const { user } = useAuth();
   const [finds, setFinds] = useState<NearbyFind[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -46,6 +60,21 @@ export function MapScreen({ navigation }: Props) {
         .finally(() => setLoading(false));
     }, [])
   );
+
+  // Nearby finds only carry a display-name string, not a user id, so
+  // "Mine" matches on the same label the backend derives (display_name,
+  // falling back to the email prefix) — best-effort without a real owner id.
+  const myLabel = (user?.user_metadata?.display_name as string | undefined) ?? user?.email?.split('@')[0] ?? null;
+
+  const visibleFinds = useMemo(() => {
+    const filter = FILTERS[activeFilter];
+    return finds.filter((f) => {
+      if (filter.rare && f.speciesRarity !== 'rare' && f.speciesRarity !== 'very_rare') return false;
+      if (filter.today && !isToday(f.foundAt)) return false;
+      if (filter.mine && (!myLabel || f.loggedBy !== myLabel)) return false;
+      return true;
+    });
+  }, [finds, activeFilter, myLabel]);
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
@@ -108,15 +137,16 @@ export function MapScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.filtersRow}>
-          {FILTERS.map((label, i) => (
+          {FILTERS.map((f, i) => (
             <Text
-              key={label}
+              key={f.label}
+              onPress={() => setActiveFilter(i)}
               style={[
                 styles.filterChip,
-                { borderColor: t.border, backgroundColor: i === 0 ? t.navBg : t.surface, color: i === 0 ? t.navText : t.muted },
+                { borderColor: t.border, backgroundColor: i === activeFilter ? t.navBg : t.surface, color: i === activeFilter ? t.navText : t.muted },
               ]}
             >
-              {label}
+              {f.label}
             </Text>
           ))}
         </View>
@@ -129,8 +159,11 @@ export function MapScreen({ navigation }: Props) {
           {!loading && finds.length === 0 && (
             <Text style={[styles.emptyText, { color: t.muted }]}>No community finds nearby yet.</Text>
           )}
+          {!loading && finds.length > 0 && visibleFinds.length === 0 && (
+            <Text style={[styles.emptyText, { color: t.muted }]}>No finds match this filter.</Text>
+          )}
           {!loading &&
-            finds.map((f) => (
+            visibleFinds.map((f) => (
               <FindRow
                 key={f.id}
                 icon="🐚"
