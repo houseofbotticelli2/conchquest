@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Rect, Circle, Text as SvgText } from 'react-native-svg';
@@ -54,9 +54,14 @@ export function MapScreen({ navigation }: Props) {
       </View>
       <ScrollView>
         <View style={styles.searchRow}>
-          <View style={[styles.searchBox, { backgroundColor: t.surface, borderColor: t.border }]}>
+          <View style={[styles.searchBox, { backgroundColor: t.inputBg, borderColor: t.border }]}>
             <Text style={{ color: t.muted }}>🔍</Text>
-            <Text style={[styles.searchText, { color: t.muted }]}>Search area...</Text>
+            <TextInput
+              placeholder="Search area..."
+              placeholderTextColor={t.muted}
+              editable={false}
+              style={[styles.searchText, { color: t.text }]}
+            />
           </View>
           <View style={[styles.gearBox, { backgroundColor: t.surface, borderColor: t.border }]}>
             <Text style={{ fontSize: 16 }}>⚙</Text>
@@ -149,7 +154,7 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
   searchRow: { paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', gap: 8 },
   searchBox: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12 },
-  searchText: { fontFamily: fonts.body, fontSize: 13 },
+  searchText: { flex: 1, fontFamily: fonts.body, fontSize: 13 },
   gearBox: { borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 11, alignItems: 'center', justifyContent: 'center' },
   mapBox: { marginHorizontal: 14, marginBottom: 10, borderRadius: 10, overflow: 'hidden', borderWidth: 1 },
   filtersRow: { paddingHorizontal: 14, paddingBottom: 10, flexDirection: 'row', gap: 6 },
