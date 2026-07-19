@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
@@ -9,30 +8,24 @@ import { fonts } from '../theme/tokens';
 import { MainTabParamList } from './types';
 import { ForecastStack } from './ForecastStack';
 import { MapStack } from './MapStack';
+import { CollectionStack } from './CollectionStack';
 import { LibraryStack } from './LibraryStack';
 import { ProfileStack } from './ProfileStack';
-
-// LogTab never actually renders — its tabPress is always intercepted to open
-// the LogModal instead — but a tab screen still needs a component to satisfy
-// the navigator.
-function EmptyScreen() {
-  return <View />;
-}
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const TAB_LABELS: Record<keyof MainTabParamList, string> = {
   ForecastTab: 'Forecast',
   MapTab: 'Map',
-  LogTab: 'Log',
-  LibraryTab: 'Shells',
+  CollectionTab: 'My Shells',
+  LibraryTab: 'Library',
   ProfileTab: 'Profile',
 };
 
 const TAB_ICONS: Record<keyof MainTabParamList, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
   ForecastTab: { active: 'sunny', inactive: 'sunny-outline' },
   MapTab: { active: 'compass', inactive: 'compass-outline' },
-  LogTab: { active: 'add-circle', inactive: 'add-circle-outline' },
+  CollectionTab: { active: 'albums', inactive: 'albums-outline' },
   LibraryTab: { active: 'book', inactive: 'book-outline' },
   ProfileTab: { active: 'person', inactive: 'person-outline' },
 };
@@ -49,10 +42,6 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           const icon = TAB_ICONS[route.name as keyof MainTabParamList];
 
           const onPress = () => {
-            if (route.name === 'LogTab') {
-              navigation.getParent()?.dispatch(CommonActions.navigate({ name: 'LogModal' }));
-              return;
-            }
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
             if (!isActive && !event.defaultPrevented) {
               navigation.navigate(route.name);
@@ -82,7 +71,7 @@ export function MainTabs() {
     <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tab.Screen name="ForecastTab" component={ForecastStack} />
       <Tab.Screen name="MapTab" component={MapStack} />
-      <Tab.Screen name="LogTab" component={EmptyScreen} />
+      <Tab.Screen name="CollectionTab" component={CollectionStack} />
       <Tab.Screen name="LibraryTab" component={LibraryStack} />
       <Tab.Screen name="ProfileTab" component={ProfileStack} />
     </Tab.Navigator>

@@ -33,10 +33,14 @@ export type LogStackParamList = {
   LogConfirm: undefined;
 };
 
+export type CollectionStackParamList = {
+  MyShells: undefined;
+};
+
 export type MainTabParamList = {
   ForecastTab: undefined;
   MapTab: undefined;
-  LogTab: undefined;
+  CollectionTab: undefined;
   LibraryTab: undefined;
   ProfileTab: undefined;
 };
