@@ -118,14 +118,7 @@ export function Log({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <NavBar
-        title="Log a find"
-        leftIcon="close"
-        onLeft={() => navigation.getParent()?.goBack()}
-        rightIcon={submitting ? 'ellipsis-horizontal' : 'checkmark'}
-        onRight={submitting ? undefined : handleSubmit}
-        rightDisabled={!photo}
-      />
+      <NavBar title="Log a find" left="← Back" onLeft={() => navigation.getParent()?.goBack()} right="Sanibel" />
       <ScrollView>
         {photo ? (
           <View style={[styles.photoBox, { borderBottomColor: t.border }]}>
