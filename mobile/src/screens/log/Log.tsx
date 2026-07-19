@@ -271,7 +271,7 @@ export function Log({ navigation, route }: Props) {
               style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.inputBg, borderColor: t.border }]}
             >
               <Text style={[styles.inputText, { color: t.text }]}>
-                {isPrivate ? '🔒 Private · shown fuzzed to others' : '🌐 Public · exact location shown'}
+                {isPrivate ? '🔒 Private · general vicinity only to others' : '🌐 Public · exact location shown'}
               </Text>
               <Text style={[styles.changeText, { color: t.muted }]}>CHANGE</Text>
             </TouchableOpacity>
