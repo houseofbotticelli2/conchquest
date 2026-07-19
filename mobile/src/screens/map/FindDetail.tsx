@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Rect, Circle } from 'react-native-svg';
@@ -84,7 +84,11 @@ export function FindDetail({ navigation, route }: Props) {
                 </Text>
               </View>
               <View style={[styles.iconBox, { backgroundColor: t.iconRare, borderColor: t.border }]}>
-                <Text style={{ fontSize: 24 }}>🐚</Text>
+                {find.photoUrl ? (
+                  <Image source={{ uri: find.photoUrl }} style={styles.iconPhoto} />
+                ) : (
+                  <Text style={{ fontSize: 24 }}>🐚</Text>
+                )}
               </View>
             </View>
 
@@ -128,7 +132,8 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   name: { fontFamily: fonts.display, fontSize: 21, fontWeight: '600' },
   sci: { fontFamily: fonts.data, fontSize: 11 },
-  iconBox: { width: 46, height: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  iconBox: { width: 46, height: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, overflow: 'hidden' },
+  iconPhoto: { width: '100%', height: '100%' },
   privacyRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9, paddingHorizontal: 10, borderRadius: 6, borderWidth: 1, marginBottom: 12 },
   privacyText: { fontFamily: fonts.body, fontSize: 12 },
   note: { fontFamily: fonts.displayItalic, fontSize: 14, lineHeight: 22, marginBottom: 14 },
