@@ -9,6 +9,7 @@ import { healthRouter } from './routes/health';
 import { savedLocationsRouter } from './routes/savedLocations';
 import { scoreRouter } from './routes/score';
 import { speciesRouter } from './routes/species';
+import { uploadsRouter } from './routes/uploads';
 
 export const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api/score', requireAuth, scoreRouter);
 app.use('/api/finds', requireAuth, findsRouter);
 app.use('/api/species', requireAuth, speciesRouter);
 app.use('/api/saved-locations', requireAuth, savedLocationsRouter);
+app.use('/api/uploads', requireAuth, uploadsRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

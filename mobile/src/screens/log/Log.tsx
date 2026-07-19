@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
@@ -8,7 +9,16 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { Btn } from '../../components/Btn';
 import { NavBar } from '../../components/NavBar';
 import { LogStackParamList } from '../../navigation/types';
-import { createFind, listSpecies, FindCondition, Species } from '../../lib/api';
+import {
+  createFind,
+  listSpecies,
+  requestPhotoUploadUrl,
+  uploadPhoto,
+  isPhotoContentType,
+  FindCondition,
+  PhotoContentType,
+  Species,
+} from '../../lib/api';
 
 type Props = NativeStackScreenProps<LogStackParamList, 'Log'>;
 
@@ -36,6 +46,26 @@ export function Log({ navigation }: Props) {
   const [speciesSearching, setSpeciesSearching] = useState(false);
   const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
 
+  const [photo, setPhoto] = useState<{ uri: string; contentType: PhotoContentType } | null>(null);
+
+  async function handlePickPhoto() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Photo access needed', 'Enable photo library access in Settings to add a photo to your find.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+    if (result.canceled) return;
+
+    const asset = result.assets[0];
+    const contentType = isPhotoContentType(asset.mimeType ?? '') ? (asset.mimeType as PhotoContentType) : 'image/jpeg';
+    setPhoto({ uri: asset.uri, contentType });
+  }
+
   useEffect(() => {
     if (!speciesQuery.trim()) {
       setSpeciesResults([]);
@@ -61,12 +91,20 @@ export function Log({ navigation }: Props) {
     setError(null);
     setSubmitting(true);
     try {
+      let photoKey: string | undefined;
+      if (photo) {
+        const { uploadUrl, key } = await requestPhotoUploadUrl(photo.contentType);
+        await uploadPhoto(uploadUrl, photo.uri, photo.contentType);
+        photoKey = key;
+      }
+
       await createFind({
         lat: DEFAULT_LOCATION.lat,
         lon: DEFAULT_LOCATION.lon,
         speciesId: selectedSpecies?.id,
         condition,
         notes: notes || undefined,
+        photoKey,
         isPrivate,
       });
       navigation.navigate('LogConfirm');
@@ -87,10 +125,22 @@ export function Log({ navigation }: Props) {
         onRight={submitting ? undefined : handleSubmit}
       />
       <ScrollView>
-        <TouchableOpacity style={[styles.photoBox, { backgroundColor: t.surfaceAlt, borderBottomColor: t.border }]}>
-          <Text style={{ fontSize: 28 }}>📷</Text>
-          <Text style={[styles.photoText, { color: t.muted }]}>Tap to add photo</Text>
-        </TouchableOpacity>
+        {photo ? (
+          <View style={[styles.photoBox, { borderBottomColor: t.border }]}>
+            <Image source={{ uri: photo.uri }} style={styles.photoPreview} />
+            <TouchableOpacity style={styles.photoRemove} onPress={() => setPhoto(null)}>
+              <Ionicons name="close-circle" size={26} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[styles.photoBox, { backgroundColor: t.surfaceAlt, borderBottomColor: t.border }]}
+            onPress={handlePickPhoto}
+          >
+            <Text style={{ fontSize: 28 }}>📷</Text>
+            <Text style={[styles.photoText, { color: t.muted }]}>Tap to add photo</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.content}>
           {error && (
@@ -204,8 +254,10 @@ export function Log({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  photoBox: { height: 100, alignItems: 'center', justifyContent: 'center', gap: 6, borderBottomWidth: 1 },
+  photoBox: { height: 160, alignItems: 'center', justifyContent: 'center', gap: 6, borderBottomWidth: 1, overflow: 'hidden' },
   photoText: { fontFamily: fonts.body, fontSize: 12 },
+  photoPreview: { width: '100%', height: '100%' },
+  photoRemove: { position: 'absolute', top: 10, right: 10 },
   content: { padding: 16, gap: 14 },
   errorText: { fontFamily: fonts.body, fontSize: 12, padding: 10, borderRadius: 6, borderWidth: 1 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 6, paddingVertical: 11, paddingHorizontal: 12 },

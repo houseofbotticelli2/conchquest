@@ -102,11 +102,31 @@ export interface CreateFindInput {
   speciesId?: string;
   condition?: FindCondition;
   notes?: string;
+  photoKey?: string;
   isPrivate?: boolean;
 }
 
 export function createFind(input: CreateFindInput): Promise<Find> {
   return apiFetch<Find>('/api/finds', { method: 'POST', body: JSON.stringify(input) });
+}
+
+const ALLOWED_PHOTO_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/webp'] as const;
+export type PhotoContentType = (typeof ALLOWED_PHOTO_CONTENT_TYPES)[number];
+
+export function isPhotoContentType(value: string): value is PhotoContentType {
+  return (ALLOWED_PHOTO_CONTENT_TYPES as readonly string[]).includes(value);
+}
+
+export function requestPhotoUploadUrl(contentType: PhotoContentType): Promise<{ uploadUrl: string; key: string }> {
+  return apiFetch('/api/uploads/presign', { method: 'POST', body: JSON.stringify({ contentType }) });
+}
+
+export async function uploadPhoto(uploadUrl: string, uri: string, contentType: PhotoContentType): Promise<void> {
+  const photoBlob = await (await fetch(uri)).blob();
+  const res = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': contentType }, body: photoBlob });
+  if (!res.ok) {
+    throw new ApiError(`Photo upload failed (${res.status})`);
+  }
 }
 
 export function listMyFinds(limit = 20): Promise<Find[]> {
@@ -126,6 +146,7 @@ export interface NearbyFind {
   foundAt: string;
   condition: FindCondition | null;
   notes: string | null;
+  photoUrl: string | null;
   distanceFeet: number;
 }
 

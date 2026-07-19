@@ -129,6 +129,7 @@ export function MapScreen({ navigation }: Props) {
                 name={f.speciesName ?? 'Unidentified shell'}
                 sub={`~${(f.distanceFeet / 5280).toFixed(1)} mi · ${formatRelativeTime(f.foundAt)}`}
                 badge={toBadgeType(f.speciesRarity)}
+                photoUrl={f.photoUrl}
                 onPress={() => navigation.navigate('FindDetail', { findId: f.id })}
               />
             ))}

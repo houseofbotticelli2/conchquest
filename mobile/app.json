@@ -20,6 +20,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Conchquest uses your photos to attach a picture to a shell find."
+        }
+      ]
+    ]
   }
 }

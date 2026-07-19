@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../config/db';
 import { getConfigNumber } from '../services/appConfig';
+import { getDownloadUrl } from '../services/storage';
 import { fuzzLocation } from '../utils/fuzzLocation';
 import { feetToMeters, metersToFeet } from '../utils/units';
 
@@ -21,13 +22,13 @@ interface FindRow {
   found_at: Date;
   condition: string | null;
   notes: string | null;
-  photo_url: string | null;
+  photo_key: string | null;
   is_private: boolean;
   created_at: Date;
   updated_at: Date;
 }
 
-function toResponse(row: FindRow) {
+async function toResponse(row: FindRow) {
   return {
     id: row.id,
     speciesId: row.species_id,
@@ -37,7 +38,7 @@ function toResponse(row: FindRow) {
     foundAt: row.found_at,
     condition: row.condition,
     notes: row.notes,
-    photoUrl: row.photo_url,
+    photoUrl: row.photo_key ? await getDownloadUrl(row.photo_key) : null,
     isPrivate: row.is_private,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -47,13 +48,13 @@ function toResponse(row: FindRow) {
 const SELECT_COLUMNS = `
   sf.id, sf.species_id, ss.common_name AS species_name, ss.rarity AS species_rarity,
   ST_Y(sf.geog::geometry) AS lat, ST_X(sf.geog::geometry) AS lon,
-  sf.found_at, sf.condition, sf.notes, sf.photo_url, sf.is_private, sf.created_at, sf.updated_at
+  sf.found_at, sf.condition, sf.notes, sf.photo_key, sf.is_private, sf.created_at, sf.updated_at
 `;
 const FROM_CLAUSE = `FROM shell_finds sf LEFT JOIN shell_species ss ON ss.id = sf.species_id`;
 
 findsRouter.post('/', async (req, res, next) => {
   try {
-    const { speciesId, lat, lon, foundAt, condition, notes, photoUrl, isPrivate } = req.body ?? {};
+    const { speciesId, lat, lon, foundAt, condition, notes, photoKey, isPrivate } = req.body ?? {};
 
     if (typeof lat !== 'number' || typeof lon !== 'number' || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
       res.status(400).json({ error: 'lat and lon are required and must be valid coordinates' });
@@ -65,17 +66,17 @@ findsRouter.post('/', async (req, res, next) => {
     }
 
     const inserted = await pool.query<{ id: string }>(
-      `INSERT INTO shell_finds (user_id, species_id, geog, found_at, condition, notes, photo_url, is_private)
+      `INSERT INTO shell_finds (user_id, species_id, geog, found_at, condition, notes, photo_key, is_private)
        VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, COALESCE($5, now()), $6, $7, $8, COALESCE($9, true))
        RETURNING id`,
-      [req.user!.id, speciesId ?? null, lon, lat, foundAt ?? null, condition ?? null, notes ?? null, photoUrl ?? null, isPrivate ?? null]
+      [req.user!.id, speciesId ?? null, lon, lat, foundAt ?? null, condition ?? null, notes ?? null, photoKey ?? null, isPrivate ?? null]
     );
 
     const result = await pool.query<FindRow>(`SELECT ${SELECT_COLUMNS} ${FROM_CLAUSE} WHERE sf.id = $1`, [
       inserted.rows[0].id,
     ]);
 
-    res.status(201).json(toResponse(result.rows[0]));
+    res.status(201).json(await toResponse(result.rows[0]));
   } catch (err) {
     next(err);
   }
@@ -94,7 +95,7 @@ findsRouter.get('/', async (req, res, next) => {
       [req.user!.id, limit, offset]
     );
 
-    res.json(result.rows.map(toResponse));
+    res.json(await Promise.all(result.rows.map(toResponse)));
   } catch (err) {
     next(err);
   }
@@ -110,6 +111,7 @@ interface NearbyFindRow {
   found_at: Date;
   condition: string | null;
   notes: string | null;
+  photo_key: string | null;
   is_private: boolean;
   logged_by: string;
   distance_m: number;
@@ -136,7 +138,7 @@ findsRouter.get('/nearby', async (req, res, next) => {
       `SELECT
          sf.id, sf.species_id, ss.common_name AS species_name, ss.rarity AS species_rarity,
          ST_Y(sf.geog::geometry) AS lat, ST_X(sf.geog::geometry) AS lon,
-         sf.found_at, sf.condition, sf.notes, sf.is_private,
+         sf.found_at, sf.condition, sf.notes, sf.photo_key, sf.is_private,
          COALESCE(u.display_name, split_part(u.email, '@', 1)) AS logged_by,
          ST_Distance(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) AS distance_m
        FROM shell_finds sf
@@ -148,28 +150,31 @@ findsRouter.get('/nearby', async (req, res, next) => {
       [lon, lat, feetToMeters(radiusFeet), limit]
     );
 
-    const finds = result.rows.map((row) => {
-      const isRare = row.species_rarity !== null && RARE_RARITIES.includes(row.species_rarity);
-      const fuzzRadiusFeet = isRare ? rareFuzzRadiusFeet : row.is_private ? standardFuzzRadiusFeet : 0;
-      const location =
-        fuzzRadiusFeet > 0
-          ? fuzzLocation({ lat: row.lat, lon: row.lon }, row.id, feetToMeters(fuzzRadiusFeet))
-          : { lat: row.lat, lon: row.lon };
+    const finds = await Promise.all(
+      result.rows.map(async (row) => {
+        const isRare = row.species_rarity !== null && RARE_RARITIES.includes(row.species_rarity);
+        const fuzzRadiusFeet = isRare ? rareFuzzRadiusFeet : row.is_private ? standardFuzzRadiusFeet : 0;
+        const location =
+          fuzzRadiusFeet > 0
+            ? fuzzLocation({ lat: row.lat, lon: row.lon }, row.id, feetToMeters(fuzzRadiusFeet))
+            : { lat: row.lat, lon: row.lon };
 
-      return {
-        id: row.id,
-        speciesId: row.species_id,
-        speciesName: row.species_name,
-        speciesRarity: row.species_rarity,
-        loggedBy: row.logged_by,
-        location,
-        isLocationFuzzed: fuzzRadiusFeet > 0,
-        foundAt: row.found_at,
-        condition: row.condition,
-        notes: row.notes,
-        distanceFeet: Math.round(metersToFeet(row.distance_m)),
-      };
-    });
+        return {
+          id: row.id,
+          speciesId: row.species_id,
+          speciesName: row.species_name,
+          speciesRarity: row.species_rarity,
+          loggedBy: row.logged_by,
+          location,
+          isLocationFuzzed: fuzzRadiusFeet > 0,
+          foundAt: row.found_at,
+          condition: row.condition,
+          notes: row.notes,
+          photoUrl: row.photo_key ? await getDownloadUrl(row.photo_key) : null,
+          distanceFeet: Math.round(metersToFeet(row.distance_m)),
+        };
+      })
+    );
 
     res.json(finds);
   } catch (err) {
@@ -189,7 +194,7 @@ findsRouter.get('/:id', async (req, res, next) => {
       return;
     }
 
-    res.json(toResponse(result.rows[0]));
+    res.json(await toResponse(result.rows[0]));
   } catch (err) {
     next(err);
   }

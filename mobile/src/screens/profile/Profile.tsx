@@ -131,6 +131,7 @@ export function Profile({ navigation }: Props) {
                 name={f.speciesName ?? 'Unidentified shell'}
                 sub={`${formatFindDate(f.foundAt)}${f.condition ? ` · ${f.condition}` : ''}`}
                 badge={toBadgeType(f.speciesRarity)}
+                photoUrl={f.photoUrl}
               />
             ))}
         </View>

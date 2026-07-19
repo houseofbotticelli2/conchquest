@@ -36,7 +36,7 @@ beach name to real coordinates — before Saved Beaches can work as intended.
 
 ## Remaining PRD MVP items (docs/Conchquest PRD - Updated.docx, Section 22)
 
-Of the 11 items the PRD lists as MVP scope, these 5 are not built yet:
+Of the 11 items the PRD lists as MVP scope, these 4 are not built yet:
 
 - **Social feed** (Section 9) — global/local/following feeds where users
   share finds with photo, approximate location, timestamp, condition, notes.
@@ -55,8 +55,6 @@ Of the 11 items the PRD lists as MVP scope, these 5 are not built yet:
   shell library management, content moderation, user moderation, photo
   review, analytics dashboards, feature flags, scoring-rule management.
   Nothing built — `shell_species` data was seeded directly via migration.
-- **Photo upload for finds** — the PRD specifies Cloudflare R2 for shell
-  photo/media storage. Log a Find's "Tap to add photo" button is currently a
-  non-functional placeholder — no image picker, upload endpoint, or R2
-  bucket wired up. `shell_finds.photo_url` column already exists in the
-  schema, ready to receive a real URL.
+
+Photo upload for finds is now done (Railway Buckets instead of R2 — see
+`api/src/services/storage.ts`), so it's dropped from this list.
