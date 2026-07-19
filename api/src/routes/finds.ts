@@ -14,6 +14,8 @@ const MAX_NEARBY_RADIUS_FEET = 160_000; // ~30mi
 
 interface FindRow {
   id: string;
+  user_id: string;
+  logged_by: string;
   species_id: string | null;
   species_name: string | null;
   species_rarity: string | null;
@@ -30,6 +32,7 @@ interface FindRow {
 
 async function toResponse(row: FindRow) {
   return {
+    isOwner: true as const,
     id: row.id,
     speciesId: row.species_id,
     speciesName: row.species_name,
@@ -45,12 +48,40 @@ async function toResponse(row: FindRow) {
   };
 }
 
+async function toCommunityResponse(row: FindRow) {
+  const [standardFuzzRadiusFeet, rareFuzzRadiusFeet] = await Promise.all([
+    getConfigNumber('fuzz_radius_standard_feet', 300),
+    getConfigNumber('fuzz_radius_rare_feet', 5280),
+  ]);
+
+  const isRare = row.species_rarity !== null && RARE_RARITIES.includes(row.species_rarity);
+  const fuzzRadiusFeet = isRare ? rareFuzzRadiusFeet : row.is_private ? standardFuzzRadiusFeet : 0;
+  const location =
+    fuzzRadiusFeet > 0 ? fuzzLocation({ lat: row.lat, lon: row.lon }, row.id, feetToMeters(fuzzRadiusFeet)) : { lat: row.lat, lon: row.lon };
+
+  return {
+    isOwner: false as const,
+    id: row.id,
+    speciesId: row.species_id,
+    speciesName: row.species_name,
+    speciesRarity: row.species_rarity,
+    loggedBy: row.logged_by,
+    location,
+    isLocationFuzzed: fuzzRadiusFeet > 0,
+    foundAt: row.found_at,
+    condition: row.condition,
+    notes: row.notes,
+    photoUrl: row.photo_key ? await getDownloadUrl(row.photo_key) : null,
+  };
+}
+
 const SELECT_COLUMNS = `
-  sf.id, sf.species_id, ss.common_name AS species_name, ss.rarity AS species_rarity,
+  sf.id, sf.user_id, COALESCE(u.display_name, split_part(u.email, '@', 1)) AS logged_by,
+  sf.species_id, ss.common_name AS species_name, ss.rarity AS species_rarity,
   ST_Y(sf.geog::geometry) AS lat, ST_X(sf.geog::geometry) AS lon,
   sf.found_at, sf.condition, sf.notes, sf.photo_key, sf.is_private, sf.created_at, sf.updated_at
 `;
-const FROM_CLAUSE = `FROM shell_finds sf LEFT JOIN shell_species ss ON ss.id = sf.species_id`;
+const FROM_CLAUSE = `FROM shell_finds sf JOIN users u ON u.id = sf.user_id LEFT JOIN shell_species ss ON ss.id = sf.species_id`;
 
 findsRouter.post('/', async (req, res, next) => {
   try {
@@ -188,9 +219,43 @@ findsRouter.get('/nearby', async (req, res, next) => {
 
 findsRouter.get('/:id', async (req, res, next) => {
   try {
-    const result = await pool.query<FindRow>(
-      `SELECT ${SELECT_COLUMNS} ${FROM_CLAUSE} WHERE sf.id = $1 AND sf.user_id = $2`,
-      [req.params.id, req.user!.id]
+    const result = await pool.query<FindRow>(`SELECT ${SELECT_COLUMNS} ${FROM_CLAUSE} WHERE sf.id = $1`, [
+      req.params.id,
+    ]);
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Find not found' });
+      return;
+    }
+
+    const row = result.rows[0];
+    const isOwner = row.user_id === req.user!.id;
+    res.json(isOwner ? await toResponse(row) : await toCommunityResponse(row));
+  } catch (err) {
+    next(err);
+  }
+});
+
+findsRouter.patch('/:id', async (req, res, next) => {
+  try {
+    const { speciesId, condition, notes, photoKey, isPrivate } = req.body ?? {};
+
+    if (condition !== undefined && condition !== null && !VALID_CONDITIONS.includes(condition)) {
+      res.status(400).json({ error: `condition must be one of: ${VALID_CONDITIONS.join(', ')}` });
+      return;
+    }
+
+    const result = await pool.query<{ id: string }>(
+      `UPDATE shell_finds
+       SET species_id = COALESCE($1, species_id),
+           condition = COALESCE($2, condition),
+           notes = COALESCE($3, notes),
+           photo_key = COALESCE($4, photo_key),
+           is_private = COALESCE($5, is_private),
+           updated_at = now()
+       WHERE id = $6 AND user_id = $7
+       RETURNING id`,
+      [speciesId ?? null, condition ?? null, notes ?? null, photoKey ?? null, isPrivate ?? null, req.params.id, req.user!.id]
     );
 
     if (result.rows.length === 0) {
@@ -198,7 +263,11 @@ findsRouter.get('/:id', async (req, res, next) => {
       return;
     }
 
-    res.json(await toResponse(result.rows[0]));
+    const updated = await pool.query<FindRow>(`SELECT ${SELECT_COLUMNS} ${FROM_CLAUSE} WHERE sf.id = $1`, [
+      result.rows[0].id,
+    ]);
+
+    res.json(await toResponse(updated.rows[0]));
   } catch (err) {
     next(err);
   }

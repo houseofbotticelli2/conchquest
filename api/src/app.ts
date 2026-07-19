@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { requireAuth } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { conditionsRouter } from './routes/conditions';
+import { configRouter } from './routes/config';
 import { findsRouter } from './routes/finds';
 import { healthRouter } from './routes/health';
 import { savedLocationsRouter } from './routes/savedLocations';
@@ -19,6 +20,7 @@ app.use(express.json());
 
 app.use('/health', healthRouter);
 
+app.use('/api/config', requireAuth, configRouter);
 app.use('/api/conditions', requireAuth, conditionsRouter);
 app.use('/api/score', requireAuth, scoreRouter);
 app.use('/api/finds', requireAuth, findsRouter);
