@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
@@ -41,12 +42,15 @@ export function Profile({ navigation }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
 
-  useEffect(() => {
-    listMyFinds(5)
-      .then(setFinds)
-      .catch(() => setFinds([]))
-      .finally(() => setLoading(false));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      listMyFinds(5)
+        .then(setFinds)
+        .catch(() => setFinds([]))
+        .finally(() => setLoading(false));
+    }, [])
+  );
 
   function confirmSignOut() {
     Alert.alert('Log out?', undefined, [

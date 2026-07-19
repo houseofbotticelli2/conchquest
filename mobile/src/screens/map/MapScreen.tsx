@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Rect, Circle, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
@@ -36,12 +37,15 @@ export function MapScreen({ navigation }: Props) {
   const [finds, setFinds] = useState<NearbyFind[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    listNearbyFinds(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lon)
-      .then(setFinds)
-      .catch(() => setFinds([]))
-      .finally(() => setLoading(false));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      listNearbyFinds(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lon)
+        .then(setFinds)
+        .catch(() => setFinds([]))
+        .finally(() => setLoading(false));
+    }, [])
+  );
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
