@@ -39,7 +39,7 @@ The bucket is private, so `shell_finds.photo_key` stores the object key, not a U
 
 ## Deploy (Railway)
 
-`railway.json` is set up for Nixpacks auto-detection. On each deploy it runs `npm run migrate:up` before `npm start`, so schema changes ship automatically with the code — set `DATABASE_URL`, `SUPABASE_URL`, `OPENWEATHER_API_KEY`, `BUCKET_URL`, `BUCKET_NAME`, `BUCKET_ACCESS_KEY_ID`, and `BUCKET_SECRET_ACCESS_KEY` in the Railway dashboard's environment variables.
+`railway.json` is set up for Nixpacks auto-detection. On each deploy it runs `npm run migrate:up` before `npm start`, so schema changes ship automatically with the code — set `DATABASE_URL`, `SUPABASE_URL`, `OPENWEATHER_API_KEY`, `BUCKET_ENDPOINT`, `RAILWAY_BUCKET_NAME`, `ACCESS_KEY_ID`, and `SECRET_ACCESS_KEY` in the Railway dashboard's environment variables.
 
 The Postgres plugin needs the PostGIS extension available; if `CREATE EXTENSION postgis` fails on first migration, enable it from the Railway Postgres plugin settings (or connect as a superuser and run it manually) before redeploying.
 

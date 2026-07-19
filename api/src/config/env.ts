@@ -23,10 +23,10 @@ export const env = {
   openWeatherApiKey: required('OPENWEATHER_API_KEY'),
   conditionsCacheTtlMinutes: optionalNumber('CONDITIONS_CACHE_TTL_MINUTES', 20),
   noaaStationRefreshDays: optionalNumber('NOAA_STATION_REFRESH_DAYS', 30),
-  bucketUrl: required('BUCKET_URL'),
-  bucketName: required('BUCKET_NAME'),
-  bucketAccessKeyId: required('BUCKET_ACCESS_KEY_ID'),
-  bucketSecretAccessKey: required('BUCKET_SECRET_ACCESS_KEY'),
+  bucketUrl: required('BUCKET_ENDPOINT'),
+  bucketName: required('RAILWAY_BUCKET_NAME'),
+  bucketAccessKeyId: required('ACCESS_KEY_ID'),
+  bucketSecretAccessKey: required('SECRET_ACCESS_KEY'),
 };
 
 export const isProduction = env.nodeEnv === 'production';
