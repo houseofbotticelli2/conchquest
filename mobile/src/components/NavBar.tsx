@@ -41,8 +41,8 @@ export function NavBar({ title, left, leftIcon, onLeft, right, rightIcon, onRigh
 
 const styles = StyleSheet.create({
   base: {
-    paddingTop: 10,
-    paddingBottom: 8,
+    paddingTop: 12,
+    paddingBottom: 6,
     paddingHorizontal: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -53,5 +53,5 @@ const styles = StyleSheet.create({
   sideRight: { alignItems: 'flex-end' },
   leftLabel: { fontFamily: fonts.body, fontSize: 13 },
   rightLabel: { fontFamily: fonts.bodySemiBold, fontSize: 13 },
-  title: { fontFamily: fonts.display, fontSize: 15, fontWeight: '600' },
+  title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
 });

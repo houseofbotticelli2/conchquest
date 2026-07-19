@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   beachRowBody: { flex: 1 },
   beachRowNameLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  beachRowName: { fontFamily: fonts.bodySemiBold, fontSize: 14 },
+  beachRowName: { fontFamily: fonts.bodySemiBold, fontSize: 13 },
   beachRowScore: { fontFamily: fonts.displayBold, fontSize: 18 },
   homeBadge: {
     fontFamily: fonts.data,
