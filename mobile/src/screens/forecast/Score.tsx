@@ -1,19 +1,20 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeProvider';
-import { fonts } from '../../theme/tokens';
+import { fonts, scoreColor } from '../../theme/tokens';
 import { Card } from '../../components/Card';
 import { Eyebrow } from '../../components/Eyebrow';
 import { Btn } from '../../components/Btn';
 import { ScoreRing } from '../../components/ScoreRing';
+import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { ForecastStackParamList } from '../../navigation/types';
-import { getScore, ShellingScoreResult } from '../../lib/api';
+import { getScore, listSavedLocations, ShellingScoreResult, SavedLocation } from '../../lib/api';
 
 type Props = NativeStackScreenProps<ForecastStackParamList, 'Score'>;
 
-// No GPS or saved-beach selection wired up yet — fixed to Sanibel Island,
-// matching the location label below, until that's built.
+// No GPS wired up yet — fixed to Sanibel Island until a beach is picked.
 const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867 };
 
 function formatTime(iso: string): string {
@@ -26,22 +27,41 @@ export function Score({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [beaches, setBeaches] = useState<SavedLocation[]>([]);
+  const [selectedBeach, setSelectedBeach] = useState<SavedLocation | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      listSavedLocations()
+        .then(setBeaches)
+        .catch(() => setBeaches([]));
+    }, [])
+  );
+
+  const location = selectedBeach ? selectedBeach.location : DEFAULT_LOCATION;
+
   const fetchScore = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getScore(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lon);
+      const data = await getScore(location.lat, location.lon);
       setResult(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load score');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [location.lat, location.lon]);
 
   useEffect(() => {
     fetchScore();
   }, [fetchScore]);
+
+  function selectBeach(beach: SavedLocation) {
+    setSelectedBeach(beach);
+    setPickerOpen(false);
+  }
 
   const chips = result
     ? [
@@ -64,13 +84,38 @@ export function Score({ navigation }: Props) {
       <ScrollView>
         <View style={styles.header}>
           <View>
-            <Text style={[styles.place, { color: t.text }]}>Sanibel Island</Text>
-            <Text style={[styles.placeSub, { color: t.muted }]}>Fort Myers, FL</Text>
+            <Text style={[styles.place, { color: t.text }]}>{selectedBeach ? selectedBeach.name : 'Sanibel Island'}</Text>
+            {(selectedBeach ? selectedBeach.isHome : true) && (
+              <Text style={[styles.placeSub, { color: t.muted }]}>{selectedBeach ? 'Home beach' : 'Fort Myers, FL'}</Text>
+            )}
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => setPickerOpen(true)}>
             <Text style={{ fontSize: 20 }}>📍</Text>
           </TouchableOpacity>
         </View>
+
+        <SlideUpSheet visible={pickerOpen} onClose={() => setPickerOpen(false)} title="Choose a beach">
+          {beaches.length === 0 && (
+            <Text style={[styles.emptyPicker, { color: t.muted }]}>No saved beaches yet.</Text>
+          )}
+          {beaches.map((b) => (
+            <TouchableOpacity
+              key={b.id}
+              style={[styles.pickerRow, { borderTopColor: t.borderSoft }]}
+              onPress={() => selectBeach(b)}
+            >
+              <View style={styles.pickerRowNameLine}>
+                <Text style={[styles.pickerRowName, { color: t.text }]}>{b.name}</Text>
+                {b.isHome && (
+                  <Text style={[styles.homeBadge, { backgroundColor: t.surfaceAlt, color: t.text, borderColor: t.border }]}>
+                    HOME
+                  </Text>
+                )}
+              </View>
+              <Text style={[styles.pickerRowScore, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
+            </TouchableOpacity>
+          ))}
+        </SlideUpSheet>
 
         {loading && (
           <View style={styles.centerBox}>
@@ -155,4 +200,25 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   footer: { paddingHorizontal: 16, paddingBottom: 20 },
+  emptyPicker: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 12 },
+  pickerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+  },
+  pickerRowNameLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  pickerRowName: { fontFamily: fonts.bodySemiBold, fontSize: 14 },
+  pickerRowScore: { fontFamily: fonts.displayBold, fontSize: 18 },
+  homeBadge: {
+    fontFamily: fonts.data,
+    fontSize: 9,
+    letterSpacing: 0.4,
+    borderRadius: 10,
+    paddingVertical: 2,
+    paddingHorizontal: 7,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
 });
