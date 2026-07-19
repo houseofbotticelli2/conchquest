@@ -11,6 +11,8 @@ import { NavBar } from '../../components/NavBar';
 import { LogStackParamList } from '../../navigation/types';
 import {
   createFind,
+  updateFind,
+  getSpecies,
   listSpecies,
   requestPhotoUploadUrl,
   uploadPhoto,
@@ -33,11 +35,14 @@ const CONDITIONS: { value: FindCondition; label: string }[] = [
   { value: 'fragment', label: 'Fragment' },
 ];
 
-export function Log({ navigation }: Props) {
+export function Log({ navigation, route }: Props) {
   const { theme: t } = useTheme();
-  const [condition, setCondition] = useState<FindCondition>('good');
-  const [notes, setNotes] = useState('');
-  const [isPrivate, setIsPrivate] = useState(true);
+  const editingFind = route.params?.find ?? null;
+  const isEditMode = editingFind !== null;
+
+  const [condition, setCondition] = useState<FindCondition>(editingFind?.condition ?? 'good');
+  const [notes, setNotes] = useState(editingFind?.notes ?? '');
+  const [isPrivate, setIsPrivate] = useState(editingFind?.isPrivate ?? true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +52,39 @@ export function Log({ navigation }: Props) {
   const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
 
   const [photo, setPhoto] = useState<{ uri: string; contentType: PhotoContentType } | null>(null);
+  const existingPhotoUrl = editingFind?.photoUrl ?? null;
+
+  useEffect(() => {
+    if (editingFind?.speciesId) {
+      getSpecies(editingFind.speciesId)
+        .then(setSelectedSpecies)
+        .catch(() => {});
+    }
+  }, [editingFind?.speciesId]);
+
+  function isDirty(): boolean {
+    if (isEditMode) {
+      return (
+        condition !== (editingFind!.condition ?? 'good') ||
+        notes !== (editingFind!.notes ?? '') ||
+        isPrivate !== editingFind!.isPrivate ||
+        (selectedSpecies?.id ?? null) !== editingFind!.speciesId ||
+        photo !== null
+      );
+    }
+    return condition !== 'good' || notes !== '' || isPrivate !== true || selectedSpecies !== null || photo !== null;
+  }
+
+  function handleBack() {
+    if (!isDirty()) {
+      navigation.getParent()?.goBack();
+      return;
+    }
+    Alert.alert('Discard changes?', 'Your changes to this find have not been saved.', [
+      { text: 'Keep editing', style: 'cancel' },
+      { text: 'Discard', style: 'destructive', onPress: () => navigation.getParent()?.goBack() },
+    ]);
+  }
 
   async function handlePickPhoto() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -88,7 +126,7 @@ export function Log({ navigation }: Props) {
   }
 
   async function handleSubmit() {
-    if (!photo) {
+    if (!isEditMode && !photo) {
       setError('Add a photo to log this find.');
       return;
     }
@@ -96,21 +134,36 @@ export function Log({ navigation }: Props) {
     setError(null);
     setSubmitting(true);
     try {
-      const { uploadUrl, key } = await requestPhotoUploadUrl(photo.contentType);
-      await uploadPhoto(uploadUrl, photo.uri, photo.contentType);
+      let photoKey: string | undefined;
+      if (photo) {
+        const { uploadUrl, key } = await requestPhotoUploadUrl(photo.contentType);
+        await uploadPhoto(uploadUrl, photo.uri, photo.contentType);
+        photoKey = key;
+      }
 
-      await createFind({
-        lat: DEFAULT_LOCATION.lat,
-        lon: DEFAULT_LOCATION.lon,
-        speciesId: selectedSpecies?.id,
-        condition,
-        notes: notes || undefined,
-        photoKey: key,
-        isPrivate,
-      });
-      navigation.navigate('LogConfirm');
+      if (isEditMode) {
+        await updateFind(editingFind!.id, {
+          speciesId: selectedSpecies?.id,
+          condition,
+          notes: notes || undefined,
+          photoKey,
+          isPrivate,
+        });
+        navigation.getParent()?.goBack();
+      } else {
+        await createFind({
+          lat: DEFAULT_LOCATION.lat,
+          lon: DEFAULT_LOCATION.lon,
+          speciesId: selectedSpecies?.id,
+          condition,
+          notes: notes || undefined,
+          photoKey: photoKey!,
+          isPrivate,
+        });
+        navigation.navigate('LogConfirm');
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to log find');
+      setError(e instanceof Error ? e.message : `Failed to ${isEditMode ? 'save' : 'log'} find`);
     } finally {
       setSubmitting(false);
     }
@@ -118,15 +171,17 @@ export function Log({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <NavBar title="Log a find" left="← Back" onLeft={() => navigation.getParent()?.goBack()} right="Sanibel" />
+      <NavBar title={isEditMode ? 'Edit a find' : 'Log a find'} left="← Back" onLeft={handleBack} right="Sanibel" />
       <ScrollView>
-        {photo ? (
-          <View style={[styles.photoBox, { borderBottomColor: t.border }]}>
-            <Image source={{ uri: photo.uri }} style={styles.photoPreview} />
-            <TouchableOpacity style={styles.photoRemove} onPress={() => setPhoto(null)}>
-              <Ionicons name="close-circle" size={26} color="#fff" />
-            </TouchableOpacity>
-          </View>
+        {photo || existingPhotoUrl ? (
+          <TouchableOpacity style={[styles.photoBox, { borderBottomColor: t.border }]} onPress={handlePickPhoto}>
+            <Image source={{ uri: photo?.uri ?? existingPhotoUrl! }} style={styles.photoPreview} />
+            {photo && (
+              <TouchableOpacity style={styles.photoRemove} onPress={() => setPhoto(null)}>
+                <Ionicons name="close-circle" size={26} color="#fff" />
+              </TouchableOpacity>
+            )}
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={[styles.photoBox, { backgroundColor: t.surfaceAlt, borderBottomColor: t.border }]}
@@ -239,7 +294,12 @@ export function Log({ navigation }: Props) {
               <ActivityIndicator color={t.accent} />
             </View>
           ) : (
-            <Btn label="Log this find" onPress={handleSubmit} disabled={!photo} style={styles.submitBtn} />
+            <Btn
+              label={isEditMode ? 'Save this find' : 'Log this find'}
+              onPress={handleSubmit}
+              disabled={!isEditMode && !photo}
+              style={styles.submitBtn}
+            />
           )}
         </View>
       </ScrollView>

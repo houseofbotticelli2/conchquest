@@ -39,6 +39,13 @@ export function MyShells({ navigation }: Props) {
     navigation.getParent()?.getParent()?.dispatch(CommonActions.navigate({ name: 'LogModal' }));
   }
 
+  function handleEdit(find: Find) {
+    navigation
+      .getParent()
+      ?.getParent()
+      ?.dispatch(CommonActions.navigate({ name: 'LogModal', params: { screen: 'Log', params: { find } } }));
+  }
+
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <View style={styles.header}>
@@ -62,6 +69,7 @@ export function MyShells({ navigation }: Props) {
               sub={`${formatFindDate(f.foundAt)}${f.condition ? ` · ${f.condition}` : ''}`}
               badge={toBadgeType(f.speciesRarity)}
               photoUrl={f.photoUrl}
+              onPress={() => handleEdit(f)}
             />
           ))}
       </ScrollView>

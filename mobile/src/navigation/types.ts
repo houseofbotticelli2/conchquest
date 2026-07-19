@@ -1,4 +1,5 @@
-import type { ShellingScoreResult } from '../lib/api';
+import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { ShellingScoreResult, Find } from '../lib/api';
 
 export type OnboardingStackParamList = {
   Welcome: undefined;
@@ -29,7 +30,7 @@ export type ProfileStackParamList = {
 };
 
 export type LogStackParamList = {
-  Log: undefined;
+  Log: { find?: Find } | undefined;
   LogConfirm: undefined;
 };
 
@@ -48,5 +49,5 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   Onboarding: undefined;
   Main: undefined;
-  LogModal: undefined;
+  LogModal: NavigatorScreenParams<LogStackParamList> | undefined;
 };
