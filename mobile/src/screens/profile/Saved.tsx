@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
 import { NavBar } from '../../components/NavBar';
@@ -24,6 +25,8 @@ export function Saved({ navigation }: Props) {
   const [newName, setNewName] = useState('');
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
   const fetchBeaches = useCallback(async () => {
     setLoading(true);
@@ -65,6 +68,24 @@ export function Saved({ navigation }: Props) {
     const next = Math.max(0, Math.min(100, (beach.alertThresholdScore ?? beach.score) + delta));
     await updateSavedLocation(beach.id, { alertThresholdScore: next });
     fetchBeaches();
+  }
+
+  function startEditing(beach: SavedLocation) {
+    setEditingId(beach.id);
+    setEditName(beach.name);
+  }
+
+  async function handleSaveName(id: string) {
+    if (!editName.trim()) return;
+    setSavingName(true);
+    try {
+      await updateSavedLocation(id, { name: editName.trim() });
+      await fetchBeaches();
+    } catch (e) {
+      Alert.alert('Could not rename beach', e instanceof Error ? e.message : 'Please try again.');
+    } finally {
+      setSavingName(false);
+    }
   }
 
   function confirmRemove(beach: SavedLocation) {
@@ -141,31 +162,60 @@ export function Saved({ navigation }: Props) {
               </View>
 
               {editingId === b.id ? (
-                <View style={[styles.editRow, { backgroundColor: t.surfaceAlt, borderTopColor: t.borderSoft }]}>
-                  <TouchableOpacity onPress={() => handleAdjustAlert(b, -ALERT_STEP)}>
-                    <Text style={[styles.stepper, { color: t.text }]}>−</Text>
-                  </TouchableOpacity>
-                  <Text style={[styles.alertText, { color: t.sea }]}>
-                    🔔 Alert at score {b.alertThresholdScore ?? b.score}+
-                  </Text>
-                  <TouchableOpacity onPress={() => handleAdjustAlert(b, ALERT_STEP)}>
-                    <Text style={[styles.stepper, { color: t.text }]}>+</Text>
-                  </TouchableOpacity>
-                  {!b.isHome && (
-                    <Text style={[styles.editText, { color: t.muted }]} onPress={() => handleSetHome(b.id)}>
-                      SET HOME
-                    </Text>
-                  )}
-                  <Text style={[styles.editText, { color: t.accentDeep }]} onPress={() => confirmRemove(b)}>
-                    REMOVE
-                  </Text>
+                <View style={[styles.editPanel, { backgroundColor: t.surfaceAlt, borderTopColor: t.borderSoft }]}>
+                  <View style={styles.editSection}>
+                    <Text style={[styles.editLabel, { color: t.muted }]}>NAME</Text>
+                    <View style={styles.nameEditRow}>
+                      <TextInput
+                        value={editName}
+                        onChangeText={setEditName}
+                        style={[styles.nameInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+                      />
+                      {savingName ? (
+                        <ActivityIndicator color={t.accent} />
+                      ) : (
+                        <TouchableOpacity onPress={() => handleSaveName(b.id)} style={[styles.saveNameBtn, { backgroundColor: t.accent }]}>
+                          <Text style={styles.saveNameBtnText}>Save</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+
+                  <View style={styles.editSection}>
+                    <Text style={[styles.editLabel, { color: t.muted }]}>ALERT THRESHOLD</Text>
+                    <View style={styles.alertStepperRow}>
+                      <TouchableOpacity onPress={() => handleAdjustAlert(b, -ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
+                        <Ionicons name="remove-circle-outline" size={26} color={t.text} />
+                      </TouchableOpacity>
+                      <Text style={[styles.alertText, { color: t.sea }]}>
+                        🔔 Alert at score {b.alertThresholdScore ?? b.score}+
+                      </Text>
+                      <TouchableOpacity onPress={() => handleAdjustAlert(b, ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
+                        <Ionicons name="add-circle-outline" size={26} color={t.text} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <View style={styles.editActionsRow}>
+                    {!b.isHome && (
+                      <TouchableOpacity onPress={() => handleSetHome(b.id)} hitSlop={8}>
+                        <Text style={[styles.editText, { color: t.muted }]}>SET HOME</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity onPress={() => confirmRemove(b)} hitSlop={8}>
+                      <Text style={[styles.editText, { color: t.accentDeep }]}>REMOVE</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setEditingId(null)} hitSlop={8} style={{ marginLeft: 'auto' }}>
+                      <Text style={[styles.editText, { color: t.accent }]}>DONE</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               ) : (
                 <View style={[styles.beachFooter, { backgroundColor: t.surfaceAlt, borderTopColor: t.borderSoft }]}>
                   <Text style={[styles.alertText, { color: t.sea }]}>
                     {b.alertThresholdScore != null ? `🔔 Alert at score ${b.alertThresholdScore}+` : '🔕 No alert set'}
                   </Text>
-                  <Text style={[styles.editText, { color: t.muted }]} onPress={() => setEditingId(b.id)}>
+                  <Text style={[styles.editText, { color: t.muted }]} onPress={() => startEditing(b)}>
                     EDIT
                   </Text>
                 </View>
@@ -195,8 +245,16 @@ const styles = StyleSheet.create({
   conditionBox: { borderRadius: 6, paddingVertical: 7, paddingHorizontal: 10, borderWidth: 1 },
   conditionText: { fontFamily: fonts.data, fontSize: 11 },
   beachFooter: { borderTopWidth: 1, paddingVertical: 8, paddingHorizontal: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  editRow: { borderTopWidth: 1, paddingVertical: 8, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  stepper: { fontFamily: fonts.bodySemiBold, fontSize: 16, paddingHorizontal: 4 },
+  editPanel: { borderTopWidth: 1, padding: 14, gap: 14 },
+  editSection: { gap: 6 },
+  editLabel: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4 },
+  nameEditRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  nameInput: { flex: 1, fontFamily: fonts.body, fontSize: 13, borderWidth: 1, borderRadius: 6, paddingVertical: 8, paddingHorizontal: 10 },
+  saveNameBtn: { borderRadius: 6, paddingVertical: 9, paddingHorizontal: 14 },
+  saveNameBtnText: { fontFamily: fonts.bodySemiBold, fontSize: 12, color: '#fff' },
+  alertStepperRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  stepperBtn: { padding: 2 },
+  editActionsRow: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingTop: 2 },
   alertText: { fontFamily: fonts.data, fontSize: 11, flex: 1 },
   editText: { fontFamily: fonts.data, fontSize: 11, letterSpacing: 0.4 },
 });
