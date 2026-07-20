@@ -153,6 +153,17 @@ export function Score({ navigation }: Props) {
               )}
             </Card>
 
+            <Card style={styles.windowCard}>
+              <Eyebrow>Today's conditions</Eyebrow>
+              <Text style={[styles.windowTime, { color: t.text }]}>
+                {result.conditions.weather.tempF != null ? `${Math.round(result.conditions.weather.tempF)}°F` : '--°F'}
+                {result.conditions.weather.conditions ? ` · ${result.conditions.weather.conditions}` : ''}
+              </Text>
+              <Text style={[styles.windowNote, { color: t.muted }]}>
+                Sunrise {formatTime(result.conditions.weather.sunrise)} · Sunset {formatTime(result.conditions.weather.sunset)}
+              </Text>
+            </Card>
+
             <View style={styles.chipsRow}>
               {chips.map((c) => (
                 <Text key={c.label} style={[styles.chip, { backgroundColor: t.surface, borderColor: t.border, color: c.color }]}>

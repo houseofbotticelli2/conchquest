@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: fonts.display, fontSize: 21, fontWeight: '600' },
   sci: { fontFamily: fonts.data, fontSize: 11 },
   iconBox: { width: 46, height: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, overflow: 'hidden' },
-  iconPhoto: { width: '100%', height: '100%' },
+  iconPhoto: { width: '100%', height: '100%', resizeMode: 'contain' },
   privacyRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9, paddingHorizontal: 10, borderRadius: 6, borderWidth: 1, marginBottom: 12 },
   privacyText: { fontFamily: fonts.body, fontSize: 12 },
   note: { fontFamily: fonts.displayItalic, fontSize: 14, lineHeight: 22, marginBottom: 14 },

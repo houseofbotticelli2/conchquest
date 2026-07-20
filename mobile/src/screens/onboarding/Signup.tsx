@@ -67,9 +67,9 @@ export function Signup({ navigation, route }: Props) {
       </View>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={[styles.title, { color: t.text }]}>{isSignup ? 'Create your account' : 'Welcome back'}</Text>
-        <Text style={[styles.subtitle, { color: t.muted }]}>
-          {isSignup ? 'Free to start. No credit card needed.' : 'Log in to continue.'}
-        </Text>
+        {isSignup && (
+          <Text style={[styles.subtitle, { color: t.muted }]}>Free to start. No credit card needed.</Text>
+        )}
 
         {confirmationNotice && (
           <Text style={[styles.notice, { color: t.sea, borderColor: t.border, backgroundColor: t.surfaceAlt }]}>

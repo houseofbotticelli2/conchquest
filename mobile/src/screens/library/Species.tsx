@@ -52,7 +52,7 @@ export function Species({ navigation, route }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <NavBar title="Species detail" left="← Library" onLeft={() => navigation.goBack()} right="🔖" />
+      <NavBar title="Species detail" left="← Library" onLeft={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.content}>
         {loading && <ActivityIndicator color={t.accent} style={{ marginVertical: 40 }} />}
 
