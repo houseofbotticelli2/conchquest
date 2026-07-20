@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -89,7 +89,11 @@ export function Library({ navigation }: Props) {
         {!loading &&
           !error &&
           species.map((s) => (
-            <View key={s.id} style={[styles.row, { borderBottomColor: t.borderSoft }]}>
+            <TouchableOpacity
+              key={s.id}
+              style={[styles.row, { borderBottomColor: t.borderSoft }]}
+              onPress={() => navigation.navigate('Species', { speciesId: s.id })}
+            >
               <View style={[styles.icon, { backgroundColor: t.surfaceAlt, borderColor: t.border }]}>
                 <Text style={{ fontSize: 20 }}>🐚</Text>
               </View>
@@ -98,13 +102,7 @@ export function Library({ navigation }: Props) {
                 <Text style={[styles.sci, { color: t.muted }]}>{s.scientificName}</Text>
                 <Badge type={toBadgeType(s.rarity)} />
               </View>
-              <Text
-                style={[styles.chevron, { color: t.muted }]}
-                onPress={() => navigation.navigate('Species', { speciesId: s.id })}
-              >
-                ›
-              </Text>
-            </View>
+            </TouchableOpacity>
           ))}
       </ScrollView>
     </View>
@@ -126,5 +124,4 @@ const styles = StyleSheet.create({
   body: { flex: 1, gap: 3 },
   name: { fontFamily: fonts.bodySemiBold, fontSize: 13 },
   sci: { fontFamily: fonts.displayItalic, fontSize: 11 },
-  chevron: { fontSize: 18 },
 });
