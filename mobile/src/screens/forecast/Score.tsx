@@ -146,7 +146,9 @@ export function Score({ navigation }: Props) {
                   <Text style={[styles.windowTime, { color: t.text }]}>
                     {formatTime(result.bestWindow.start)} – {formatTime(result.bestWindow.end)}
                   </Text>
-                  <Text style={[styles.windowNote, { color: t.sea }]}>{result.bestWindow.reason}</Text>
+                  <Text style={[styles.windowNote, { color: t.sea }]}>
+                    Next low tide: {formatTime(result.bestWindow.lowTideTime)} · {result.bestWindow.reason}
+                  </Text>
                 </>
               ) : (
                 <Text style={[styles.windowNote, { color: t.muted }]}>No daylight low tide in today's forecast window.</Text>

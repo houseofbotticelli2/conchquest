@@ -206,7 +206,8 @@ function findBestWindow(conditions: NormalizedConditions): ShellingScoreResult['
   return {
     start: start.toISOString(),
     end: end.toISOString(),
-    reason: `Centered on the low tide at ${new Date(daylightLow.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} — the 90 minutes on either side typically expose the most productive ground.`,
+    lowTideTime: daylightLow.time,
+    reason: 'The 90 minutes on either side of low tide typically expose the most productive ground.',
   };
 }
 
