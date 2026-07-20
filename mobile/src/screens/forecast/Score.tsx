@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
 import { Card } from '../../components/Card';
@@ -23,6 +24,7 @@ function formatTime(iso: string): string {
 
 export function Score({ navigation }: Props) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
   const [result, setResult] = useState<ShellingScoreResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export function Score({ navigation }: Props) {
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <ScrollView>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <View>
             <Text style={[styles.place, { color: t.text }]}>{selectedBeach ? selectedBeach.name : 'Sanibel Island'}</Text>
             {(selectedBeach ? selectedBeach.isHome : true) && (

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Badge, BadgeType } from '../../components/Badge';
@@ -22,6 +23,7 @@ const FILTERS: { label: string; rarity?: 'rare'; region?: string }[] = [
 
 export function Library({ navigation }: Props) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState(0);
   const [species, setSpecies] = useState<Species[]>([]);
@@ -49,7 +51,7 @@ export function Library({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={[styles.title, { color: t.text }]}>Shell Library</Text>
       </View>
       <ScrollView contentContainerStyle={styles.content}>

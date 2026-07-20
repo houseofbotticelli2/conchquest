@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Card } from '../../components/Card';
@@ -13,10 +14,11 @@ type Props = NativeStackScreenProps<OnboardingStackParamList, 'Welcome'>;
 
 export function Welcome({ navigation }: Props) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 22 }]}>
         <View style={[styles.logo, { backgroundColor: t.surface, borderColor: t.border }]}>
           <Text style={styles.logoEmoji}>🐚</Text>
         </View>

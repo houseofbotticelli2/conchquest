@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
@@ -37,6 +38,7 @@ const HELP_ITEMS = [
 
 export function Profile({ navigation }: Props) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
   const statColor = { text: t.text, accentDeep: t.accentDeep };
   const [finds, setFinds] = useState<Find[]>([]);
@@ -94,7 +96,7 @@ export function Profile({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={[styles.title, { color: t.text }]}>Profile</Text>
         <View style={styles.headerIcons}>
           <TouchableOpacity onPress={() => setHelpOpen(true)}>

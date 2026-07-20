@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
@@ -17,9 +18,10 @@ interface NavBarProps {
 
 export function NavBar({ title, left, leftIcon, onLeft, right, rightIcon, onRight, rightDisabled }: NavBarProps) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
   const rightColor = rightDisabled ? t.muted : t.body;
   return (
-    <View style={[styles.base, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
+    <View style={[styles.base, { backgroundColor: t.bg, borderBottomColor: t.border, paddingTop: insets.top + 12 }]}>
       <TouchableOpacity onPress={onLeft} disabled={!onLeft} style={styles.side}>
         {leftIcon ? (
           <Ionicons name={leftIcon} size={22} color={t.accent} />

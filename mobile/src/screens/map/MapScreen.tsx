@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, TextInput, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Rect, Circle, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
@@ -46,6 +47,7 @@ function isToday(iso: string): boolean {
 
 export function MapScreen({ navigation }: Props) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [finds, setFinds] = useState<NearbyFind[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +80,7 @@ export function MapScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={[styles.title, { color: t.text }]}>Map</Text>
       </View>
       <ScrollView>

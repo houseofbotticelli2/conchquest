@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
@@ -14,6 +15,7 @@ type Props = NativeStackScreenProps<OnboardingStackParamList, 'Beach'>;
 
 export function Beach({ navigation }: Props) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState('Sanibel Island');
 
   const startShelling = () => {
@@ -22,7 +24,7 @@ export function Beach({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}>
         <Text style={[styles.title, { color: t.text }]}>Your home beach</Text>
         <Text style={[styles.subtitle, { color: t.body }]}>Set a default location. Change it anytime.</Text>
 

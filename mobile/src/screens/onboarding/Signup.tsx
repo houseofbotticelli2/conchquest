@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Btn } from '../../components/Btn';
@@ -15,6 +16,7 @@ type Mode = 'signup' | 'login';
 
 export function Signup({ navigation, route }: Props) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
   const { signUp, signIn } = useAuth();
   const [mode, setMode] = useState<Mode>(route.params?.mode ?? 'signup');
   const [displayName, setDisplayName] = useState('');
@@ -58,7 +60,7 @@ export function Signup({ navigation, route }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <View style={styles.statusRow}>
+      <View style={[styles.statusRow, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={[styles.back, { color: t.accent }]}>← Back</Text>
         </TouchableOpacity>

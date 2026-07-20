@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Card } from '../../components/Card';
@@ -14,6 +15,7 @@ type Props = NativeStackScreenProps<LogStackParamList, 'LogConfirm'>;
 
 export function LogConfirm({ navigation }: Props) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const goToMain = (screen: 'ForecastTab' | 'MapTab') => {
     navigation.getParent()?.dispatch(
@@ -23,7 +25,7 @@ export function LogConfirm({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={[styles.headerTitle, { color: t.text }]}>Find logged</Text>
       </View>
       <ScrollView contentContainerStyle={styles.content}>

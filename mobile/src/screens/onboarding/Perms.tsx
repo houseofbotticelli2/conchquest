@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Card } from '../../components/Card';
@@ -29,10 +30,11 @@ const PERMS_CARDS = [
 
 export function Perms({ navigation }: Props) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}>
         <Text style={[styles.title, { color: t.text }]}>A couple of things</Text>
         <Text style={[styles.subtitle, { color: t.body }]}>Conchquest works best with your location.</Text>
 

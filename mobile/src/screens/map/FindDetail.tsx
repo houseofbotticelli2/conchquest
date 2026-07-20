@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Rect, Circle } from 'react-native-svg';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
@@ -23,6 +24,7 @@ function formatFindDate(iso: string): string {
 
 export function FindDetail({ navigation, route }: Props) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
   const findId = route.params?.findId;
   const [find, setFind] = useState<FindDetailData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,7 @@ export function FindDetail({ navigation, route }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => navigation.navigate('Map')}>
           <Text style={[styles.back, { color: t.accent }]}>← Map</Text>
         </TouchableOpacity>
