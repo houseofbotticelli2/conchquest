@@ -109,7 +109,13 @@ export function Saved({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <NavBar title="Saved beaches" left="← Back" onLeft={() => navigation.goBack()} right="+" onRight={() => setAdding((v) => !v)} />
+      <NavBar
+        title="Saved beaches"
+        left="← Back"
+        onLeft={() => navigation.goBack()}
+        rightIcon="add-circle-outline"
+        onRight={() => setAdding((v) => !v)}
+      />
       <ScrollView contentContainerStyle={styles.content}>
         {adding && (
           <View style={[styles.addBox, { backgroundColor: t.surface, borderColor: t.border }]}>

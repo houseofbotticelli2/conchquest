@@ -66,7 +66,9 @@ export function Signup({ navigation, route }: Props) {
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { color: t.text }]}>{isSignup ? 'Create your account' : 'Welcome back'}</Text>
+        <Text style={[styles.title, { color: t.text, marginBottom: isSignup ? 4 : 20 }]}>
+          {isSignup ? 'Create your account' : 'Welcome back'}
+        </Text>
         {isSignup && (
           <Text style={[styles.subtitle, { color: t.muted }]}>Free to start. No credit card needed.</Text>
         )}
