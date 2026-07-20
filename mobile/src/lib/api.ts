@@ -151,8 +151,11 @@ export function isPhotoContentType(value: string): value is PhotoContentType {
   return (ALLOWED_PHOTO_CONTENT_TYPES as readonly string[]).includes(value);
 }
 
-export function requestPhotoUploadUrl(contentType: PhotoContentType): Promise<{ uploadUrl: string; key: string }> {
-  return apiFetch('/api/uploads/presign', { method: 'POST', body: JSON.stringify({ contentType }) });
+export function requestPhotoUploadUrl(
+  contentType: PhotoContentType,
+  purpose: 'find' | 'avatar' = 'find'
+): Promise<{ uploadUrl: string; key: string }> {
+  return apiFetch('/api/uploads/presign', { method: 'POST', body: JSON.stringify({ contentType, purpose }) });
 }
 
 export async function uploadPhoto(uploadUrl: string, uri: string, contentType: PhotoContentType): Promise<void> {
@@ -276,4 +279,25 @@ export interface AppConfig {
 
 export function getAppConfig(): Promise<AppConfig> {
   return apiFetch<AppConfig>('/api/config');
+}
+
+export interface Profile {
+  email: string;
+  displayName: string | null;
+  shellingSinceYear: number;
+  avatarUrl: string | null;
+}
+
+export interface UpdateProfileInput {
+  displayName?: string;
+  shellingSinceYear?: number;
+  avatarKey?: string;
+}
+
+export function getProfile(): Promise<Profile> {
+  return apiFetch<Profile>('/api/profile');
+}
+
+export function updateProfile(input: UpdateProfileInput): Promise<Profile> {
+  return apiFetch<Profile>('/api/profile', { method: 'PATCH', body: JSON.stringify(input) });
 }

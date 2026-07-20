@@ -1,5 +1,6 @@
 import { TideConditions, TideEvent } from '../types';
 import { findNearestTideStation } from './noaaStations';
+import { logNoaaFailure } from './noaaFailureLog';
 
 interface RawPrediction {
   t: string; // "2024-01-15 06:12"
@@ -81,6 +82,7 @@ export async function getTideConditions(lat: number, lon: number, now: Date): Pr
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error(`NOAA tide predictions unavailable for station ${station.stationId}:`, err instanceof Error ? err.message : err);
+    await logNoaaFailure('tide', station.stationId, err);
     return null;
   }
   const events = predictions.map(toEvent).sort((a, b) => a.time.localeCompare(b.time));

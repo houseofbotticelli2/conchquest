@@ -27,9 +27,20 @@ export function isAllowedImageContentType(contentType: string): boolean {
   return contentType in ALLOWED_CONTENT_TYPES;
 }
 
-export async function createUploadUrl(userId: string, contentType: string): Promise<{ uploadUrl: string; key: string }> {
+export type UploadPurpose = 'find' | 'avatar';
+
+const FOLDER_BY_PURPOSE: Record<UploadPurpose, string> = {
+  find: 'finds',
+  avatar: 'avatars',
+};
+
+export async function createUploadUrl(
+  userId: string,
+  contentType: string,
+  purpose: UploadPurpose = 'find'
+): Promise<{ uploadUrl: string; key: string }> {
   const ext = ALLOWED_CONTENT_TYPES[contentType];
-  const key = `finds/${userId}/${randomUUID()}.${ext}`;
+  const key = `${FOLDER_BY_PURPOSE[purpose]}/${userId}/${randomUUID()}.${ext}`;
 
   const uploadUrl = await getSignedUrl(
     client,

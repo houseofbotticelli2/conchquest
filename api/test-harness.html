@@ -340,6 +340,25 @@
 
 <section>
   <div class="section-head">
+    <h2>NOAA Failures</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text" style="width:300px">Every time a NOAA tide or buoy fetch fails, the API records it (source, station, error, timestamp) instead of only logging to Railway's ephemeral console. Use this to look for day-of-week/hour-of-day patterns in the flakiness.</div>
+    </details>
+  </div>
+  <label>Source filter</label>
+  <select id="noaaFailureSource">
+    <option value="">All</option>
+    <option value="tide">tide</option>
+    <option value="buoy">buoy</option>
+  </select>
+  <button onclick="fetchNoaaFailures()">GET /api/noaa-failures</button>
+  <pre id="noaaFailuresResult" class="inline-result"></pre>
+  <div id="noaaFailuresSummary"></div>
+</section>
+
+<section>
+  <div class="section-head">
     <h2>Activity Log</h2>
     <div style="display:flex; gap:8px; align-items:center">
       <details class="help">
@@ -535,6 +554,43 @@ async function getFindById() {
   const id = document.getElementById('findId').value;
   const result = await callApi('GET', () => `/api/finds/${id}`);
   showInlineResult('findGetResult', result);
+}
+
+async function fetchNoaaFailures() {
+  const source = document.getElementById('noaaFailureSource').value;
+  const result = await callApi('GET', () => `/api/noaa-failures${source ? `?source=${source}` : ''}`);
+  showInlineResult('noaaFailuresResult', result);
+  renderNoaaFailuresSummary(result && result.status >= 200 && result.status < 300 ? result.data : []);
+}
+
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function renderNoaaFailuresSummary(rows) {
+  const el = document.getElementById('noaaFailuresSummary');
+  if (!Array.isArray(rows) || rows.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+
+  const byDay = new Array(7).fill(0);
+  const byHour = new Array(24).fill(0);
+  rows.forEach((row) => {
+    const d = new Date(row.occurredAt);
+    byDay[d.getDay()]++;
+    byHour[d.getHours()]++;
+  });
+
+  const dayRow = DAY_NAMES.map((name, i) => `<span class="session-row"><span>${name}</span><span>${byDay[i]}</span></span>`).join('');
+  const hourRow = byHour
+    .map((count, h) => `<span class="session-row"><span>${String(h).padStart(2, '0')}:00</span><span>${count}</span></span>`)
+    .filter((_, h) => byHour[h] > 0)
+    .join('');
+
+  el.innerHTML = `
+    <div class="note" style="margin-top:10px">${rows.length} failure(s) — by day of week and hour (local time, so patterns line up with when you'd actually notice them):</div>
+    <div class="session-box visible" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(70px,1fr))">${dayRow}</div>
+    <div class="session-box visible" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(70px,1fr)); margin-top:6px">${hourRow || '<span class="session-row"><span>(no hours with failures)</span></span>'}</div>
+  `;
 }
 
 async function fetchNearby() {

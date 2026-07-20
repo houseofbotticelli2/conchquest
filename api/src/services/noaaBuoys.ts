@@ -1,6 +1,7 @@
 import { WaveConditions } from '../types';
 import { findNearestBuoyStation } from './noaaStations';
 import { metersToFeet } from '../utils/units';
+import { logNoaaFailure } from './noaaFailureLog';
 
 // NDBC realtime2 fixed-column layout (most recent observation on the first
 // data row): YY MM DD hh mm WDIR WSPD GST WVHT DPD APD MWD PRES ATMP WTMP DEWP VIS PTDY TIDE
@@ -12,12 +13,16 @@ function parseValue(raw: string | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-async function fetchLatestObservation(stationId: string): Promise<Record<string, number | null> | null> {
+async function fetchLatestObservation(stationId: string): Promise<Record<string, number | null>> {
   const response = await fetch(`https://www.ndbc.noaa.gov/data/realtime2/${stationId}.txt`);
-  if (!response.ok) return null;
+  if (!response.ok) {
+    throw new Error(`NDBC realtime2 request failed: ${response.status}`);
+  }
   const text = await response.text();
   const dataLine = text.split('\n').find((line) => line.trim() && !line.startsWith('#'));
-  if (!dataLine) return null;
+  if (!dataLine) {
+    throw new Error('NDBC realtime2 response had no data line');
+  }
 
   const fields = dataLine.trim().split(/\s+/);
   const record: Record<string, number | null> = {};
@@ -47,8 +52,13 @@ export async function getWaveConditions(lat: number, lon: number): Promise<WaveC
     };
   }
 
-  const observation = await fetchLatestObservation(station.stationId);
-  if (!observation) {
+  let observation: Record<string, number | null>;
+  try {
+    observation = await fetchLatestObservation(station.stationId);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(`NDBC observation unavailable for station ${station.stationId}:`, err instanceof Error ? err.message : err);
+    await logNoaaFailure('buoy', station.stationId, err);
     return {
       heightFt: null,
       periodSec: null,
