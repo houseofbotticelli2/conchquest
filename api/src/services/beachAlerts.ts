@@ -33,6 +33,7 @@ async function fetchAlertCandidates(): Promise<AlertCandidateRow[]> {
 
 export async function checkBeachAlerts(): Promise<void> {
   const candidates = await fetchAlertCandidates();
+  let sent = 0;
 
   for (const beach of candidates) {
     try {
@@ -46,9 +47,12 @@ export async function checkBeachAlerts(): Promise<void> {
           `${beach.name} just hit a Shellcast score of ${score} -- time to go check it out.`
         );
         await pool.query(`UPDATE saved_locations SET last_alerted_at = now() WHERE id = $1`, [beach.id]);
+        sent += 1;
       }
     } catch (err) {
       console.error(`Failed to check alert for saved location ${beach.id}:`, err);
     }
   }
+
+  console.log(`Beach alert check: ${candidates.length} beach(es) eligible, ${sent} notification(s) sent.`);
 }
