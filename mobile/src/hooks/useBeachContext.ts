@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import * as Location from 'expo-location';
 import { listSavedLocations, SavedLocation } from '../lib/api';
-import { getCurrentLocation, DeviceLocation } from '../lib/location';
+import { getCurrentLocation, reverseGeocodeCity, DeviceLocation } from '../lib/location';
 
 // How close (in feet) you need to be to a saved beach for it to auto-select
 // instead of showing "No Beach" -- generous enough to absorb typical GPS
@@ -79,15 +78,9 @@ export function useBeachContext(defaultLocation: { lat: number; lon: number }): 
       return;
     }
     let cancelled = false;
-    Location.reverseGeocodeAsync({ latitude: deviceLocation.lat, longitude: deviceLocation.lon })
-      .then((results) => {
-        if (cancelled) return;
-        const first = results[0];
-        setGeocodedCity(first ? (first.city ?? first.subregion ?? first.region ?? null) : null);
-      })
-      .catch(() => {
-        if (!cancelled) setGeocodedCity(null);
-      });
+    reverseGeocodeCity(deviceLocation).then((city) => {
+      if (!cancelled) setGeocodedCity(city);
+    });
     return () => {
       cancelled = true;
     };

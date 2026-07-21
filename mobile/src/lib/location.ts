@@ -28,3 +28,16 @@ export async function getCurrentLocation(): Promise<DeviceLocation | null> {
     return null;
   }
 }
+
+// Best-effort city name for a coordinate, via on-device reverse geocoding
+// (no backend call). Returns null if it fails or nothing usable comes back --
+// callers should treat that as "leave it blank", not an error.
+export async function reverseGeocodeCity(location: DeviceLocation): Promise<string | null> {
+  try {
+    const results = await Location.reverseGeocodeAsync({ latitude: location.lat, longitude: location.lon });
+    const first = results[0];
+    return first ? (first.city ?? first.subregion ?? first.region ?? null) : null;
+  } catch {
+    return null;
+  }
+}

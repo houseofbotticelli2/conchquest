@@ -9,11 +9,12 @@ import { Btn } from '../../components/Btn';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { BeachesStackParamList } from '../../navigation/types';
 import { listSavedLocations, createSavedLocation, updateSavedLocation, deleteSavedLocation, SavedLocation } from '../../lib/api';
+import { getCurrentLocation, reverseGeocodeCity, DeviceLocation } from '../../lib/location';
 
 type Props = NativeStackScreenProps<BeachesStackParamList, 'Beaches'>;
 
-// No location picker/GPS yet — same fixed Sanibel Island location used
-// elsewhere in the app (Score, Log) is used as the "current" spot to save.
+// Falls back to Sanibel Island if location permission is denied or a fix
+// can't be gotten.
 const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867, label: 'Sanibel Island' };
 const ALERT_STEP = 1;
 const DEFAULT_NEW_ALERT = 50;
@@ -37,6 +38,7 @@ export function Beaches(_props: Props) {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
   const [newCity, setNewCity] = useState('');
+  const [newLocation, setNewLocation] = useState<DeviceLocation | null>(null);
   const [newAlertEnabled, setNewAlertEnabled] = useState(false);
   const [newAlert, setNewAlert] = useState(DEFAULT_NEW_ALERT);
   const [newIsHome, setNewIsHome] = useState(false);
@@ -86,21 +88,31 @@ export function Beaches(_props: Props) {
   function openAdd() {
     setNewName('');
     setNewCity('');
+    setNewLocation(null);
     setNewAlertEnabled(false);
     setNewAlert(DEFAULT_NEW_ALERT);
     setNewIsHome(false);
     setAdding((v) => !v);
+
+    getCurrentLocation().then((loc) => {
+      if (!loc) return;
+      setNewLocation(loc);
+      reverseGeocodeCity(loc).then((city) => {
+        if (city) setNewCity(city);
+      });
+    });
   }
 
   async function handleAdd() {
-    if (!newName.trim()) return;
+    if (!newName.trim() || !newCity.trim()) return;
     setSaving(true);
     try {
+      const location = newLocation ?? DEFAULT_LOCATION;
       const created = await createSavedLocation({
         name: newName.trim(),
-        lat: DEFAULT_LOCATION.lat,
-        lon: DEFAULT_LOCATION.lon,
-        city: newCity.trim() || undefined,
+        lat: location.lat,
+        lon: location.lon,
+        city: newCity.trim(),
         alertThresholdScore: newAlertEnabled ? newAlert : undefined,
       });
       if (newIsHome && !created.isHome) {
@@ -175,7 +187,7 @@ export function Beaches(_props: Props) {
             <TextInput
               value={newName}
               onChangeText={setNewName}
-              placeholder={`Beach name (near ${DEFAULT_LOCATION.label})`}
+              placeholder={`Beach name (near ${newCity.trim() || DEFAULT_LOCATION.label})`}
               placeholderTextColor={t.muted}
               style={[styles.addInput, { borderColor: t.border, color: t.text }]}
             />
