@@ -26,7 +26,10 @@ export type LibraryStackParamList = {
 
 export type ProfileStackParamList = {
   Profile: undefined;
-  Saved: undefined;
+};
+
+export type BeachesStackParamList = {
+  Beaches: undefined;
 };
 
 export type LogStackParamList = {
@@ -42,6 +45,7 @@ export type MainTabParamList = {
   ForecastTab: undefined;
   MapTab: undefined;
   CollectionTab: undefined;
+  BeachesTab: undefined;
   LibraryTab: undefined;
   ProfileTab: undefined;
 };

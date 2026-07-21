@@ -17,7 +17,7 @@ export function LogConfirm({ navigation }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const goToMain = (screen: 'ForecastTab' | 'MapTab') => {
+  const goToMain = (screen: 'CollectionTab' | 'MapTab') => {
     navigation.getParent()?.dispatch(
       CommonActions.navigate({ name: 'Main', params: { screen } })
     );
@@ -50,7 +50,7 @@ export function LogConfirm({ navigation }: Props) {
         </Card>
 
         <View style={styles.actions}>
-          <Btn label="Back to score" onPress={() => goToMain('ForecastTab')} />
+          <Btn label="Back to My Shells" onPress={() => goToMain('CollectionTab')} />
           <Btn label="View on map" variant="ghost" onPress={() => goToMain('MapTab')} />
         </View>
       </ScrollView>

@@ -55,7 +55,7 @@ function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
 }
 
 const HELP_ITEMS = [
-  { icon: '🌊', title: 'Forecast', body: 'Get a Shelling Score for a beach based on tide, wind, waves, and moon phase.' },
+  { icon: '🌊', title: 'Shellcast', body: 'Get a Shelling Score for a beach based on tide, wind, waves, and moon phase.' },
   { icon: '🧭', title: 'Map', body: 'Browse shells the community has logged nearby.' },
   { icon: '➕', title: 'Log', body: 'Log a find with its species, condition, and whether the location is shown publicly.' },
   { icon: '📖', title: 'Shells', body: 'Browse the shell species library.' },
@@ -218,15 +218,6 @@ export function Profile({ navigation }: Props) {
           style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
           onPress={() => {
             setSettingsOpen(false);
-            navigation.navigate('Saved');
-          }}
-        >
-          <Text style={[styles.sheetRowText, { color: t.text }]}>Manage saved beaches</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
-          onPress={() => {
-            setSettingsOpen(false);
             confirmSignOut();
           }}
         >
@@ -312,8 +303,14 @@ export function Profile({ navigation }: Props) {
                       </Text>
                     )}
                   </View>
+                  <Text style={[styles.beachRowAlert, { color: t.muted }]}>
+                    {b.alertThresholdScore != null ? `Alert at ${b.alertThresholdScore}+` : 'No alert set'}
+                  </Text>
                 </View>
-                <Text style={[styles.beachRowScore, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
+                <View style={styles.beachRowScoreWrap}>
+                  <Text style={[styles.beachRowScore, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
+                  <Text style={[styles.beachRowScoreLabel, { color: t.muted }]}>SHELLCAST SCORE</Text>
+                </View>
               </View>
             ))}
         </View>
@@ -410,7 +407,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   beachRowBody: { flex: 1 },
-  beachRowNameLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  beachRowNameLine: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 },
+  beachRowAlert: { fontFamily: fonts.data, fontSize: 10, letterSpacing: 0.3 },
+  beachRowScoreWrap: { alignItems: 'flex-end' },
+  beachRowScoreLabel: { fontFamily: fonts.data, fontSize: 8, letterSpacing: 0.3 },
   beachRowName: { fontFamily: fonts.bodySemiBold, fontSize: 13 },
   beachRowScore: { fontFamily: fonts.displayBold, fontSize: 18 },
   homeBadge: {

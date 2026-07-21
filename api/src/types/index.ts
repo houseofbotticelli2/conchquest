@@ -80,7 +80,6 @@ export interface ShellingScoreResult {
   bestWindow: {
     start: string;
     end: string;
-    lowTideTime: string;
     reason: string;
   } | null;
   explanation: string;

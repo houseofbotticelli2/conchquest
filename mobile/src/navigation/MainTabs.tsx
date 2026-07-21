@@ -9,15 +9,17 @@ import { MainTabParamList } from './types';
 import { ForecastStack } from './ForecastStack';
 import { MapStack } from './MapStack';
 import { CollectionStack } from './CollectionStack';
+import { BeachesStack } from './BeachesStack';
 import { LibraryStack } from './LibraryStack';
 import { ProfileStack } from './ProfileStack';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const TAB_LABELS: Record<keyof MainTabParamList, string> = {
-  ForecastTab: 'Forecast',
+  ForecastTab: 'Shellcast',
   MapTab: 'Map',
   CollectionTab: 'My Shells',
+  BeachesTab: 'Beaches',
   LibraryTab: 'Library',
   ProfileTab: 'Profile',
 };
@@ -26,6 +28,7 @@ const TAB_ICONS: Record<keyof MainTabParamList, { active: keyof typeof Ionicons.
   ForecastTab: { active: 'sunny', inactive: 'sunny-outline' },
   MapTab: { active: 'compass', inactive: 'compass-outline' },
   CollectionTab: { active: 'albums', inactive: 'albums-outline' },
+  BeachesTab: { active: 'umbrella', inactive: 'umbrella-outline' },
   LibraryTab: { active: 'book', inactive: 'book-outline' },
   ProfileTab: { active: 'person', inactive: 'person-outline' },
 };
@@ -72,6 +75,7 @@ export function MainTabs() {
       <Tab.Screen name="ForecastTab" component={ForecastStack} />
       <Tab.Screen name="MapTab" component={MapStack} />
       <Tab.Screen name="CollectionTab" component={CollectionStack} />
+      <Tab.Screen name="BeachesTab" component={BeachesStack} />
       <Tab.Screen name="LibraryTab" component={LibraryStack} />
       <Tab.Screen name="ProfileTab" component={ProfileStack} />
     </Tab.Navigator>

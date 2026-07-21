@@ -22,6 +22,10 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
+function isTomorrow(iso: string): boolean {
+  return new Date(iso).toDateString() !== new Date().toDateString();
+}
+
 export function Score({ navigation }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
@@ -80,6 +84,8 @@ export function Score({ navigation }: Props) {
         },
       ]
     : [];
+
+  const nextLowTide = result?.conditions.tide?.nextEvents.find((e) => e.type === 'low') ?? null;
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
@@ -146,12 +152,16 @@ export function Score({ navigation }: Props) {
                   <Text style={[styles.windowTime, { color: t.text }]}>
                     {formatTime(result.bestWindow.start)} – {formatTime(result.bestWindow.end)}
                   </Text>
-                  <Text style={[styles.windowNote, { color: t.sea }]}>
-                    Next low tide: {formatTime(result.bestWindow.lowTideTime)} · {result.bestWindow.reason}
-                  </Text>
+                  <Text style={[styles.windowNote, { color: t.sea }]}>{result.bestWindow.reason}</Text>
                 </>
               ) : (
                 <Text style={[styles.windowNote, { color: t.muted }]}>No daylight low tide in today's forecast window.</Text>
+              )}
+              {nextLowTide && (
+                <Text style={[styles.windowNote, { color: t.muted, marginTop: 6 }]}>
+                  Next low tide: {formatTime(nextLowTide.time)}
+                  {isTomorrow(nextLowTide.time) ? ' (tomorrow)' : ''}
+                </Text>
               )}
             </Card>
 

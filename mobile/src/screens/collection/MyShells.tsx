@@ -14,7 +14,7 @@ import { listMyFinds, Find, FindCondition } from '../../lib/api';
 type Props = NativeStackScreenProps<CollectionStackParamList, 'MyShells'>;
 
 function formatFindDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
@@ -130,8 +130,12 @@ export function MyShells({ navigation }: Props) {
               icon="🐚"
               bg={t.surfaceAlt}
               name={f.speciesName ?? 'Unidentified shell'}
-              sub={`${formatFindDate(f.foundAt)}${f.condition ? ` · ${f.condition}` : ''}`}
+              sub=""
+              dateSuffix={formatFindDate(f.foundAt)}
               badge={toBadgeType(f.speciesRarity)}
+              condition={f.condition}
+              notes={f.notes}
+              isPrivate={f.isPrivate}
               photoUrl={f.photoUrl}
               onPress={() => handleEdit(f)}
             />

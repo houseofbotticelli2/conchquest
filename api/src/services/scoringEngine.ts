@@ -206,7 +206,6 @@ function findBestWindow(conditions: NormalizedConditions): ShellingScoreResult['
   return {
     start: start.toISOString(),
     end: end.toISOString(),
-    lowTideTime: daylightLow.time,
     reason: 'The 90 minutes on either side of low tide typically expose the most productive ground.',
   };
 }

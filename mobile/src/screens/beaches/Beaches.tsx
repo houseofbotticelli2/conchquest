@@ -1,30 +1,45 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
-import { NavBar } from '../../components/NavBar';
 import { Btn } from '../../components/Btn';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { ProfileStackParamList } from '../../navigation/types';
+import { BeachesStackParamList } from '../../navigation/types';
 import { listSavedLocations, createSavedLocation, updateSavedLocation, deleteSavedLocation, SavedLocation } from '../../lib/api';
 
-type Props = NativeStackScreenProps<ProfileStackParamList, 'Saved'>;
+type Props = NativeStackScreenProps<BeachesStackParamList, 'Beaches'>;
 
 // No location picker/GPS yet — same fixed Sanibel Island location used
 // elsewhere in the app (Score, Log) is used as the "current" spot to save.
 const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867, label: 'Sanibel Island' };
 const ALERT_STEP = 1;
+const DEFAULT_NEW_ALERT = 50;
 
-export function Saved({ navigation }: Props) {
+const FILTERS: { label: string; home?: boolean; hasAlert?: boolean }[] = [
+  { label: 'All' },
+  { label: 'Home', home: true },
+  { label: 'Has alert', hasAlert: true },
+  { label: 'No alert', hasAlert: false },
+];
+
+export function Beaches(_props: Props) {
   const { theme: t } = useTheme();
+  const insets = useSafeAreaInsets();
   const [beaches, setBeaches] = useState<SavedLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [activeFilter, setActiveFilter] = useState(0);
+
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
+  const [newAlert, setNewAlert] = useState(DEFAULT_NEW_ALERT);
+  const [newIsHome, setNewIsHome] = useState(false);
   const [saving, setSaving] = useState(false);
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editAlert, setEditAlert] = useState(0);
@@ -49,11 +64,42 @@ export function Saved({ navigation }: Props) {
     fetchBeaches();
   }, [fetchBeaches]);
 
+  const visibleBeaches = useMemo(() => {
+    const filter = FILTERS[activeFilter];
+    const query = search.trim().toLowerCase();
+    return beaches.filter((b) => {
+      if (query && !b.name.toLowerCase().includes(query)) return false;
+      if (filter.home && !b.isHome) return false;
+      if (filter.hasAlert === true && b.alertThresholdScore == null) return false;
+      if (filter.hasAlert === false && b.alertThresholdScore != null) return false;
+      return true;
+    });
+  }, [beaches, search, activeFilter]);
+
+  function adjustNewAlert(delta: number) {
+    setNewAlert((prev) => Math.max(0, Math.min(100, prev + delta)));
+  }
+
+  function openAdd() {
+    setNewName('');
+    setNewAlert(DEFAULT_NEW_ALERT);
+    setNewIsHome(false);
+    setAdding((v) => !v);
+  }
+
   async function handleAdd() {
     if (!newName.trim()) return;
     setSaving(true);
     try {
-      await createSavedLocation({ name: newName.trim(), lat: DEFAULT_LOCATION.lat, lon: DEFAULT_LOCATION.lon });
+      const created = await createSavedLocation({
+        name: newName.trim(),
+        lat: DEFAULT_LOCATION.lat,
+        lon: DEFAULT_LOCATION.lon,
+        alertThresholdScore: newAlert,
+      });
+      if (newIsHome && !created.isHome) {
+        await updateSavedLocation(created.id, { isHome: true });
+      }
       setNewName('');
       setAdding(false);
       await fetchBeaches();
@@ -109,13 +155,12 @@ export function Saved({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <NavBar
-        title="Saved beaches"
-        left="← Back"
-        onLeft={() => navigation.goBack()}
-        rightIcon="add-circle-outline"
-        onRight={() => setAdding((v) => !v)}
-      />
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <Text style={[styles.title, { color: t.text }]}>Beaches</Text>
+        <TouchableOpacity onPress={openAdd}>
+          <Ionicons name="add-circle-outline" size={26} color={t.text} />
+        </TouchableOpacity>
+      </View>
       <ScrollView contentContainerStyle={styles.content}>
         {adding && (
           <View style={[styles.addBox, { backgroundColor: t.surface, borderColor: t.border }]}>
@@ -126,6 +171,25 @@ export function Saved({ navigation }: Props) {
               placeholderTextColor={t.muted}
               style={[styles.addInput, { borderColor: t.border, color: t.text }]}
             />
+
+            <View style={styles.addSection}>
+              <Text style={[styles.editLabel, { color: t.muted }]}>ALERT THRESHOLD</Text>
+              <View style={styles.alertStepperRow}>
+                <TouchableOpacity onPress={() => adjustNewAlert(-ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
+                  <Ionicons name="remove-circle-outline" size={26} color={t.text} />
+                </TouchableOpacity>
+                <Text style={[styles.alertText, { color: t.sea }]}>🔔 Alert at score {newAlert}+</Text>
+                <TouchableOpacity onPress={() => adjustNewAlert(ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
+                  <Ionicons name="add-circle-outline" size={26} color={t.text} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity style={styles.homeToggleRow} onPress={() => setNewIsHome((v) => !v)} hitSlop={8}>
+              <Ionicons name={newIsHome ? 'checkbox' : 'square-outline'} size={20} color={t.text} />
+              <Text style={[styles.homeToggleText, { color: t.text }]}>Set as home beach</Text>
+            </TouchableOpacity>
+
             {saving ? (
               <ActivityIndicator color={t.accent} />
             ) : (
@@ -134,15 +198,44 @@ export function Saved({ navigation }: Props) {
           </View>
         )}
 
+        <View style={[styles.searchBox, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+          <Text style={{ color: t.muted }}>🔍</Text>
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search your beaches..."
+            placeholderTextColor={t.muted}
+            style={[styles.searchText, { color: t.text }]}
+          />
+        </View>
+
+        <View style={styles.filtersRow}>
+          {FILTERS.map((f, i) => (
+            <Text
+              key={f.label}
+              onPress={() => setActiveFilter(i)}
+              style={[
+                styles.filterChip,
+                { borderColor: t.border, backgroundColor: i === activeFilter ? t.navBg : t.surface, color: i === activeFilter ? t.navText : t.muted },
+              ]}
+            >
+              {f.label}
+            </Text>
+          ))}
+        </View>
+
         {loading && <ActivityIndicator color={t.accent} style={{ marginVertical: 20 }} />}
         {!loading && error && <Text style={[styles.emptyText, { color: t.accentDeep }]}>{error}</Text>}
         {!loading && !error && beaches.length === 0 && (
           <Text style={[styles.emptyText, { color: t.muted }]}>No saved beaches yet — tap + to add one.</Text>
         )}
+        {!loading && !error && beaches.length > 0 && visibleBeaches.length === 0 && (
+          <Text style={[styles.emptyText, { color: t.muted }]}>No beaches match this search.</Text>
+        )}
 
         {!loading &&
           !error &&
-          beaches.map((b) => (
+          visibleBeaches.map((b) => (
             <View
               key={b.id}
               style={[
@@ -164,7 +257,7 @@ export function Saved({ navigation }: Props) {
                   </View>
                   <View style={styles.scoreWrap}>
                     <Text style={[styles.scoreVal, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
-                    <Text style={[styles.scoreLabel, { color: t.muted }]}>SCORE NOW</Text>
+                    <Text style={[styles.scoreLabel, { color: t.muted }]}>SHELLCAST SCORE</Text>
                   </View>
                 </View>
               </View>
@@ -259,9 +352,18 @@ export function Saved({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
   content: { padding: 14 },
   addBox: { borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 14 },
   addInput: { fontFamily: fonts.body, fontSize: 13, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12 },
+  addSection: { gap: 6, marginTop: 12 },
+  homeToggleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
+  homeToggleText: { fontFamily: fonts.body, fontSize: 13 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12, marginBottom: 10 },
+  searchText: { flex: 1, fontFamily: fonts.body, fontSize: 13 },
+  filtersRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
+  filterChip: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4, borderWidth: 1, borderRadius: 20, paddingVertical: 4, paddingHorizontal: 10, overflow: 'hidden' },
   emptyText: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 20, textAlign: 'center' },
   beachCard: { borderRadius: 14, overflow: 'hidden', marginBottom: 12 },
   beachTop: { padding: 14 },
