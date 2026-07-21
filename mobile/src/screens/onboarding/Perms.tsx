@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,30 +7,28 @@ import { fonts } from '../../theme/tokens';
 import { Card } from '../../components/Card';
 import { Btn } from '../../components/Btn';
 import { Dots } from '../../components/Dots';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { OnboardingStackParamList } from '../../navigation/types';
+import { enableBeachAlerts } from '../../lib/notifications';
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, 'Perms'>;
-
-const PERMS_CARDS = [
-  {
-    icon: '📍',
-    title: 'Location',
-    desc: 'Used to fetch tide and weather for your beach. Never stored without permission.',
-    btnLabel: 'Allow location',
-    variant: 'dark' as const,
-  },
-  {
-    icon: '🔔',
-    title: 'Notifications',
-    desc: 'Get alerted when saved beaches hit a high score. Optional.',
-    btnLabel: 'Maybe later',
-    variant: 'ghost' as const,
-  },
-];
 
 export function Perms({ navigation }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
+  const [notifStatus, setNotifStatus] = useState<'idle' | 'enabled'>('idle');
+  const [notifErrorMsg, setNotifErrorMsg] = useState<string | null>(null);
+
+  async function handleEnableNotifications() {
+    const result = await enableBeachAlerts();
+    if (result === 'enabled') {
+      setNotifStatus('enabled');
+    } else if (result === 'denied') {
+      setNotifErrorMsg('Notifications permission was denied. You can turn this on later from Profile settings.');
+    } else {
+      setNotifErrorMsg('Push notifications aren\'t supported on this device/simulator.');
+    }
+  }
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
@@ -38,24 +36,52 @@ export function Perms({ navigation }: Props) {
         <Text style={[styles.title, { color: t.text }]}>A couple of things</Text>
         <Text style={[styles.subtitle, { color: t.body }]}>Conchquest works best with your location.</Text>
 
-        {PERMS_CARDS.map((p) => (
-          <Card key={p.title} style={styles.card}>
-            <View style={styles.cardRow}>
-              <View style={[styles.iconBox, { backgroundColor: t.surfaceAlt, borderColor: t.border }]}>
-                <Text style={styles.iconText}>{p.icon}</Text>
-              </View>
-              <View style={styles.cardTextWrap}>
-                <Text style={[styles.cardTitle, { color: t.text }]}>{p.title}</Text>
-                <Text style={[styles.cardDesc, { color: t.body }]}>{p.desc}</Text>
-              </View>
+        <Card style={styles.card}>
+          <View style={styles.cardRow}>
+            <View style={[styles.iconBox, { backgroundColor: t.surfaceAlt, borderColor: t.border }]}>
+              <Text style={styles.iconText}>📍</Text>
             </View>
-            <Btn label={p.btnLabel} variant={p.variant} />
-          </Card>
-        ))}
+            <View style={styles.cardTextWrap}>
+              <Text style={[styles.cardTitle, { color: t.text }]}>Location</Text>
+              <Text style={[styles.cardDesc, { color: t.body }]}>
+                Used to fetch tide and weather for your beach. Never stored without permission.
+              </Text>
+            </View>
+          </View>
+          <Btn label="Allow location" variant="dark" />
+        </Card>
+
+        <Card style={styles.card}>
+          <View style={styles.cardRow}>
+            <View style={[styles.iconBox, { backgroundColor: t.surfaceAlt, borderColor: t.border }]}>
+              <Text style={styles.iconText}>🔔</Text>
+            </View>
+            <View style={styles.cardTextWrap}>
+              <Text style={[styles.cardTitle, { color: t.text }]}>Notifications</Text>
+              <Text style={[styles.cardDesc, { color: t.body }]}>
+                Get alerted when saved beaches hit a high score. Optional.
+              </Text>
+            </View>
+          </View>
+          <Btn
+            label={notifStatus === 'enabled' ? 'Notifications enabled' : 'Enable notifications'}
+            variant="ghost"
+            disabled={notifStatus === 'enabled'}
+            onPress={handleEnableNotifications}
+          />
+        </Card>
 
         <Btn label="Continue" onPress={() => navigation.navigate('Beach')} />
       </ScrollView>
       <Dots step={2} />
+
+      <ConfirmDialog
+        visible={!!notifErrorMsg}
+        title="Couldn't enable notifications"
+        message={notifErrorMsg ?? undefined}
+        buttons={[{ text: 'OK' }]}
+        onClose={() => setNotifErrorMsg(null)}
+      />
     </View>
   );
 }

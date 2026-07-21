@@ -50,7 +50,7 @@ const SELECT_COLUMNS = `
 savedLocationsRouter.get('/', async (req, res, next) => {
   try {
     const result = await pool.query<SavedLocationRow>(
-      `SELECT ${SELECT_COLUMNS} FROM saved_locations WHERE user_id = $1 ORDER BY is_home DESC, created_at ASC`,
+      `SELECT ${SELECT_COLUMNS} FROM saved_locations WHERE user_id = $1 ORDER BY is_home DESC, created_at DESC`,
       [req.user!.id]
     );
 

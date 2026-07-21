@@ -9,6 +9,7 @@ import { findsRouter } from './routes/finds';
 import { healthRouter } from './routes/health';
 import { noaaFailuresRouter } from './routes/noaaFailures';
 import { profileRouter } from './routes/profile';
+import { pushTokenRouter } from './routes/pushToken';
 import { savedLocationsRouter } from './routes/savedLocations';
 import { scoreRouter } from './routes/score';
 import { speciesRouter } from './routes/species';
@@ -31,6 +32,7 @@ app.use('/api/saved-locations', requireAuth, savedLocationsRouter);
 app.use('/api/uploads', requireAuth, uploadsRouter);
 app.use('/api/noaa-failures', requireAuth, noaaFailuresRouter);
 app.use('/api/profile', requireAuth, profileRouter);
+app.use('/api/push-token', requireAuth, pushTokenRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

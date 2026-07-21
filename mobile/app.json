@@ -35,7 +35,8 @@
         {
           "photosPermission": "Conchquest uses your photos to attach a picture to a shell find."
         }
-      ]
+      ],
+      "expo-notifications"
     ],
     "extra": {
       "eas": {

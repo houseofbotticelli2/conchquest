@@ -4,7 +4,9 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
+import { enableBeachAlerts, disableBeachAlerts } from '../../lib/notifications';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
@@ -74,6 +76,30 @@ export function Profile({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notifErrorMsg, setNotifErrorMsg] = useState<string | null>(null);
+
+  async function openSettings() {
+    const { status } = await Notifications.getPermissionsAsync();
+    setNotificationsEnabled(status === 'granted');
+    setSettingsOpen(true);
+  }
+
+  async function handleToggleNotifications() {
+    if (notificationsEnabled) {
+      await disableBeachAlerts();
+      setNotificationsEnabled(false);
+      return;
+    }
+    const result = await enableBeachAlerts();
+    if (result === 'enabled') {
+      setNotificationsEnabled(true);
+    } else if (result === 'denied') {
+      setNotifErrorMsg('Notifications permission was denied. Enable it for Conchquest in your device Settings app.');
+    } else {
+      setNotifErrorMsg("Push notifications aren't supported on this device/simulator.");
+    }
+  }
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -198,7 +224,7 @@ export function Profile({ navigation }: Props) {
           <TouchableOpacity onPress={() => setHelpOpen(true)}>
             <Ionicons name="help-circle-outline" size={26} color={t.text} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setSettingsOpen(true)}>
+          <TouchableOpacity onPress={openSettings}>
             <Ionicons name="settings-outline" size={22} color={t.text} />
           </TouchableOpacity>
         </View>
@@ -215,6 +241,13 @@ export function Profile({ navigation }: Props) {
           <Text style={[styles.sheetRowText, { color: t.text }]}>Edit profile</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.sheetRow, styles.sheetRowBetween, { borderTopColor: t.borderSoft }]}
+          onPress={handleToggleNotifications}
+        >
+          <Text style={[styles.sheetRowText, { color: t.text }]}>Beach alert notifications</Text>
+          <Ionicons name={notificationsEnabled ? 'checkbox' : 'square-outline'} size={20} color={t.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
           onPress={() => {
             setSettingsOpen(false);
@@ -224,6 +257,14 @@ export function Profile({ navigation }: Props) {
           <Text style={[styles.sheetRowText, { color: t.accentDeep }]}>Log out</Text>
         </TouchableOpacity>
       </SlideUpSheet>
+
+      <ConfirmDialog
+        visible={!!notifErrorMsg}
+        title="Couldn't enable notifications"
+        message={notifErrorMsg ?? undefined}
+        buttons={[{ text: 'OK' }]}
+        onClose={() => setNotifErrorMsg(null)}
+      />
 
       <SlideUpSheet visible={helpOpen} onClose={() => setHelpOpen(false)} title="How Conchquest works">
         {HELP_ITEMS.map((item) => (
@@ -378,6 +419,7 @@ const styles = StyleSheet.create({
   headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
   sheetRow: { paddingVertical: 14 },
+  sheetRowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sheetRowText: { fontFamily: fonts.bodySemiBold, fontSize: 15 },
   helpRow: { flexDirection: 'row', gap: 12, paddingVertical: 10, alignItems: 'flex-start' },
   helpTitle: { fontFamily: fonts.bodySemiBold, fontSize: 14, marginBottom: 2 },

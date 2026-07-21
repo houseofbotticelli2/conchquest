@@ -301,3 +301,11 @@ export function getProfile(): Promise<Profile> {
 export function updateProfile(input: UpdateProfileInput): Promise<Profile> {
   return apiFetch<Profile>('/api/profile', { method: 'PATCH', body: JSON.stringify(input) });
 }
+
+export async function registerPushToken(token: string): Promise<void> {
+  await apiFetch<void>('/api/push-token', { method: 'PUT', body: JSON.stringify({ token }) });
+}
+
+export async function unregisterPushToken(): Promise<void> {
+  await apiFetch<void>('/api/push-token', { method: 'DELETE' });
+}
