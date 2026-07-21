@@ -14,12 +14,14 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Rect, Circle } from 'react-native-svg';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
 import { Btn } from '../../components/Btn';
 import { NavBar } from '../../components/NavBar';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { ShellingMap } from '../../components/ShellingMap';
 import { LogStackParamList } from '../../navigation/types';
 import {
   createFind,
@@ -237,6 +239,25 @@ export function Log({ navigation, route }: Props) {
           </TouchableOpacity>
         )}
 
+        {isEditMode && (
+          <View style={[styles.mapBox, { borderColor: t.border }]}>
+            <ShellingMap
+              latitude={editingFind!.location.lat}
+              longitude={editingFind!.location.lon}
+              latitudeDelta={0.01}
+              longitudeDelta={0.01}
+              fallback={
+                <Svg viewBox="0 0 290 88" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+                  <Rect width={290} height={88} fill="#B8C8D0" opacity={0.7} />
+                  <Rect x={20} y={10} width={250} height={63} rx={6} fill="#C8D8C0" opacity={0.5} />
+                  <Circle cx={145} cy={43} r={11} fill={t.accentDeep} opacity={0.9} />
+                  <Circle cx={145} cy={43} r={20} fill={t.accentDeep} opacity={0.15} />
+                </Svg>
+              }
+            />
+          </View>
+        )}
+
         <View style={styles.content}>
           {error && (
             <Text style={[styles.errorText, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceAlt }]}>
@@ -387,6 +408,7 @@ const styles = StyleSheet.create({
   photoText: { fontFamily: fonts.body, fontSize: 12 },
   photoPreview: { width: '100%', height: '100%' },
   photoRemove: { position: 'absolute', top: 10, right: 10 },
+  mapBox: { marginHorizontal: 14, marginVertical: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, height: 270 },
   content: { padding: 16, gap: 14 },
   errorText: { fontFamily: fonts.body, fontSize: 12, padding: 10, borderRadius: 6, borderWidth: 1 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 6, paddingVertical: 11, paddingHorizontal: 12 },
