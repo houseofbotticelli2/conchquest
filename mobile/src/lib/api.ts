@@ -232,6 +232,7 @@ export interface SavedLocation {
   id: string;
   name: string;
   location: { lat: number; lon: number };
+  city: string | null;
   notes: string | null;
   alertThresholdScore: number | null;
   isHome: boolean;
@@ -245,12 +246,14 @@ export interface CreateSavedLocationInput {
   name: string;
   lat: number;
   lon: number;
+  city?: string;
   notes?: string;
   alertThresholdScore?: number;
 }
 
 export interface UpdateSavedLocationInput {
   name?: string;
+  city?: string;
   notes?: string;
   alertThresholdScore?: number;
   isHome?: boolean;

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
@@ -11,11 +10,13 @@ import { Btn } from '../../components/Btn';
 import { ScoreRing } from '../../components/ScoreRing';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { ForecastStackParamList } from '../../navigation/types';
-import { getScore, listSavedLocations, ShellingScoreResult, SavedLocation } from '../../lib/api';
+import { getScore, ShellingScoreResult } from '../../lib/api';
+import { useBeachContext } from '../../hooks/useBeachContext';
 
 type Props = NativeStackScreenProps<ForecastStackParamList, 'Score'>;
 
-// No GPS wired up yet — fixed to Sanibel Island until a beach is picked.
+// Falls back to Sanibel Island if location permission is denied and no
+// beach is nearby/selected.
 const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867 };
 
 function formatTime(iso: string): string {
@@ -33,19 +34,8 @@ export function Score({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [beaches, setBeaches] = useState<SavedLocation[]>([]);
-  const [selectedBeach, setSelectedBeach] = useState<SavedLocation | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      listSavedLocations()
-        .then(setBeaches)
-        .catch(() => setBeaches([]));
-    }, [])
-  );
-
-  const location = selectedBeach ? selectedBeach.location : DEFAULT_LOCATION;
+  const { beaches, selectedBeach, location, titleLabel, subLabel, pickerOpen, setPickerOpen, selectBeach } =
+    useBeachContext(DEFAULT_LOCATION);
 
   const fetchScore = useCallback(async () => {
     setLoading(true);
@@ -63,11 +53,6 @@ export function Score({ navigation }: Props) {
   useEffect(() => {
     fetchScore();
   }, [fetchScore]);
-
-  function selectBeach(beach: SavedLocation) {
-    setSelectedBeach(beach);
-    setPickerOpen(false);
-  }
 
   const chips = result
     ? [
@@ -92,10 +77,8 @@ export function Score({ navigation }: Props) {
       <ScrollView>
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <View>
-            <Text style={[styles.place, { color: t.text }]}>{selectedBeach ? selectedBeach.name : 'Sanibel Island'}</Text>
-            {(selectedBeach ? selectedBeach.isHome : true) && (
-              <Text style={[styles.placeSub, { color: t.muted }]}>{selectedBeach ? 'Home beach' : 'Fort Myers, FL'}</Text>
-            )}
+            <Text style={[styles.place, { color: t.text }]}>{titleLabel}</Text>
+            {subLabel && <Text style={[styles.placeSub, { color: t.muted }]}>{subLabel}</Text>}
           </View>
           <TouchableOpacity onPress={() => setPickerOpen(true)}>
             <Text style={{ fontSize: 20 }}>📍</Text>
@@ -103,6 +86,9 @@ export function Score({ navigation }: Props) {
         </View>
 
         <SlideUpSheet visible={pickerOpen} onClose={() => setPickerOpen(false)} title="Choose a beach">
+          <TouchableOpacity style={[styles.pickerRow, { borderTopColor: t.borderSoft }]} onPress={() => selectBeach(null)}>
+            <Text style={[styles.pickerRowName, { color: t.text }]}>Current Location</Text>
+          </TouchableOpacity>
           {beaches.length === 0 && (
             <Text style={[styles.emptyPicker, { color: t.muted }]}>No saved beaches yet.</Text>
           )}
@@ -200,6 +186,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 6,
+    minHeight: 47,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

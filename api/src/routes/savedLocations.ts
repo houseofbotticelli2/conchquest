@@ -10,6 +10,7 @@ interface SavedLocationRow {
   name: string;
   lat: number;
   lon: number;
+  city: string | null;
   notes: string | null;
   alert_threshold_score: number | null;
   is_home: boolean;
@@ -32,6 +33,7 @@ async function toResponse(row: SavedLocationRow) {
     id: row.id,
     name: row.name,
     location: { lat: row.lat, lon: row.lon },
+    city: row.city,
     notes: row.notes,
     alertThresholdScore: row.alert_threshold_score,
     isHome: row.is_home,
@@ -44,7 +46,7 @@ async function toResponse(row: SavedLocationRow) {
 
 const SELECT_COLUMNS = `
   id, name, ST_Y(geog::geometry) AS lat, ST_X(geog::geometry) AS lon,
-  notes, alert_threshold_score, is_home, created_at
+  city, notes, alert_threshold_score, is_home, created_at
 `;
 
 savedLocationsRouter.get('/', async (req, res, next) => {
@@ -63,7 +65,7 @@ savedLocationsRouter.get('/', async (req, res, next) => {
 
 savedLocationsRouter.post('/', async (req, res, next) => {
   try {
-    const { name, lat, lon, notes, alertThresholdScore } = req.body ?? {};
+    const { name, lat, lon, city, notes, alertThresholdScore } = req.body ?? {};
 
     if (typeof name !== 'string' || !name.trim()) {
       res.status(400).json({ error: 'name is required' });
@@ -81,10 +83,10 @@ savedLocationsRouter.post('/', async (req, res, next) => {
     const isFirst = existingCount.rows[0].count === '0';
 
     const result = await pool.query<SavedLocationRow>(
-      `INSERT INTO saved_locations (user_id, name, geog, notes, alert_threshold_score, is_home)
-       VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, $5, $6, $7)
+      `INSERT INTO saved_locations (user_id, name, geog, city, notes, alert_threshold_score, is_home)
+       VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, $5, $6, $7, $8)
        RETURNING ${SELECT_COLUMNS}`,
-      [req.user!.id, name.trim(), lon, lat, notes ?? null, alertThresholdScore ?? null, isFirst]
+      [req.user!.id, name.trim(), lon, lat, city?.trim() || null, notes ?? null, alertThresholdScore ?? null, isFirst]
     );
 
     res.status(201).json(await toResponse(result.rows[0]));
@@ -96,7 +98,7 @@ savedLocationsRouter.post('/', async (req, res, next) => {
 savedLocationsRouter.patch('/:id', async (req, res, next) => {
   const client = await pool.connect();
   try {
-    const { name, notes, alertThresholdScore, isHome } = req.body ?? {};
+    const { name, city, notes, alertThresholdScore, isHome } = req.body ?? {};
 
     await client.query('BEGIN');
 
@@ -107,12 +109,13 @@ savedLocationsRouter.patch('/:id', async (req, res, next) => {
     const result = await client.query<SavedLocationRow>(
       `UPDATE saved_locations
        SET name = COALESCE($1, name),
-           notes = COALESCE($2, notes),
-           alert_threshold_score = COALESCE($3, alert_threshold_score),
-           is_home = COALESCE($4, is_home)
-       WHERE id = $5 AND user_id = $6
+           city = COALESCE($2, city),
+           notes = COALESCE($3, notes),
+           alert_threshold_score = COALESCE($4, alert_threshold_score),
+           is_home = COALESCE($5, is_home)
+       WHERE id = $6 AND user_id = $7
        RETURNING ${SELECT_COLUMNS}`,
-      [name ?? null, notes ?? null, alertThresholdScore ?? null, isHome ?? null, req.params.id, req.user!.id]
+      [name ?? null, city ?? null, notes ?? null, alertThresholdScore ?? null, isHome ?? null, req.params.id, req.user!.id]
     );
 
     if (result.rows.length === 0) {

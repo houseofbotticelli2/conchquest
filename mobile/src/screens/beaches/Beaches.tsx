@@ -36,6 +36,7 @@ export function Beaches(_props: Props) {
 
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
+  const [newCity, setNewCity] = useState('');
   const [newAlertEnabled, setNewAlertEnabled] = useState(false);
   const [newAlert, setNewAlert] = useState(DEFAULT_NEW_ALERT);
   const [newIsHome, setNewIsHome] = useState(false);
@@ -43,6 +44,7 @@ export function Beaches(_props: Props) {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [editCity, setEditCity] = useState('');
   const [editAlert, setEditAlert] = useState(0);
   const [savingEdit, setSavingEdit] = useState(false);
   const [addErrorMsg, setAddErrorMsg] = useState<string | null>(null);
@@ -83,6 +85,7 @@ export function Beaches(_props: Props) {
 
   function openAdd() {
     setNewName('');
+    setNewCity('');
     setNewAlertEnabled(false);
     setNewAlert(DEFAULT_NEW_ALERT);
     setNewIsHome(false);
@@ -97,12 +100,14 @@ export function Beaches(_props: Props) {
         name: newName.trim(),
         lat: DEFAULT_LOCATION.lat,
         lon: DEFAULT_LOCATION.lon,
+        city: newCity.trim() || undefined,
         alertThresholdScore: newAlertEnabled ? newAlert : undefined,
       });
       if (newIsHome && !created.isHome) {
         await updateSavedLocation(created.id, { isHome: true });
       }
       setNewName('');
+      setNewCity('');
       setAdding(false);
       await fetchBeaches();
     } catch (e) {
@@ -124,6 +129,7 @@ export function Beaches(_props: Props) {
   function startEditing(beach: SavedLocation) {
     setEditingId(beach.id);
     setEditName(beach.name);
+    setEditCity(beach.city ?? '');
     setEditAlert(beach.alertThresholdScore ?? beach.score);
   }
 
@@ -135,7 +141,7 @@ export function Beaches(_props: Props) {
     if (!editName.trim()) return;
     setSavingEdit(true);
     try {
-      await updateSavedLocation(id, { name: editName.trim(), alertThresholdScore: editAlert });
+      await updateSavedLocation(id, { name: editName.trim(), city: editCity.trim(), alertThresholdScore: editAlert });
       await fetchBeaches();
       setEditingId(null);
     } catch (e) {
@@ -172,6 +178,14 @@ export function Beaches(_props: Props) {
               placeholder={`Beach name (near ${DEFAULT_LOCATION.label})`}
               placeholderTextColor={t.muted}
               style={[styles.addInput, { borderColor: t.border, color: t.text }]}
+            />
+
+            <TextInput
+              value={newCity}
+              onChangeText={setNewCity}
+              placeholder="City (e.g. Sanibel, FL)"
+              placeholderTextColor={t.muted}
+              style={[styles.addInput, { borderColor: t.border, color: t.text, marginTop: 8 }]}
             />
 
             <TouchableOpacity style={styles.homeToggleRow} onPress={() => setNewAlertEnabled((v) => !v)} hitSlop={8}>
@@ -305,6 +319,17 @@ export function Beaches(_props: Props) {
                     <TextInput
                       value={editName}
                       onChangeText={setEditName}
+                      style={[styles.nameInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+                    />
+                  </View>
+
+                  <View style={styles.editSection}>
+                    <Text style={[styles.editLabel, { color: t.muted }]}>CITY</Text>
+                    <TextInput
+                      value={editCity}
+                      onChangeText={setEditCity}
+                      placeholder="e.g. Sanibel, FL"
+                      placeholderTextColor={t.muted}
                       style={[styles.nameInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
                     />
                   </View>
