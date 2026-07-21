@@ -33,10 +33,18 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Conchquest uses your photos to attach a picture to a shell find."
+          "photosPermission": "Conchquest uses your photos to attach a picture to a shell find.",
+          "cameraPermission": "Conchquest uses your camera to take a photo for a shell find or your profile."
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Conchquest uses your location to fetch tide and weather conditions for nearby beaches."
+        }
+      ],
+      "react-native-maps"
     ],
     "extra": {
       "eas": {

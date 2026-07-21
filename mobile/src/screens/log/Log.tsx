@@ -33,10 +33,12 @@ import {
   PhotoContentType,
   Species,
 } from '../../lib/api';
+import { getCurrentLocation } from '../../lib/location';
 
 type Props = NativeStackScreenProps<LogStackParamList, 'Log'>;
 
-// No GPS wired up yet — same fixed Sanibel Island location used by Score.
+// Falls back to Sanibel Island if location permission is denied or a fix
+// can't be obtained (same default used elsewhere in the app).
 const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867 };
 
 const CONDITIONS: { value: FindCondition; label: string }[] = [
@@ -67,7 +69,9 @@ export function Log({ navigation, route }: Props) {
   const existingPhotoUrl = editingFind?.photoUrl ?? null;
 
   const [discardVisible, setDiscardVisible] = useState(false);
-  const [photoPermVisible, setPhotoPermVisible] = useState(false);
+  const [photoPermMsg, setPhotoPermMsg] = useState<string | null>(null);
+  const [photoSourceOpen, setPhotoSourceOpen] = useState(false);
+  const [deviceLocation, setDeviceLocation] = useState<{ lat: number; lon: number } | null>(null);
 
   useEffect(() => {
     if (editingFind?.speciesId) {
@@ -76,6 +80,12 @@ export function Log({ navigation, route }: Props) {
         .catch(() => {});
     }
   }, [editingFind?.speciesId]);
+
+  useEffect(() => {
+    if (!isEditMode) {
+      getCurrentLocation().then(setDeviceLocation);
+    }
+  }, [isEditMode]);
 
   function isDirty(): boolean {
     if (isEditMode) {
@@ -98,10 +108,15 @@ export function Log({ navigation, route }: Props) {
     setDiscardVisible(true);
   }
 
-  async function handlePickPhoto() {
+  function applyPhotoAsset(asset: ImagePicker.ImagePickerAsset) {
+    const contentType = isPhotoContentType(asset.mimeType ?? '') ? (asset.mimeType as PhotoContentType) : 'image/jpeg';
+    setPhoto({ uri: asset.uri, contentType });
+  }
+
+  async function handlePickPhotoFromLibrary() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      setPhotoPermVisible(true);
+      setPhotoPermMsg('Enable photo library access in Settings to add a photo to your find.');
       return;
     }
 
@@ -110,10 +125,19 @@ export function Log({ navigation, route }: Props) {
       quality: 0.8,
     });
     if (result.canceled) return;
+    applyPhotoAsset(result.assets[0]);
+  }
 
-    const asset = result.assets[0];
-    const contentType = isPhotoContentType(asset.mimeType ?? '') ? (asset.mimeType as PhotoContentType) : 'image/jpeg';
-    setPhoto({ uri: asset.uri, contentType });
+  async function handlePickPhotoFromCamera() {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      setPhotoPermMsg('Enable camera access in Settings to take a photo for your find.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+    if (result.canceled) return;
+    applyPhotoAsset(result.assets[0]);
   }
 
   useEffect(() => {
@@ -163,9 +187,10 @@ export function Log({ navigation, route }: Props) {
         });
         navigation.getParent()?.goBack();
       } else {
+        const location = deviceLocation ?? DEFAULT_LOCATION;
         await createFind({
-          lat: DEFAULT_LOCATION.lat,
-          lon: DEFAULT_LOCATION.lon,
+          lat: location.lat,
+          lon: location.lon,
           speciesId: selectedSpecies?.id,
           condition,
           notes: notes || undefined,
@@ -186,10 +211,15 @@ export function Log({ navigation, route }: Props) {
       style={[styles.screen, { backgroundColor: t.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <NavBar title={isEditMode ? 'Edit a find' : 'Log a find'} left="← Back" onLeft={handleBack} right="Sanibel" />
+      <NavBar
+        title={isEditMode ? 'Edit a find' : 'Log a find'}
+        left="← Back"
+        onLeft={handleBack}
+        right={deviceLocation ? 'Current location' : 'Sanibel'}
+      />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
         {photo || existingPhotoUrl ? (
-          <TouchableOpacity style={[styles.photoBox, { borderBottomColor: t.border }]} onPress={handlePickPhoto}>
+          <TouchableOpacity style={[styles.photoBox, { borderBottomColor: t.border }]} onPress={() => setPhotoSourceOpen(true)}>
             <Image source={{ uri: photo?.uri ?? existingPhotoUrl! }} style={styles.photoPreview} />
             {photo && (
               <TouchableOpacity style={styles.photoRemove} onPress={() => setPhoto(null)}>
@@ -200,7 +230,7 @@ export function Log({ navigation, route }: Props) {
         ) : (
           <TouchableOpacity
             style={[styles.photoBox, { backgroundColor: t.surfaceAlt, borderBottomColor: t.border }]}
-            onPress={handlePickPhoto}
+            onPress={() => setPhotoSourceOpen(true)}
           >
             <Text style={{ fontSize: 28 }}>📷</Text>
             <Text style={[styles.photoText, { color: t.muted }]}>Tap to add photo (required)</Text>
@@ -330,11 +360,21 @@ export function Log({ navigation, route }: Props) {
         onClose={() => setDiscardVisible(false)}
       />
       <ConfirmDialog
-        visible={photoPermVisible}
+        visible={!!photoPermMsg}
         title="Photo access needed"
-        message="Enable photo library access in Settings to add a photo to your find."
+        message={photoPermMsg ?? undefined}
         buttons={[{ text: 'OK' }]}
-        onClose={() => setPhotoPermVisible(false)}
+        onClose={() => setPhotoPermMsg(null)}
+      />
+      <ConfirmDialog
+        visible={photoSourceOpen}
+        title="Add photo"
+        buttons={[
+          { text: 'Camera', onPress: handlePickPhotoFromCamera },
+          { text: 'Photos', onPress: handlePickPhotoFromLibrary },
+          { text: 'Cancel', style: 'cancel' },
+        ]}
+        onClose={() => setPhotoSourceOpen(false)}
       />
     </KeyboardAvoidingView>
   );
@@ -355,7 +395,7 @@ const styles = StyleSheet.create({
   changeText: { fontFamily: fonts.data, fontSize: 11 },
   chipsRow: { flexDirection: 'row', gap: 7, flexWrap: 'wrap' },
   conditionChip: { borderRadius: 6, paddingVertical: 7, paddingHorizontal: 13, borderWidth: 1 },
-  notesBox: { fontFamily: fonts.body, fontSize: 12, borderWidth: 1, borderRadius: 6, padding: 11, height: 44 },
+  notesBox: { fontFamily: fonts.body, fontSize: 12, borderWidth: 1, borderRadius: 6, padding: 11, height: 88 },
   submitBtn: { marginBottom: 20 },
   speciesInput: { flex: 1 },
   speciesSci: { fontFamily: fonts.displayItalic, fontSize: 11, marginTop: 1 },

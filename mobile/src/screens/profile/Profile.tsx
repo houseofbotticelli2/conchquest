@@ -152,6 +152,7 @@ export function Profile({ navigation }: Props) {
   const [editPhoto, setEditPhoto] = useState<{ uri: string; contentType: PhotoContentType } | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileErrorMsg, setProfileErrorMsg] = useState<string | null>(null);
+  const [avatarSourceOpen, setAvatarSourceOpen] = useState(false);
 
   function startEditingProfile() {
     setEditName(displayName);
@@ -160,7 +161,12 @@ export function Profile({ navigation }: Props) {
     setEditProfileOpen(true);
   }
 
-  async function handlePickAvatarPhoto() {
+  function applyAvatarAsset(asset: ImagePicker.ImagePickerAsset) {
+    const contentType = isPhotoContentType(asset.mimeType ?? '') ? (asset.mimeType as PhotoContentType) : 'image/jpeg';
+    setEditPhoto({ uri: asset.uri, contentType });
+  }
+
+  async function handlePickAvatarFromLibrary() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       setProfileErrorMsg('Enable photo library access in Settings to change your profile photo.');
@@ -174,10 +180,23 @@ export function Profile({ navigation }: Props) {
       aspect: [1, 1],
     });
     if (result.canceled) return;
+    applyAvatarAsset(result.assets[0]);
+  }
 
-    const asset = result.assets[0];
-    const contentType = isPhotoContentType(asset.mimeType ?? '') ? (asset.mimeType as PhotoContentType) : 'image/jpeg';
-    setEditPhoto({ uri: asset.uri, contentType });
+  async function handlePickAvatarFromCamera() {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      setProfileErrorMsg('Enable camera access in Settings to take a profile photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 0.8,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    if (result.canceled) return;
+    applyAvatarAsset(result.assets[0]);
   }
 
   async function saveProfile() {
@@ -358,7 +377,7 @@ export function Profile({ navigation }: Props) {
       </ScrollView>
 
       <SlideUpSheet visible={editProfileOpen} onClose={() => setEditProfileOpen(false)} title="Edit profile">
-        <TouchableOpacity style={styles.editAvatarWrap} onPress={handlePickAvatarPhoto}>
+        <TouchableOpacity style={styles.editAvatarWrap} onPress={() => setAvatarSourceOpen(true)}>
           <View style={[styles.avatar, styles.editAvatar, { backgroundColor: t.navBg }]}>
             {editPhoto || profile?.avatarUrl ? (
               <Image source={{ uri: editPhoto?.uri ?? profile!.avatarUrl! }} style={styles.avatarPhoto} />
@@ -398,6 +417,17 @@ export function Profile({ navigation }: Props) {
         message={profileErrorMsg ?? undefined}
         buttons={[{ text: 'OK' }]}
         onClose={() => setProfileErrorMsg(null)}
+      />
+
+      <ConfirmDialog
+        visible={avatarSourceOpen}
+        title="Change photo"
+        buttons={[
+          { text: 'Camera', onPress: handlePickAvatarFromCamera },
+          { text: 'Photos', onPress: handlePickAvatarFromLibrary },
+          { text: 'Cancel', style: 'cancel' },
+        ]}
+        onClose={() => setAvatarSourceOpen(false)}
       />
 
       <ConfirmDialog

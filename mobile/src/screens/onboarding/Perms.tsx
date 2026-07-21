@@ -10,14 +10,26 @@ import { Dots } from '../../components/Dots';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { OnboardingStackParamList } from '../../navigation/types';
 import { enableBeachAlerts } from '../../lib/notifications';
+import { requestLocationPermission } from '../../lib/location';
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, 'Perms'>;
 
 export function Perms({ navigation }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'enabled'>('idle');
+  const [locationErrorMsg, setLocationErrorMsg] = useState<string | null>(null);
   const [notifStatus, setNotifStatus] = useState<'idle' | 'enabled'>('idle');
   const [notifErrorMsg, setNotifErrorMsg] = useState<string | null>(null);
+
+  async function handleEnableLocation() {
+    const result = await requestLocationPermission();
+    if (result === 'granted') {
+      setLocationStatus('enabled');
+    } else {
+      setLocationErrorMsg('Location permission was denied. Enable it for Conchquest in your device Settings app.');
+    }
+  }
 
   async function handleEnableNotifications() {
     const result = await enableBeachAlerts();
@@ -48,7 +60,12 @@ export function Perms({ navigation }: Props) {
               </Text>
             </View>
           </View>
-          <Btn label="Allow location" variant="dark" />
+          <Btn
+            label={locationStatus === 'enabled' ? 'Location enabled' : 'Allow location'}
+            variant="dark"
+            disabled={locationStatus === 'enabled'}
+            onPress={handleEnableLocation}
+          />
         </Card>
 
         <Card style={styles.card}>
@@ -81,6 +98,13 @@ export function Perms({ navigation }: Props) {
         message={notifErrorMsg ?? undefined}
         buttons={[{ text: 'OK' }]}
         onClose={() => setNotifErrorMsg(null)}
+      />
+      <ConfirmDialog
+        visible={!!locationErrorMsg}
+        title="Couldn't enable location"
+        message={locationErrorMsg ?? undefined}
+        buttons={[{ text: 'OK' }]}
+        onClose={() => setLocationErrorMsg(null)}
       />
     </View>
   );
