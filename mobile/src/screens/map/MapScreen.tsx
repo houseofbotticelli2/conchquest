@@ -41,12 +41,8 @@ function markerColorForRarity(rarity: NearbyFind['speciesRarity']): string {
   return '#D9B36C';
 }
 
-function formatRelativeTime(iso: string): string {
-  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
-  if (minutes < 60) return `${Math.max(minutes, 1)}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+function formatFindDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function isToday(iso: string): boolean {
@@ -136,7 +132,7 @@ export function MapScreen({ navigation }: Props) {
             }))}
             onSelectMarker={(id) => navigation.navigate('FindDetail', { findId: id })}
             fallback={
-              <Svg viewBox="0 0 292 155" width="100%" height={155}>
+              <Svg viewBox="0 0 292 155" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
                 <Rect width={292} height={155} fill="#B8D4E0" />
                 <Rect x={20} y={25} width={252} height={110} rx={8} fill="#C8DCC0" />
                 <Rect x={30} y={35} width={115} height={75} rx={6} fill="#B8CEB0" />
@@ -202,7 +198,10 @@ export function MapScreen({ navigation }: Props) {
                 icon="🐚"
                 bg={t.surfaceAlt}
                 name={f.speciesName ?? 'Unidentified shell'}
-                sub={`~${(f.distanceFeet / 5280).toFixed(1)} mi · ${formatRelativeTime(f.foundAt)}`}
+                sub=""
+                dateSuffix={formatFindDate(f.foundAt)}
+                condition={f.condition}
+                notes={f.notes}
                 badge={toBadgeType(f.speciesRarity)}
                 photoUrl={f.photoUrl}
                 onPress={() => navigation.navigate('FindDetail', { findId: f.id })}
@@ -227,7 +226,7 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: fonts.display, fontSize: 18, fontWeight: '600' },
   titleSub: { fontFamily: fonts.data, fontSize: 11 },
-  mapBox: { marginHorizontal: 14, marginBottom: 10, borderRadius: 10, overflow: 'hidden', borderWidth: 1, height: 180 },
+  mapBox: { marginHorizontal: 14, marginBottom: 10, borderRadius: 10, overflow: 'hidden', borderWidth: 1, height: 270 },
   filtersRow: { paddingHorizontal: 14, paddingBottom: 10, flexDirection: 'row', gap: 6 },
   filterChip: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4, borderWidth: 1, borderRadius: 20, paddingVertical: 4, paddingHorizontal: 10, overflow: 'hidden' },
   sectionHeader: { paddingHorizontal: 14, paddingBottom: 4 },

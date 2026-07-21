@@ -51,7 +51,7 @@ export function FindDetail({ navigation, route }: Props) {
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <TouchableOpacity onPress={() => navigation.navigate('Map')}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={[styles.back, { color: t.accent }]}>← Map</Text>
         </TouchableOpacity>
       </View>
@@ -70,10 +70,8 @@ export function FindDetail({ navigation, route }: Props) {
               longitude={find.location.lon}
               latitudeDelta={0.01}
               longitudeDelta={0.01}
-              scrollEnabled={false}
-              zoomEnabled={false}
               fallback={
-                <Svg viewBox="0 0 290 88" width="100%" height={88}>
+                <Svg viewBox="0 0 290 88" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
                   <Rect width={290} height={88} fill="#B8C8D0" opacity={0.7} />
                   <Rect x={20} y={10} width={250} height={63} rx={6} fill="#C8D8C0" opacity={0.5} />
                   <Circle cx={145} cy={43} r={11} fill={t.accentDeep} opacity={0.9} />
@@ -139,7 +137,7 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 },
   back: { fontFamily: fonts.body, fontSize: 14 },
   emptyText: { fontFamily: fonts.body, fontSize: 13, textAlign: 'center', marginTop: 40, paddingHorizontal: 20 },
-  mapBox: { marginHorizontal: 14, marginVertical: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, height: 88 },
+  mapBox: { marginHorizontal: 14, marginVertical: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, height: 270 },
   content: { paddingHorizontal: 18, paddingBottom: 18 },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
