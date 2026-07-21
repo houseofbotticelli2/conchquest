@@ -212,7 +212,7 @@ export function Log({ navigation, route }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <NavBar
-        title={isEditMode ? 'Edit a find' : 'Log a find'}
+        title=""
         left="← Back"
         onLeft={handleBack}
         right={deviceLocation ? 'Current location' : 'Sanibel'}
@@ -340,7 +340,7 @@ export function Log({ navigation, route }: Props) {
             </View>
           ) : (
             <Btn
-              label={isEditMode ? 'Save this find' : 'Log this find'}
+              label={isEditMode ? 'Update' : 'Save'}
               onPress={handleSubmit}
               disabled={!isEditMode && !photo}
               style={styles.submitBtn}
