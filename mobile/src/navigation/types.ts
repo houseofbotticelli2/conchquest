@@ -19,11 +19,6 @@ export type MapStackParamList = {
   Species: { speciesId?: string } | undefined;
 };
 
-export type LibraryStackParamList = {
-  Library: undefined;
-  Species: { speciesId?: string } | undefined;
-};
-
 export type ProfileStackParamList = {
   Profile: undefined;
 };
@@ -39,6 +34,8 @@ export type LogStackParamList = {
 
 export type CollectionStackParamList = {
   MyShells: undefined;
+  Library: undefined;
+  Species: { speciesId?: string } | undefined;
 };
 
 export type MainTabParamList = {
@@ -46,7 +43,6 @@ export type MainTabParamList = {
   MapTab: undefined;
   CollectionTab: undefined;
   BeachesTab: undefined;
-  LibraryTab: undefined;
   ProfileTab: undefined;
 };
 

@@ -74,6 +74,10 @@ export function MyShells({ navigation }: Props) {
     navigation.getParent()?.getParent()?.dispatch(CommonActions.navigate({ name: 'LogModal' }));
   }
 
+  function handleOpenLibrary() {
+    navigation.navigate('Library');
+  }
+
   function handleEdit(find: Find) {
     navigation
       .getParent()
@@ -85,9 +89,14 @@ export function MyShells({ navigation }: Props) {
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={[styles.title, { color: t.text }]}>My Shells</Text>
-        <TouchableOpacity onPress={handleAdd}>
-          <Ionicons name="add-circle-outline" size={26} color={t.text} />
-        </TouchableOpacity>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity onPress={handleOpenLibrary}>
+            <Ionicons name="book-outline" size={24} color={t.text} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleAdd}>
+            <Ionicons name="add-circle-outline" size={26} color={t.text} />
+          </TouchableOpacity>
+        </View>
       </View>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.searchBox, { backgroundColor: t.inputBg, borderColor: t.border }]}>
@@ -147,8 +156,9 @@ export function MyShells({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
+  headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   content: { paddingHorizontal: 14, paddingBottom: 16 },
   emptyText: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 20, textAlign: 'center' },
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12, marginBottom: 10 },

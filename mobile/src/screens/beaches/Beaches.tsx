@@ -36,6 +36,7 @@ export function Beaches(_props: Props) {
 
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
+  const [newAlertEnabled, setNewAlertEnabled] = useState(false);
   const [newAlert, setNewAlert] = useState(DEFAULT_NEW_ALERT);
   const [newIsHome, setNewIsHome] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -82,6 +83,7 @@ export function Beaches(_props: Props) {
 
   function openAdd() {
     setNewName('');
+    setNewAlertEnabled(false);
     setNewAlert(DEFAULT_NEW_ALERT);
     setNewIsHome(false);
     setAdding((v) => !v);
@@ -95,7 +97,7 @@ export function Beaches(_props: Props) {
         name: newName.trim(),
         lat: DEFAULT_LOCATION.lat,
         lon: DEFAULT_LOCATION.lon,
-        alertThresholdScore: newAlert,
+        alertThresholdScore: newAlertEnabled ? newAlert : undefined,
       });
       if (newIsHome && !created.isHome) {
         await updateSavedLocation(created.id, { isHome: true });
@@ -172,18 +174,25 @@ export function Beaches(_props: Props) {
               style={[styles.addInput, { borderColor: t.border, color: t.text }]}
             />
 
-            <View style={styles.addSection}>
-              <Text style={[styles.editLabel, { color: t.muted }]}>ALERT THRESHOLD</Text>
-              <View style={styles.alertStepperRow}>
-                <TouchableOpacity onPress={() => adjustNewAlert(-ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
-                  <Ionicons name="remove-circle-outline" size={26} color={t.text} />
-                </TouchableOpacity>
-                <Text style={[styles.alertText, { color: t.sea }]}>🔔 Alert at score {newAlert}+</Text>
-                <TouchableOpacity onPress={() => adjustNewAlert(ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
-                  <Ionicons name="add-circle-outline" size={26} color={t.text} />
-                </TouchableOpacity>
+            <TouchableOpacity style={styles.homeToggleRow} onPress={() => setNewAlertEnabled((v) => !v)} hitSlop={8}>
+              <Ionicons name={newAlertEnabled ? 'checkbox' : 'square-outline'} size={20} color={t.text} />
+              <Text style={[styles.homeToggleText, { color: t.text }]}>Alert me at a score threshold</Text>
+            </TouchableOpacity>
+
+            {newAlertEnabled && (
+              <View style={styles.addSection}>
+                <Text style={[styles.editLabel, { color: t.muted }]}>ALERT THRESHOLD</Text>
+                <View style={styles.alertStepperRow}>
+                  <TouchableOpacity onPress={() => adjustNewAlert(-ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
+                    <Ionicons name="arrow-down-circle-outline" size={26} color={t.text} />
+                  </TouchableOpacity>
+                  <Text style={[styles.alertText, { color: t.sea }]}>🔔 Alert at score {newAlert}+</Text>
+                  <TouchableOpacity onPress={() => adjustNewAlert(ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
+                    <Ionicons name="arrow-up-circle-outline" size={26} color={t.text} />
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            )}
 
             <TouchableOpacity style={styles.homeToggleRow} onPress={() => setNewIsHome((v) => !v)} hitSlop={8}>
               <Ionicons name={newIsHome ? 'checkbox' : 'square-outline'} size={20} color={t.text} />
@@ -243,24 +252,51 @@ export function Beaches(_props: Props) {
                 { backgroundColor: t.surface, borderColor: b.isHome ? t.accent : t.border, borderWidth: b.isHome ? 1.5 : 1 },
               ]}
             >
-              <View style={styles.beachTop}>
-                <View style={styles.beachTopRow}>
-                  <View>
-                    <View style={styles.nameRow}>
-                      <Text style={[styles.beachName, { color: t.text }]}>{b.name}</Text>
-                      {b.isHome && (
-                        <Text style={[styles.homeBadge, { backgroundColor: t.surfaceAlt, color: t.text, borderColor: t.border }]}>
-                          HOME
-                        </Text>
-                      )}
+              {editingId === b.id ? (
+                <View style={styles.beachTop}>
+                  <View style={styles.beachTopRow}>
+                    <View style={styles.nameColumn}>
+                      <View style={styles.nameRow}>
+                        <Text style={[styles.beachName, { color: t.text }]}>{b.name}</Text>
+                        {b.isHome && (
+                          <Text style={[styles.homeBadge, { backgroundColor: t.surfaceAlt, color: t.text, borderColor: t.border }]}>
+                            HOME
+                          </Text>
+                        )}
+                      </View>
+                      <Text style={[styles.cardAlertText, { color: t.sea }]}>
+                        {b.alertThresholdScore != null ? `🔔 Alert at score ${b.alertThresholdScore}+` : '🔕 No alert set'}
+                      </Text>
+                    </View>
+                    <View style={styles.scoreWrap}>
+                      <Text style={[styles.scoreVal, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
+                      <Text style={[styles.scoreLabel, { color: t.muted }]}>SHELLCAST SCORE</Text>
                     </View>
                   </View>
-                  <View style={styles.scoreWrap}>
-                    <Text style={[styles.scoreVal, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
-                    <Text style={[styles.scoreLabel, { color: t.muted }]}>SHELLCAST SCORE</Text>
-                  </View>
                 </View>
-              </View>
+              ) : (
+                <TouchableOpacity style={styles.beachTop} onPress={() => startEditing(b)} activeOpacity={0.7}>
+                  <View style={styles.beachTopRow}>
+                    <View style={styles.nameColumn}>
+                      <View style={styles.nameRow}>
+                        <Text style={[styles.beachName, { color: t.text }]}>{b.name}</Text>
+                        {b.isHome && (
+                          <Text style={[styles.homeBadge, { backgroundColor: t.surfaceAlt, color: t.text, borderColor: t.border }]}>
+                            HOME
+                          </Text>
+                        )}
+                      </View>
+                      <Text style={[styles.cardAlertText, { color: t.sea }]}>
+                        {b.alertThresholdScore != null ? `🔔 Alert at score ${b.alertThresholdScore}+` : '🔕 No alert set'}
+                      </Text>
+                    </View>
+                    <View style={styles.scoreWrap}>
+                      <Text style={[styles.scoreVal, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
+                      <Text style={[styles.scoreLabel, { color: t.muted }]}>SHELLCAST SCORE</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
 
               {editingId === b.id ? (
                 <View style={[styles.editPanel, { backgroundColor: t.surfaceAlt, borderTopColor: t.borderSoft }]}>
@@ -277,11 +313,11 @@ export function Beaches(_props: Props) {
                     <Text style={[styles.editLabel, { color: t.muted }]}>ALERT THRESHOLD</Text>
                     <View style={styles.alertStepperRow}>
                       <TouchableOpacity onPress={() => adjustDraftAlert(-ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
-                        <Ionicons name="remove-circle-outline" size={26} color={t.text} />
+                        <Ionicons name="arrow-down-circle-outline" size={26} color={t.text} />
                       </TouchableOpacity>
                       <Text style={[styles.alertText, { color: t.sea }]}>🔔 Alert at score {editAlert}+</Text>
                       <TouchableOpacity onPress={() => adjustDraftAlert(ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
-                        <Ionicons name="add-circle-outline" size={26} color={t.text} />
+                        <Ionicons name="arrow-up-circle-outline" size={26} color={t.text} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -309,16 +345,7 @@ export function Beaches(_props: Props) {
                     )}
                   </View>
                 </View>
-              ) : (
-                <View style={[styles.beachFooter, { backgroundColor: t.surfaceAlt, borderTopColor: t.borderSoft }]}>
-                  <Text style={[styles.alertText, { color: t.sea }]}>
-                    {b.alertThresholdScore != null ? `🔔 Alert at score ${b.alertThresholdScore}+` : '🔕 No alert set'}
-                  </Text>
-                  <Text style={[styles.editText, { color: t.muted }]} onPress={() => startEditing(b)}>
-                    EDIT
-                  </Text>
-                </View>
-              )}
+              ) : null}
             </View>
           ))}
       </ScrollView>
@@ -352,9 +379,9 @@ export function Beaches(_props: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
-  content: { padding: 14 },
+  content: { paddingHorizontal: 14, paddingBottom: 16 },
   addBox: { borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 14 },
   addInput: { fontFamily: fonts.body, fontSize: 13, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12 },
   addSection: { gap: 6, marginTop: 12 },
@@ -367,14 +394,15 @@ const styles = StyleSheet.create({
   emptyText: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 20, textAlign: 'center' },
   beachCard: { borderRadius: 14, overflow: 'hidden', marginBottom: 12 },
   beachTop: { padding: 14 },
-  beachTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 },
+  beachTopRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  nameColumn: { justifyContent: 'space-between' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
   beachName: { fontFamily: fonts.display, fontSize: 14, fontWeight: '600' },
   homeBadge: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4, borderRadius: 10, paddingVertical: 2, paddingHorizontal: 7, borderWidth: 1, overflow: 'hidden' },
-  scoreWrap: { alignItems: 'flex-end' },
+  scoreWrap: { alignItems: 'flex-end', justifyContent: 'space-between' },
   scoreVal: { fontFamily: fonts.displayBold, fontSize: 28, lineHeight: 30 },
   scoreLabel: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4 },
-  beachFooter: { borderTopWidth: 1, paddingVertical: 8, paddingHorizontal: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardAlertText: { fontFamily: fonts.data, fontSize: 11 },
   editPanel: { borderTopWidth: 1, padding: 14, gap: 14 },
   editSection: { gap: 6 },
   editLabel: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4 },

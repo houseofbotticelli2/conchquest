@@ -1,18 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Badge, BadgeType } from '../../components/Badge';
-import { LibraryStackParamList } from '../../navigation/types';
+import { NavBar } from '../../components/NavBar';
+import { CollectionStackParamList } from '../../navigation/types';
 import { listSpecies, Species } from '../../lib/api';
 
 function toBadgeType(rarity: Species['rarity']): BadgeType {
   return rarity === 'very_rare' ? 'rare' : rarity;
 }
 
-type Props = NativeStackScreenProps<LibraryStackParamList, 'Library'>;
+type Props = NativeStackScreenProps<CollectionStackParamList, 'Library'>;
 
 const FILTERS: { label: string; rarity?: 'rare'; region?: string }[] = [
   { label: 'All' },
@@ -23,7 +23,6 @@ const FILTERS: { label: string; rarity?: 'rare'; region?: string }[] = [
 
 export function Library({ navigation }: Props) {
   const { theme: t } = useTheme();
-  const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState(0);
   const [species, setSpecies] = useState<Species[]>([]);
@@ -51,9 +50,7 @@ export function Library({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={[styles.title, { color: t.text }]}>Shell Library</Text>
-      </View>
+      <NavBar title="Shell Library" left="← My Shells" onLeft={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.searchBox, { backgroundColor: t.inputBg, borderColor: t.border }]}>
           <Text style={{ color: t.muted }}>🔍</Text>
@@ -111,8 +108,6 @@ export function Library({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 },
-  title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
   content: { paddingHorizontal: 14, paddingBottom: 16 },
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12, marginBottom: 10 },
   searchText: { flex: 1, fontFamily: fonts.body, fontSize: 13 },

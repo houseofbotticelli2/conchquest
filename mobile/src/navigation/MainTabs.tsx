@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
@@ -10,7 +10,6 @@ import { ForecastStack } from './ForecastStack';
 import { MapStack } from './MapStack';
 import { CollectionStack } from './CollectionStack';
 import { BeachesStack } from './BeachesStack';
-import { LibraryStack } from './LibraryStack';
 import { ProfileStack } from './ProfileStack';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -20,17 +19,15 @@ const TAB_LABELS: Record<keyof MainTabParamList, string> = {
   MapTab: 'Map',
   CollectionTab: 'My Shells',
   BeachesTab: 'Beaches',
-  LibraryTab: 'Library',
   ProfileTab: 'Profile',
 };
 
-const TAB_ICONS: Record<keyof MainTabParamList, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
-  ForecastTab: { active: 'sunny', inactive: 'sunny-outline' },
-  MapTab: { active: 'compass', inactive: 'compass-outline' },
-  CollectionTab: { active: 'albums', inactive: 'albums-outline' },
-  BeachesTab: { active: 'umbrella', inactive: 'umbrella-outline' },
-  LibraryTab: { active: 'book', inactive: 'book-outline' },
-  ProfileTab: { active: 'person', inactive: 'person-outline' },
+const TAB_ICONS: Record<keyof MainTabParamList, { family: 'ionicons' | 'mci'; active: string; inactive: string }> = {
+  ForecastTab: { family: 'ionicons', active: 'sunny', inactive: 'sunny-outline' },
+  MapTab: { family: 'ionicons', active: 'compass', inactive: 'compass-outline' },
+  CollectionTab: { family: 'ionicons', active: 'albums', inactive: 'albums-outline' },
+  BeachesTab: { family: 'mci', active: 'umbrella-beach', inactive: 'umbrella-beach-outline' },
+  ProfileTab: { family: 'ionicons', active: 'person', inactive: 'person-outline' },
 };
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
@@ -51,13 +48,20 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             }
           };
 
+          const IconComponent = icon.family === 'mci' ? MaterialCommunityIcons : Ionicons;
+
           return (
             <TouchableOpacity
               key={route.key}
               onPress={onPress}
               style={[styles.item, isActive && { backgroundColor: t.accent }]}
             >
-              <Ionicons name={isActive ? icon.active : icon.inactive} size={20} color={isActive ? '#fff' : t.muted} style={styles.icon} />
+              <IconComponent
+                name={(isActive ? icon.active : icon.inactive) as never}
+                size={20}
+                color={isActive ? '#fff' : t.muted}
+                style={styles.icon}
+              />
               <Text style={[styles.label, { color: isActive ? '#fff' : t.muted }]} numberOfLines={1}>
                 {label}
               </Text>
@@ -76,7 +80,6 @@ export function MainTabs() {
       <Tab.Screen name="MapTab" component={MapStack} />
       <Tab.Screen name="CollectionTab" component={CollectionStack} />
       <Tab.Screen name="BeachesTab" component={BeachesStack} />
-      <Tab.Screen name="LibraryTab" component={LibraryStack} />
       <Tab.Screen name="ProfileTab" component={ProfileStack} />
     </Tab.Navigator>
   );

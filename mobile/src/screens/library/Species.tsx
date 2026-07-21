@@ -9,7 +9,7 @@ import { NavBar } from '../../components/NavBar';
 import { Btn } from '../../components/Btn';
 import { getSpecies, Species as SpeciesData } from '../../lib/api';
 
-// Reused across both MapStack and LibraryStack, whose "Species" route shapes
+// Reused across both MapStack and CollectionStack, whose "Species" route shapes
 // are identical but are distinct navigator types — a shared prop type here
 // would fight one call site or the other, so this takes the minimal shape
 // it actually uses instead of a full NativeStackScreenProps union.

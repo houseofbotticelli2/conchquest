@@ -374,7 +374,7 @@ export function Profile({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
   sheetRow: { paddingVertical: 14 },

@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -171,9 +182,12 @@ export function Log({ navigation, route }: Props) {
   }
 
   return (
-    <View style={[styles.screen, { backgroundColor: t.bg }]}>
+    <KeyboardAvoidingView
+      style={[styles.screen, { backgroundColor: t.bg }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <NavBar title={isEditMode ? 'Edit a find' : 'Log a find'} left="← Back" onLeft={handleBack} right="Sanibel" />
-      <ScrollView>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
         {photo || existingPhotoUrl ? (
           <TouchableOpacity style={[styles.photoBox, { borderBottomColor: t.border }]} onPress={handlePickPhoto}>
             <Image source={{ uri: photo?.uri ?? existingPhotoUrl! }} style={styles.photoPreview} />
@@ -322,12 +336,13 @@ export function Log({ navigation, route }: Props) {
         buttons={[{ text: 'OK' }]}
         onClose={() => setPhotoPermVisible(false)}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  scrollContent: { paddingBottom: 200 },
   photoBox: { height: 160, alignItems: 'center', justifyContent: 'center', gap: 6, borderBottomWidth: 1, overflow: 'hidden' },
   photoText: { fontFamily: fonts.body, fontSize: 12 },
   photoPreview: { width: '100%', height: '100%' },
