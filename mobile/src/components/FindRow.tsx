@@ -26,10 +26,8 @@ export function FindRow({ icon, bg, name, sub, badge, dateSuffix, condition, not
         {photoUrl ? <Image source={{ uri: photoUrl }} style={styles.photo} /> : <Text style={styles.iconText}>{icon}</Text>}
       </View>
       <View style={styles.body}>
-        <Text style={[styles.name, { color: t.text }]}>
-          {name}
-          {dateSuffix && <Text style={[styles.dateSuffix, { color: t.muted }]}> ({dateSuffix})</Text>}
-        </Text>
+        <Text style={[styles.name, { color: t.text }]}>{name}</Text>
+        {dateSuffix && <Text style={[styles.dateSuffix, { color: t.muted }]}>{dateSuffix}</Text>}
         {!!sub && <Text style={[styles.sub, { color: t.muted }]}>{sub}</Text>}
         {notes && (
           <Text style={[styles.notes, { color: t.muted }]} numberOfLines={1} ellipsizeMode="tail">
