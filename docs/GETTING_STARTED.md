@@ -5,6 +5,50 @@ environment set up (repo cloned, dependencies installed, backend/mobile
 running locally, dev client connected). This is the next step: how to
 actually start working on the project with Claude Code.
 
+## Overall Architecture
+
+Before touching code, it's worth having a mental map of the pieces and how
+they fit together:
+
+- **Mobile app** — React Native + Expo (TypeScript), living in `mobile/`.
+  This is the actual Conchquest app someone installs on their phone: screens,
+  navigation, the design system, all the map/photo/location features. It
+  talks to the backend API over HTTPS and to Supabase directly for
+  authentication.
+- **Backend API** — Node.js + Express (TypeScript), living in `api/`, hosted
+  on **Railway**. Everything the mobile app needs beyond raw auth goes
+  through this: shell finds, saved beaches, species library, scoring/
+  conditions, photo upload URLs, profile data, push notifications. It's the
+  only thing that talks directly to the database and the file bucket — the
+  mobile app never does.
+- **Database** — PostgreSQL with the **PostGIS** extension (for geospatial
+  queries like "finds near this location"), also hosted on Railway. One
+  shared database for the whole project, not a separate copy per person —
+  see `CLAUDE.md`'s note on this. Schema changes only ever happen through
+  migrations (`npm run migrate:create`/`migrate:up` in `api/`), never by
+  hand-editing the schema.
+- **File storage** — a Railway Bucket (S3-compatible) holding find/profile
+  photos. The bucket itself is **private, not publicly accessible** — the
+  API generates short-lived presigned URLs for uploading and downloading, so
+  a photo is only ever reachable through a URL the API issued to an
+  authenticated user, never a permanent public link.
+- **Authentication** — **Supabase Auth**. The mobile app authenticates
+  directly against Supabase to get a JWT, then sends that token to the
+  backend API on every request; the API verifies it before doing anything.
+  One shared Supabase Auth project for everyone working on this, same
+  reasoning as the shared database.
+- **Expo / EAS** — used two different ways: day-to-day, the Expo **dev
+  client** lets code changes show up instantly while developing (see
+  `docs/ONBOARDING.md`); separately, **EAS Build** produces a real,
+  installable standalone app (no dev-client/Metro dependency at all) for
+  handing to a tester, and **EAS Update** pushes JS-only updates to those
+  installs afterward (see `docs/Standalone Build Guide.docx`).
+
+In short: the phone in your hand only ever talks to two things over the
+internet — Supabase (for login) and the Railway-hosted API (for everything
+else) — and the API is the only thing with access to the database and the
+photo bucket, both of which are private by design.
+
 ## Read these first
 
 - **`CLAUDE.md`** (repo root, not in `docs/`) — Claude Code loads this
