@@ -59,7 +59,7 @@ photo bucket, both of which are private by design.
   stay at the repo root — that's where Claude Code looks for it.
 - **`docs/TODO.md`** — the current list of open and completed work, kept in
   sync with the task tracker. This is where to look for what to work on next.
-- **`docs/Standalone Build Guide.docx`** — if you want a permanently installed
+- **`docs/STANDALONE_BUILD_GUIDE.md`** — if you want a permanently installed
   copy of the app on a phone (not the day-to-day dev-client workflow from
   `docs/ONBOARDING.md`), this walks through it in detail. Read it before
   asking Mark for an iOS device registration — it explains exactly which
