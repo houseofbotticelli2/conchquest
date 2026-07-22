@@ -295,10 +295,22 @@
 
 <section>
   <div class="section-head">
+    <h2>Config</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text">Small app-wide settings the mobile client reads on startup — how many recent finds/beaches to show, currently. Cached server-side with a short TTL.</div>
+    </details>
+  </div>
+  <button onclick="fetchConfig()">GET /api/config</button>
+  <pre id="configResult" class="inline-result"></pre>
+</section>
+
+<section>
+  <div class="section-head">
     <h2>Finds</h2>
     <details class="help">
       <summary>?</summary>
-      <div class="help-text" style="width:300px"><strong>POST</strong> records a shell find (location, condition, notes) tied to whoever's logged in. <strong>GET /api/finds</strong> lists your own logged finds. <strong>GET /api/finds/:id</strong> looks up one specific find — copy an id from the list result first. <strong>GET /api/finds/nearby</strong> is the community view — everyone's finds within a radius, not just yours. Private finds show a fuzzed location instead of the exact spot, and rare-species finds are always fuzzed even if marked public — so don't be surprised if the returned coordinates don't exactly match what was logged.</div>
+      <div class="help-text" style="width:300px"><strong>POST</strong> records a shell find (location, condition, notes) tied to whoever's logged in. <strong>GET /api/finds</strong> lists your own logged finds. <strong>GET /api/finds/:id</strong> looks up one specific find — copy an id from the list result first. <strong>PATCH /api/finds/:id</strong> edits it (only fields you fill in are changed — leave a field blank to keep it as-is). <strong>GET /api/finds/stats</strong> is your own totals (finds, rare finds, distinct species). <strong>GET /api/finds/nearby</strong> is the community view — everyone's finds within a radius, not just yours. Private finds show a fuzzed location instead of the exact spot, and rare-species finds are always fuzzed even if marked public — so don't be surprised if the returned coordinates don't exactly match what was logged.</div>
     </details>
   </div>
   <div class="row">
@@ -321,21 +333,199 @@
   </select>
   <label>Notes</label>
   <textarea id="findNotes" rows="2" placeholder="Optional note...">Test harness find</textarea>
+  <div class="row">
+    <div>
+      <label>Species ID (optional)</label>
+      <input id="findSpeciesId" placeholder="paste an id from Species below" />
+    </div>
+    <div>
+      <label>Photo key (optional)</label>
+      <input id="findPhotoKey" placeholder="paste a key from Uploads below" />
+    </div>
+  </div>
+  <label>Private?</label>
+  <select id="findIsPrivate">
+    <option value="">(unset)</option>
+    <option value="true">true</option>
+    <option value="false">false</option>
+  </select>
   <div>
     <button onclick="submitFind()">POST /api/finds</button>
     <button class="secondary" onclick="listFinds()">GET /api/finds</button>
+    <button class="secondary" onclick="fetchFindStats()">GET /api/finds/stats</button>
   </div>
   <pre id="findPostResult" class="inline-result"></pre>
   <pre id="findListResult" class="inline-result"></pre>
-  <label style="margin-top:14px">Find ID (for single lookup)</label>
+  <pre id="findStatsResult" class="inline-result"></pre>
+  <label style="margin-top:14px">Find ID (for single lookup, edit)</label>
   <input id="findId" placeholder="paste an id from the list above" />
-  <button class="secondary" onclick="getFindById()">GET /api/finds/:id</button>
+  <div>
+    <button class="secondary" onclick="getFindById()">GET /api/finds/:id</button>
+    <button class="secondary" onclick="patchFind()">PATCH /api/finds/:id (uses fields above)</button>
+  </div>
   <pre id="findGetResult" class="inline-result"></pre>
+  <pre id="findPatchResult" class="inline-result"></pre>
 
   <label style="margin-top:14px">Search radius (feet, for nearby search)</label>
   <input id="nearbyRadius" value="16000" />
   <button class="secondary" onclick="fetchNearby()">GET /api/finds/nearby</button>
   <pre id="findNearbyResult" class="inline-result"></pre>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>Species</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text">The shell library. <strong>GET /api/species</strong> supports optional search/rarity/region filters. <strong>GET /api/species/:id</strong> looks up one entry — copy an id from the list result.</div>
+    </details>
+  </div>
+  <div class="row">
+    <div>
+      <label>Search (optional)</label>
+      <input id="speciesSearch" placeholder="e.g. junonia" />
+    </div>
+    <div>
+      <label>Rarity (optional)</label>
+      <select id="speciesRarity">
+        <option value="">(any)</option>
+        <option value="common">common</option>
+        <option value="uncommon">uncommon</option>
+        <option value="rare">rare</option>
+        <option value="very_rare">very_rare</option>
+      </select>
+    </div>
+  </div>
+  <button onclick="listSpecies()">GET /api/species</button>
+  <pre id="speciesListResult" class="inline-result"></pre>
+  <label style="margin-top:14px">Species ID (for single lookup)</label>
+  <input id="speciesId" placeholder="paste an id from the list above" />
+  <button class="secondary" onclick="getSpeciesById()">GET /api/species/:id</button>
+  <pre id="speciesGetResult" class="inline-result"></pre>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>Saved Locations (Beaches)</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text" style="width:300px">A user's saved beaches. <strong>POST</strong> creates one (the first one you add is auto-marked home). <strong>GET</strong> lists them with a live Shellcast score for each. <strong>PATCH</strong> edits one — only fields you fill in change, and setting home unsets any previous home beach. <strong>DELETE</strong> removes one.</div>
+    </details>
+  </div>
+  <div class="row">
+    <div>
+      <label>Name</label>
+      <input id="beachName" placeholder="e.g. Bowman's Beach" />
+    </div>
+    <div>
+      <label>City (optional)</label>
+      <input id="beachCity" placeholder="e.g. Sanibel, FL" />
+    </div>
+  </div>
+  <div class="row">
+    <div>
+      <label>Latitude</label>
+      <input id="beachLat" value="26.4615" />
+    </div>
+    <div>
+      <label>Longitude</label>
+      <input id="beachLon" value="-82.1867" />
+    </div>
+  </div>
+  <label>Alert threshold score (optional)</label>
+  <input id="beachAlertThreshold" placeholder="e.g. 70" />
+  <div>
+    <button onclick="createBeach()">POST /api/saved-locations</button>
+    <button class="secondary" onclick="listBeaches()">GET /api/saved-locations</button>
+  </div>
+  <pre id="beachPostResult" class="inline-result"></pre>
+  <pre id="beachListResult" class="inline-result"></pre>
+  <label style="margin-top:14px">Beach ID (for edit/delete)</label>
+  <input id="beachId" placeholder="paste an id from the list above" />
+  <label>Set as home?</label>
+  <select id="beachIsHome">
+    <option value="">(unset)</option>
+    <option value="true">true</option>
+  </select>
+  <div>
+    <button class="secondary" onclick="patchBeach()">PATCH /api/saved-locations/:id (uses fields above)</button>
+    <button class="secondary" onclick="deleteBeach()">DELETE /api/saved-locations/:id</button>
+  </div>
+  <pre id="beachPatchResult" class="inline-result"></pre>
+  <pre id="beachDeleteResult" class="inline-result"></pre>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>Uploads</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text">Requests a presigned upload URL for a find or profile-avatar photo. This only gets the URL/key pair — actually uploading bytes to <code>uploadUrl</code> needs a real PUT with the file body, which this harness doesn't do; use it to confirm the presign step itself works, then paste the returned <code>key</code> into Finds' "Photo key" field or Profile's "Avatar key" field.</div>
+    </details>
+  </div>
+  <div class="row">
+    <div>
+      <label>Content type</label>
+      <select id="uploadContentType">
+        <option value="image/jpeg" selected>image/jpeg</option>
+        <option value="image/png">image/png</option>
+        <option value="image/heic">image/heic</option>
+        <option value="image/webp">image/webp</option>
+      </select>
+    </div>
+    <div>
+      <label>Purpose</label>
+      <select id="uploadPurpose">
+        <option value="find" selected>find</option>
+        <option value="avatar">avatar</option>
+      </select>
+    </div>
+  </div>
+  <button onclick="presignUpload()">POST /api/uploads/presign</button>
+  <pre id="uploadResult" class="inline-result"></pre>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>Profile</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text">The logged-in user's own profile. <strong>PATCH</strong> only changes fields you fill in — leave a field blank to keep it as-is.</div>
+    </details>
+  </div>
+  <button onclick="fetchProfile()">GET /api/profile</button>
+  <pre id="profileGetResult" class="inline-result"></pre>
+  <div class="row" style="margin-top:14px">
+    <div>
+      <label>Display name (optional)</label>
+      <input id="profileDisplayName" placeholder="e.g. Mark" />
+    </div>
+    <div>
+      <label>Shelling since year (optional)</label>
+      <input id="profileShellingSinceYear" placeholder="e.g. 2019" />
+    </div>
+  </div>
+  <label>Avatar key (optional)</label>
+  <input id="profileAvatarKey" placeholder="paste a key from Uploads above" />
+  <button class="secondary" onclick="patchProfile()">PATCH /api/profile</button>
+  <pre id="profilePatchResult" class="inline-result"></pre>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>Push Token</h2>
+    <details class="help">
+      <summary>?</summary>
+      <div class="help-text">Registers/clears this account's Expo push token, used by the beach-alert cron job. There's no real device token to test with here — any non-empty string satisfies the endpoint for a smoke test.</div>
+    </details>
+  </div>
+  <label>Token</label>
+  <input id="pushToken" placeholder="e.g. ExponentPushToken[test-harness]" />
+  <div>
+    <button onclick="putPushToken()">PUT /api/push-token</button>
+    <button class="secondary" onclick="deletePushToken()">DELETE /api/push-token</button>
+  </div>
+  <pre id="pushTokenResult" class="inline-result"></pre>
 </section>
 
 <section>
@@ -540,9 +730,17 @@ async function submitFind() {
     lon: Number(document.getElementById('findLon').value),
     condition: document.getElementById('findCondition').value,
     notes: document.getElementById('findNotes').value || undefined,
+    speciesId: document.getElementById('findSpeciesId').value || undefined,
+    photoKey: document.getElementById('findPhotoKey').value || undefined,
+    isPrivate: findIsPrivateValue(),
   };
   const result = await callApi('POST', '/api/finds', { body });
   showInlineResult('findPostResult', result);
+}
+
+function findIsPrivateValue() {
+  const v = document.getElementById('findIsPrivate').value;
+  return v === '' ? undefined : v === 'true';
 }
 
 async function listFinds() {
@@ -550,10 +748,124 @@ async function listFinds() {
   showInlineResult('findListResult', result);
 }
 
+async function fetchFindStats() {
+  const result = await callApi('GET', '/api/finds/stats');
+  showInlineResult('findStatsResult', result);
+}
+
 async function getFindById() {
   const id = document.getElementById('findId').value;
   const result = await callApi('GET', () => `/api/finds/${id}`);
   showInlineResult('findGetResult', result);
+}
+
+async function patchFind() {
+  const id = document.getElementById('findId').value;
+  const body = {
+    condition: document.getElementById('findCondition').value || undefined,
+    notes: document.getElementById('findNotes').value || undefined,
+    speciesId: document.getElementById('findSpeciesId').value || undefined,
+    photoKey: document.getElementById('findPhotoKey').value || undefined,
+    isPrivate: findIsPrivateValue(),
+  };
+  const result = await callApi('PATCH', () => `/api/finds/${id}`, { body });
+  showInlineResult('findPatchResult', result);
+}
+
+async function fetchConfig() {
+  const result = await callApi('GET', '/api/config');
+  showInlineResult('configResult', result);
+}
+
+async function listSpecies() {
+  const search = document.getElementById('speciesSearch').value;
+  const rarity = document.getElementById('speciesRarity').value;
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (rarity) params.set('rarity', rarity);
+  const qs = params.toString();
+  const result = await callApi('GET', () => `/api/species${qs ? `?${qs}` : ''}`);
+  showInlineResult('speciesListResult', result);
+}
+
+async function getSpeciesById() {
+  const id = document.getElementById('speciesId').value;
+  const result = await callApi('GET', () => `/api/species/${id}`);
+  showInlineResult('speciesGetResult', result);
+}
+
+async function createBeach() {
+  const alertVal = document.getElementById('beachAlertThreshold').value;
+  const body = {
+    name: document.getElementById('beachName').value,
+    city: document.getElementById('beachCity').value || undefined,
+    lat: Number(document.getElementById('beachLat').value),
+    lon: Number(document.getElementById('beachLon').value),
+    alertThresholdScore: alertVal ? Number(alertVal) : undefined,
+  };
+  const result = await callApi('POST', '/api/saved-locations', { body });
+  showInlineResult('beachPostResult', result);
+}
+
+async function listBeaches() {
+  const result = await callApi('GET', '/api/saved-locations');
+  showInlineResult('beachListResult', result);
+}
+
+async function patchBeach() {
+  const id = document.getElementById('beachId').value;
+  const alertVal = document.getElementById('beachAlertThreshold').value;
+  const isHomeVal = document.getElementById('beachIsHome').value;
+  const body = {
+    name: document.getElementById('beachName').value || undefined,
+    city: document.getElementById('beachCity').value || undefined,
+    alertThresholdScore: alertVal ? Number(alertVal) : undefined,
+    isHome: isHomeVal === 'true' ? true : undefined,
+  };
+  const result = await callApi('PATCH', () => `/api/saved-locations/${id}`, { body });
+  showInlineResult('beachPatchResult', result);
+}
+
+async function deleteBeach() {
+  const id = document.getElementById('beachId').value;
+  const result = await callApi('DELETE', () => `/api/saved-locations/${id}`);
+  showInlineResult('beachDeleteResult', result);
+}
+
+async function presignUpload() {
+  const body = {
+    contentType: document.getElementById('uploadContentType').value,
+    purpose: document.getElementById('uploadPurpose').value,
+  };
+  const result = await callApi('POST', '/api/uploads/presign', { body });
+  showInlineResult('uploadResult', result);
+}
+
+async function fetchProfile() {
+  const result = await callApi('GET', '/api/profile');
+  showInlineResult('profileGetResult', result);
+}
+
+async function patchProfile() {
+  const yearVal = document.getElementById('profileShellingSinceYear').value;
+  const body = {
+    displayName: document.getElementById('profileDisplayName').value || undefined,
+    shellingSinceYear: yearVal ? Number(yearVal) : undefined,
+    avatarKey: document.getElementById('profileAvatarKey').value || undefined,
+  };
+  const result = await callApi('PATCH', '/api/profile', { body });
+  showInlineResult('profilePatchResult', result);
+}
+
+async function putPushToken() {
+  const body = { token: document.getElementById('pushToken').value };
+  const result = await callApi('PUT', '/api/push-token', { body });
+  showInlineResult('pushTokenResult', result);
+}
+
+async function deletePushToken() {
+  const result = await callApi('DELETE', '/api/push-token');
+  showInlineResult('pushTokenResult', result);
 }
 
 async function fetchNoaaFailures() {
