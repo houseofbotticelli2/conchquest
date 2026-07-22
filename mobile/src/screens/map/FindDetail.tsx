@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, LayoutChangeEvent } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Rect, Circle } from 'react-native-svg';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
@@ -10,6 +9,7 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { Badge, BadgeType } from '../../components/Badge';
 import { ShellingMap } from '../../components/ShellingMap';
 import { PhotoViewer } from '../../components/PhotoViewer';
+import { NavBar } from '../../components/NavBar';
 import { MapStackParamList } from '../../navigation/types';
 import { getFind, FindDetail as FindDetailData, FindCondition } from '../../lib/api';
 
@@ -35,7 +35,6 @@ function formatFindDate(iso: string): string {
 
 export function FindDetail({ navigation, route }: Props) {
   const { theme: t } = useTheme();
-  const insets = useSafeAreaInsets();
   const findId = route.params?.findId;
   const [find, setFind] = useState<FindDetailData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,11 +67,7 @@ export function FindDetail({ navigation, route }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={[styles.back, { color: t.accent }]}>← Map</Text>
-        </TouchableOpacity>
-      </View>
+      <NavBar title="" left="← Map" onLeft={() => navigation.goBack()} />
 
       {loading && <ActivityIndicator color={t.accent} style={{ marginTop: 40 }} />}
 
@@ -191,12 +186,10 @@ export function FindDetail({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 },
-  back: { fontFamily: fonts.body, fontSize: 14 },
   emptyText: { fontFamily: fonts.body, fontSize: 13, textAlign: 'center', marginTop: 40, paddingHorizontal: 20 },
   mapBox: { marginHorizontal: 14, marginVertical: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, height: 270 },
   scrollContent: { paddingBottom: 40 },
-  content: { paddingHorizontal: 16, gap: 14 },
+  content: { padding: 16, gap: 14 },
   photoSpeciesRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   speciesColumn: { flex: 1 },
   photoSquare: { borderRadius: 10, borderWidth: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },

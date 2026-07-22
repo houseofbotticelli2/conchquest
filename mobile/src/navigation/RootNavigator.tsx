@@ -28,7 +28,7 @@ export function RootNavigator() {
             <Stack.Screen
               name="LogModal"
               component={LogStack}
-              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+              options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
             />
           </>
         ) : (
