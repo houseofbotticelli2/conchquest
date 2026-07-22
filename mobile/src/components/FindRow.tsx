@@ -38,7 +38,7 @@ export function FindRow({ icon, bg, name, sub, badge, dateSuffix, condition, not
       <View style={styles.badgeRow}>
         {condition && (
           <Text style={[styles.neutralChip, { backgroundColor: t.surfaceAlt, color: t.muted, borderColor: t.border }]}>
-            {condition}
+            {condition.charAt(0).toUpperCase() + condition.slice(1)}
           </Text>
         )}
         <Badge type={badge} />
