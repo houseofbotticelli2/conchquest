@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  LayoutChangeEvent,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
@@ -22,6 +23,7 @@ import { Btn } from '../../components/Btn';
 import { NavBar } from '../../components/NavBar';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { ShellingMap } from '../../components/ShellingMap';
+import { PhotoViewer } from '../../components/PhotoViewer';
 import { LogStackParamList } from '../../navigation/types';
 import {
   createFind,
@@ -58,7 +60,7 @@ export function Log({ navigation, route }: Props) {
 
   const [condition, setCondition] = useState<FindCondition>(editingFind?.condition ?? 'good');
   const [notes, setNotes] = useState(editingFind?.notes ?? '');
-  const [isPrivate, setIsPrivate] = useState(editingFind?.isPrivate ?? true);
+  const [isPrivate, setIsPrivate] = useState(editingFind?.isPrivate ?? false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,11 +71,18 @@ export function Log({ navigation, route }: Props) {
 
   const [photo, setPhoto] = useState<{ uri: string; contentType: PhotoContentType } | null>(null);
   const existingPhotoUrl = editingFind?.photoUrl ?? null;
+  const currentPhotoUri = photo?.uri ?? existingPhotoUrl;
 
   const [discardVisible, setDiscardVisible] = useState(false);
   const [photoPermMsg, setPhotoPermMsg] = useState<string | null>(null);
   const [photoSourceOpen, setPhotoSourceOpen] = useState(false);
+  const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
   const [deviceLocation, setDeviceLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [speciesBoxHeight, setSpeciesBoxHeight] = useState(60);
+
+  function handleSpeciesBoxLayout(e: LayoutChangeEvent) {
+    setSpeciesBoxHeight(e.nativeEvent.layout.height);
+  }
 
   useEffect(() => {
     if (editingFind?.speciesId) {
@@ -99,7 +108,7 @@ export function Log({ navigation, route }: Props) {
         photo !== null
       );
     }
-    return condition !== 'good' || notes !== '' || isPrivate !== true || selectedSpecies !== null || photo !== null;
+    return condition !== 'good' || notes !== '' || isPrivate !== false || selectedSpecies !== null || photo !== null;
   }
 
   function handleBack() {
@@ -220,26 +229,7 @@ export function Log({ navigation, route }: Props) {
         right={deviceLocation ? 'Current location' : 'Sanibel'}
       />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
-        {photo || existingPhotoUrl ? (
-          <TouchableOpacity style={[styles.photoBox, { borderBottomColor: t.border }]} onPress={() => setPhotoSourceOpen(true)}>
-            <Image source={{ uri: photo?.uri ?? existingPhotoUrl! }} style={styles.photoPreview} />
-            {photo && (
-              <TouchableOpacity style={styles.photoRemove} onPress={() => setPhoto(null)}>
-                <Ionicons name="close-circle" size={26} color="#fff" />
-              </TouchableOpacity>
-            )}
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[styles.photoBox, { backgroundColor: t.surfaceAlt, borderBottomColor: t.border }]}
-            onPress={() => setPhotoSourceOpen(true)}
-          >
-            <Text style={{ fontSize: 28 }}>📷</Text>
-            <Text style={[styles.photoText, { color: t.muted }]}>Tap to add photo (required)</Text>
-          </TouchableOpacity>
-        )}
-
-        {isEditMode && (
+        {isEditMode ? (
           <View style={[styles.mapBox, { borderColor: t.border }]}>
             <ShellingMap
               latitude={editingFind!.location.lat}
@@ -256,6 +246,21 @@ export function Log({ navigation, route }: Props) {
               }
             />
           </View>
+        ) : photo ? (
+          <TouchableOpacity style={[styles.photoBox, { borderBottomColor: t.border }]} onPress={() => setPhotoSourceOpen(true)}>
+            <Image source={{ uri: photo.uri }} style={styles.photoPreview} />
+            <TouchableOpacity style={styles.photoRemove} onPress={() => setPhoto(null)}>
+              <Ionicons name="close-circle" size={26} color="#fff" />
+            </TouchableOpacity>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[styles.photoBox, { backgroundColor: t.surfaceAlt, borderBottomColor: t.border }]}
+            onPress={() => setPhotoSourceOpen(true)}
+          >
+            <Text style={{ fontSize: 28 }}>📷</Text>
+            <Text style={[styles.photoText, { color: t.muted }]}>Tap to add photo (required)</Text>
+          </TouchableOpacity>
         )}
 
         <View style={styles.content}>
@@ -265,20 +270,63 @@ export function Log({ navigation, route }: Props) {
             </Text>
           )}
 
-          <View>
-            <Eyebrow>Shell species</Eyebrow>
-            {selectedSpecies ? (
-              <View style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.inputBg, borderColor: t.border }]}>
-                <View style={{ flexShrink: 1 }}>
-                  <Text style={[styles.inputText, { color: t.text }]}>{selectedSpecies.commonName}</Text>
-                  <Text style={[styles.speciesSci, { color: t.muted }]}>{selectedSpecies.scientificName}</Text>
-                </View>
-                <TouchableOpacity onPress={() => setSelectedSpecies(null)}>
-                  <Ionicons name="close-circle" size={20} color={t.muted} />
-                </TouchableOpacity>
+          {isEditMode ? (
+            <View style={styles.photoSpeciesRow}>
+              <TouchableOpacity
+                onPress={() => currentPhotoUri && setPhotoViewerOpen(true)}
+                style={[
+                  styles.photoSquare,
+                  { width: speciesBoxHeight, height: speciesBoxHeight, borderColor: t.border, backgroundColor: t.surfaceAlt },
+                ]}
+              >
+                {currentPhotoUri ? (
+                  <Image source={{ uri: currentPhotoUri }} style={styles.photoSquareImg} />
+                ) : (
+                  <Text style={{ fontSize: 22 }}>🐚</Text>
+                )}
+              </TouchableOpacity>
+
+              <View style={styles.speciesColumn} onLayout={handleSpeciesBoxLayout}>
+                <Eyebrow>Shell species</Eyebrow>
+                {selectedSpecies ? (
+                  <View style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+                    <View style={{ flexShrink: 1 }}>
+                      <Text style={[styles.inputText, { color: t.text }]}>{selectedSpecies.commonName}</Text>
+                      <Text style={[styles.speciesSci, { color: t.muted }]}>{selectedSpecies.scientificName}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setSelectedSpecies(null)}>
+                      <Ionicons name="close-circle" size={20} color={t.muted} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={[styles.inputRow, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+                    <Text style={{ color: t.muted }}>🔍</Text>
+                    <TextInput
+                      value={speciesQuery}
+                      onChangeText={setSpeciesQuery}
+                      placeholder="Search the shell library..."
+                      placeholderTextColor={t.muted}
+                      style={[styles.inputText, styles.speciesInput, { color: t.text }]}
+                    />
+                    {speciesSearching && <ActivityIndicator size="small" color={t.accent} />}
+                  </View>
+                )}
               </View>
-            ) : (
-              <>
+            </View>
+          ) : (
+            <View>
+              <Eyebrow>Shell species</Eyebrow>
+              {selectedSpecies ? (
+                <View style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+                  <View style={{ flexShrink: 1 }}>
+                    <Text style={[styles.inputText, { color: t.text }]}>{selectedSpecies.commonName}</Text>
+                    <Text style={[styles.speciesSci, { color: t.muted }]}>{selectedSpecies.scientificName}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setSelectedSpecies(null)}>
+                    <Ionicons name="close-circle" size={20} color={t.muted} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
                 <View style={[styles.inputRow, { backgroundColor: t.inputBg, borderColor: t.border }]}>
                   <Text style={{ color: t.muted }}>🔍</Text>
                   <TextInput
@@ -290,22 +338,23 @@ export function Log({ navigation, route }: Props) {
                   />
                   {speciesSearching && <ActivityIndicator size="small" color={t.accent} />}
                 </View>
-                {speciesResults.length > 0 && (
-                  <View style={[styles.resultsBox, { backgroundColor: t.surface, borderColor: t.border }]}>
-                    {speciesResults.map((s) => (
-                      <TouchableOpacity key={s.id} style={[styles.resultRow, { borderBottomColor: t.borderSoft }]} onPress={() => selectSpecies(s)}>
-                        <Text style={[styles.inputText, { color: t.text }]}>{s.commonName}</Text>
-                        <Text style={[styles.speciesSci, { color: t.muted }]}>{s.scientificName}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-                {!speciesSearching && speciesQuery.trim().length > 0 && speciesResults.length === 0 && (
-                  <Text style={[styles.speciesEmpty, { color: t.muted }]}>No shells match "{speciesQuery.trim()}".</Text>
-                )}
-              </>
-            )}
-          </View>
+              )}
+            </View>
+          )}
+
+          {speciesResults.length > 0 && (
+            <View style={[styles.resultsBox, { backgroundColor: t.surface, borderColor: t.border }]}>
+              {speciesResults.map((s) => (
+                <TouchableOpacity key={s.id} style={[styles.resultRow, { borderBottomColor: t.borderSoft }]} onPress={() => selectSpecies(s)}>
+                  <Text style={[styles.inputText, { color: t.text }]}>{s.commonName}</Text>
+                  <Text style={[styles.speciesSci, { color: t.muted }]}>{s.scientificName}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          {!speciesSearching && speciesQuery.trim().length > 0 && speciesResults.length === 0 && (
+            <Text style={[styles.speciesEmpty, { color: t.muted }]}>No shells match "{speciesQuery.trim()}".</Text>
+          )}
 
           <View>
             <Eyebrow>Condition</Eyebrow>
@@ -337,7 +386,7 @@ export function Log({ navigation, route }: Props) {
               style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.inputBg, borderColor: t.border }]}
             >
               <Text style={[styles.inputText, { color: t.text }]}>
-                {isPrivate ? '🔒 Private · general vicinity only to others' : '🌐 Public · exact location shown'}
+                {isPrivate ? '🔒 Private - general vicinity shown' : '🌐 Public · exact location shown'}
               </Text>
               <Text style={[styles.changeText, { color: t.muted }]}>CHANGE</Text>
             </TouchableOpacity>
@@ -397,6 +446,15 @@ export function Log({ navigation, route }: Props) {
         ]}
         onClose={() => setPhotoSourceOpen(false)}
       />
+      <PhotoViewer
+        uri={currentPhotoUri}
+        visible={photoViewerOpen}
+        onRequestClose={() => setPhotoViewerOpen(false)}
+        onChangePhoto={() => {
+          setPhotoViewerOpen(false);
+          setPhotoSourceOpen(true);
+        }}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -409,6 +467,10 @@ const styles = StyleSheet.create({
   photoPreview: { width: '100%', height: '100%' },
   photoRemove: { position: 'absolute', top: 10, right: 10 },
   mapBox: { marginHorizontal: 14, marginVertical: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, height: 270 },
+  photoSpeciesRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  speciesColumn: { flex: 1 },
+  photoSquare: { borderRadius: 10, borderWidth: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  photoSquareImg: { width: '100%', height: '100%', resizeMode: 'contain' },
   content: { padding: 16, gap: 14 },
   errorText: { fontFamily: fonts.body, fontSize: 12, padding: 10, borderRadius: 6, borderWidth: 1 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 6, paddingVertical: 11, paddingHorizontal: 12 },
