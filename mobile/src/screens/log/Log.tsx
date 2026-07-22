@@ -226,7 +226,7 @@ export function Log({ navigation, route }: Props) {
         title=""
         left="← Back"
         onLeft={handleBack}
-        right={deviceLocation ? 'Current location' : 'Sanibel'}
+        right={isEditMode ? undefined : deviceLocation ? 'Current location' : 'Sanibel'}
       />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
         {isEditMode ? (
