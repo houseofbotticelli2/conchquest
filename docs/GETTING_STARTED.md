@@ -1,24 +1,25 @@
 # Getting Started on Conchquest
 
-Welcome — you've already gone through `ONBOARDING.md` and have your environment
-set up (repo cloned, dependencies installed, backend/mobile running locally,
-dev client connected). This is the next step: how to actually start working on
-the project with Claude Code.
+Welcome — you've already gone through `docs/ONBOARDING.md` and have your
+environment set up (repo cloned, dependencies installed, backend/mobile
+running locally, dev client connected). This is the next step: how to
+actually start working on the project with Claude Code.
 
 ## Read these first
 
-- **`CLAUDE.md`** — Claude Code loads this automatically, but read it yourself
-  too. It covers working conventions (confirm before making changes, feet-only
-  units, schema changes go through migrations only) and known gotchas
-  (`Alert.alert` no-op on web, `expo-dev-client` version matching, web preview
-  limitations).
-- **`TODO.md`** — the current list of open and completed work, kept in sync
-  with the task tracker. This is where to look for what to work on next.
+- **`CLAUDE.md`** (repo root, not in `docs/`) — Claude Code loads this
+  automatically, but read it yourself too. It covers working conventions
+  (confirm before making changes, feet-only units, schema changes go through
+  migrations only) and known gotchas (`Alert.alert` no-op on web,
+  `expo-dev-client` version matching, web preview limitations). It has to
+  stay at the repo root — that's where Claude Code looks for it.
+- **`docs/TODO.md`** — the current list of open and completed work, kept in
+  sync with the task tracker. This is where to look for what to work on next.
 
 ## Picking a task
 
 Don't just start reading code cold — ask Claude Code to walk you through the
-open items in `TODO.md` and recommend a good first one. Two reasonable starter
+open items in `docs/TODO.md` and recommend a good first one. Two reasonable starter
 tasks if you want a suggestion up front:
 
 - **#66** — Profile avatar "change photo" doesn't work on iOS. Small, isolated,
@@ -36,7 +37,16 @@ tasks if you want a suggestion up front:
   Postgres/Supabase Auth project — a migration or push affects everyone
   immediately, not just your own copy.
 - **Don't scope-creep.** If you notice something else broken while working on
-  a task, mention it (or add it to `TODO.md`) rather than fixing it inline.
+  a task, mention it (or add it to `docs/TODO.md`) rather than fixing it inline.
+
+## Testing the API directly
+
+`api/test-harness.html` is a standalone HTML page (no build step) for
+exercising the API's endpoints directly — health check, conditions, score,
+and more — with inline results, separate from the mobile app. Useful when
+you're working on the backend and want to check a route without going
+through the mobile UI. Open it straight in a browser and point it at your
+local API (`http://localhost:3000` by default).
 
 ## Designing a screen change before building it
 
@@ -68,5 +78,5 @@ top of whatever a given project's `CLAUDE.md` already says.
 ## If you get stuck
 
 Ping Mark for anything needing his accounts (Expo/EAS builds, Apple Developer
-device registration, Railway/Supabase credentials) — see `ONBOARDING.md` for
-which of those you already have versus what routes through him.
+device registration, Railway/Supabase credentials) — see `docs/ONBOARDING.md`
+for which of those you already have versus what routes through him.
