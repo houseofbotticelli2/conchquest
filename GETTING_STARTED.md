@@ -38,6 +38,33 @@ tasks if you want a suggestion up front:
 - **Don't scope-creep.** If you notice something else broken while working on
   a task, mention it (or add it to `TODO.md`) rather than fixing it inline.
 
+## Designing a screen change before building it
+
+For a small tweak to an existing screen (spacing, wording, a button label),
+just describe the change directly and let Claude Code implement it — the
+existing components constrain the space enough that this is usually faster.
+
+For a bigger layout change or a new screen, it's often worth designing it
+first instead of nudging the real screen back and forth: ask Claude Code to
+mock it up as an **artifact** (an HTML/CSS preview using this app's real
+fonts/colors from `mobile/src/theme/tokens.ts`) right there in the same
+conversation. You react to the mockup the same way you'd give feedback on a
+real screen, and once the layout is agreed, Claude Code translates it into
+the actual React Native code. This is still the same Claude Code session —
+there's no separate design tool or handoff step. Note that a mockup won't
+catch every native-only quirk (safe-area insets, platform-specific gesture
+behavior, libraries with no web support), so expect some adjustment once it's
+implemented for real and tested on a device.
+
+## Your own personal CLAUDE.md
+
+`CLAUDE.md` at the repo root is shared — it's checked into git and applies to
+anyone working on this project. If you want standing preferences that apply
+to *you* specifically, across any project you touch (not just Conchquest),
+create `~/.claude/CLAUDE.md` on your own machine. It's outside the repo, never
+committed, and never shared — just your own personal instructions layered on
+top of whatever a given project's `CLAUDE.md` already says.
+
 ## If you get stuck
 
 Ping Mark for anything needing his accounts (Expo/EAS builds, Apple Developer
