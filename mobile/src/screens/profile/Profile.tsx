@@ -58,10 +58,10 @@ function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
 
 const HELP_ITEMS = [
   { icon: '🌊', title: 'Shellcast', body: 'Get a Shelling Score for a beach based on tide, wind, waves, and moon phase.' },
-  { icon: '🧭', title: 'Map', body: 'Browse shells the community has logged nearby.' },
-  { icon: '➕', title: 'Log', body: 'Log a find with its species, condition, and whether the location is shown publicly.' },
-  { icon: '📖', title: 'Shells', body: 'Browse the shell species library.' },
-  { icon: '👤', title: 'Profile', body: 'Your recent finds, stats, and saved beaches.' },
+  { icon: '🧭', title: 'Map', body: 'See your position, browse shells the community has logged nearby, and use the pin to pick a saved beach.' },
+  { icon: '🐚', title: 'My Shells', body: 'Log a new find with its species, condition, photo, and whether the location is shown publicly. Tap the book icon to browse the shell species library.' },
+  { icon: '🏖️', title: 'Beaches', body: 'Save your favorite beaches, mark a home beach, and get notified when one hits a Shelling Score you set.' },
+  { icon: '👤', title: 'Profile', body: 'Your recent finds, stats, and settings.' },
 ];
 
 export function Profile({ navigation }: Props) {
@@ -145,6 +145,7 @@ export function Profile({ navigation }: Props) {
   );
 
   const displayName = profile?.displayName ?? profile?.email.split('@')[0] ?? 'Shell collector';
+  const homeBeach = beaches.find((b) => b.isHome) ?? null;
 
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [editName, setEditName] = useState('');
@@ -308,7 +309,12 @@ export function Profile({ navigation }: Props) {
           <View>
             <Text style={[styles.userName, { color: t.text }]}>{displayName}</Text>
             {profile && <Text style={[styles.userSub, { color: t.muted }]}>Shelling since {profile.shellingSinceYear}</Text>}
-            <Text style={[styles.userHome, { color: t.sea }]}>Sanibel Island · Home beach</Text>
+            {homeBeach && (
+              <Text style={[styles.userHome, { color: t.sea }]}>
+                {homeBeach.name}
+                {homeBeach.city ? ` · ${homeBeach.city}` : ''} · Home beach
+              </Text>
+            )}
           </View>
         </View>
 
