@@ -103,6 +103,24 @@ export async function getHourlyTrend(lat: number, lon: number, dayOffset: number
   return blocks;
 }
 
+export interface StrategyResult {
+  strategy: string;
+  source: 'ai' | 'fallback';
+}
+
+export function getStrategy(
+  result: ShellingScoreResult,
+  beachLabel: string,
+  dayLabel: string,
+  bestWindowStart: string | null,
+  bestWindowEnd: string | null
+): Promise<StrategyResult> {
+  return apiFetch<StrategyResult>('/api/score/strategy', {
+    method: 'POST',
+    body: JSON.stringify({ result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd }),
+  });
+}
+
 export type FindCondition = 'pristine' | 'good' | 'fair' | 'poor' | 'fragment';
 
 export interface Find {

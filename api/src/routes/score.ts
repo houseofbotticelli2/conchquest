@@ -3,7 +3,9 @@ import { getConditions } from '../services/conditionsAggregator';
 import { computeShellingScore } from '../services/scoringEngine';
 import { getMultiDayForecast } from '../services/multiDayForecast';
 import { getHourlyTrend } from '../services/hourlyTrend';
+import { getShellingStrategy } from '../services/shellingStrategy';
 import { parseLatLon } from '../utils/coordinates';
+import { ShellingScoreResult } from '../types';
 
 export const scoreRouter = Router();
 
@@ -53,6 +55,32 @@ scoreRouter.get('/hourly', async (req, res, next) => {
   try {
     const blocks = await getHourlyTrend(coords.lat, coords.lon, dayOffset);
     res.json({ blocks });
+  } catch (err) {
+    next(err);
+  }
+});
+
+scoreRouter.post('/strategy', async (req, res, next) => {
+  const { result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd } = (req.body ?? {}) as {
+    result?: ShellingScoreResult;
+    beachLabel?: string;
+    dayLabel?: string;
+    bestWindowStart?: string | null;
+    bestWindowEnd?: string | null;
+  };
+
+  if (!result || typeof result !== 'object' || !Array.isArray(result.factors) || !result.conditions?.location) {
+    res.status(400).json({ error: 'Body must include a valid "result" (ShellingScoreResult)' });
+    return;
+  }
+  if (typeof beachLabel !== 'string' || typeof dayLabel !== 'string') {
+    res.status(400).json({ error: 'Body must include string "beachLabel" and "dayLabel"' });
+    return;
+  }
+
+  try {
+    const strategy = await getShellingStrategy(result, beachLabel, dayLabel, bestWindowStart ?? null, bestWindowEnd ?? null);
+    res.json(strategy);
   } catch (err) {
     next(err);
   }

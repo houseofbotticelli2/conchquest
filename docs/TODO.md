@@ -7,11 +7,11 @@ Task numbers are stable references, not priority order.
 
 - [ ] #44 Build social feed (PRD MVP item)
 - [ ] #46 Build premium subscriptions via RevenueCat (PRD MVP item)
-- [ ] #47 Build admin/moderation console (PRD MVP item)
+- [ ] #47 Build admin/moderation console (PRD MVP item; should also include OpenAI usage/spend monitoring for #67 once built)
 - [ ] #60 Build password reset flow + fix Supabase redirect URL
 - [ ] #64 Harden Railway build: keep secrets out of Nixpacks build stage
 - [ ] #65 Add Google Maps API key for Android map rendering
-- [ ] #67 Generate Shelling Strategy card via Claude API (currently just concatenates the factor explanations; already moved to surface from tapping "Best Window Today" with a "coming soon" banner)
+- [ ] #68 Monitor OpenAI spend for Shelling Strategy feature (#67); revisit caching (dedicated day-scoped cache) if the ~20min regeneration frequency drives cost/volume higher than expected
 
 ## Completed
 
@@ -72,3 +72,4 @@ Task numbers are stable references, not priority order.
 - [x] #62 Build multi-day forecast (not just today's snapshot)
 - [x] #63 Build push notifications for beach alert thresholds
 - [x] #66 Fix Profile avatar "change photo" not working on iOS
+- [x] #67 Generate Shelling Strategy card via GPT-4o-mini (OpenAI) -- new POST /api/score/strategy endpoint, cached via conditions_cache's existing ~20min TTL, falls back to the concatenated factor explanation on error/timeout; verified live end-to-end

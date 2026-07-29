@@ -21,6 +21,7 @@ export const env = {
   databaseUrl: required('DATABASE_URL'),
   supabaseUrl: required('SUPABASE_URL'),
   openWeatherApiKey: required('OPENWEATHER_API_KEY'),
+  openaiApiKey: required('OPENAI_API_KEY'),
   conditionsCacheTtlMinutes: optionalNumber('CONDITIONS_CACHE_TTL_MINUTES', 20),
   noaaStationRefreshDays: optionalNumber('NOAA_STATION_REFRESH_DAYS', 30),
   bucketUrl: required('BUCKET_ENDPOINT'),

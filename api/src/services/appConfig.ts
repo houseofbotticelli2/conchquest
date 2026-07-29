@@ -17,3 +17,8 @@ export async function getConfigNumber(key: string, fallback: number): Promise<nu
   const value = await getConfigValue(key);
   return typeof value === 'number' ? value : fallback;
 }
+
+export async function getConfigString(key: string, fallback: string): Promise<string> {
+  const value = await getConfigValue(key);
+  return typeof value === 'string' ? value : fallback;
+}
