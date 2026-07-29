@@ -267,7 +267,7 @@ export function Score({ navigation, route }: Props) {
             </View>
 
             <View style={styles.footer}>
-              <Btn label="See score breakdown" onPress={() => navigation.navigate('Detail', { result })} />
+              <Btn label="See score breakdown" onPress={() => navigation.navigate('Detail', { result, beachLabel: titleLabel })} />
             </View>
           </>
         )}

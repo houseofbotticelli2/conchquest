@@ -22,11 +22,11 @@ const FACTOR_ICONS: Record<string, string> = {
 
 export function Detail({ navigation, route }: Props) {
   const { theme: t } = useTheme();
-  const { result } = route.params;
+  const { result, beachLabel } = route.params;
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <NavBar title="Score breakdown" left="← Back" onLeft={() => navigation.goBack()} right="Sanibel" />
+      <NavBar title="Score breakdown" left="← Back" onLeft={() => navigation.goBack()} right={beachLabel} />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.factors}>
           {result.factors.map((f) => {
