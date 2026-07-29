@@ -32,6 +32,25 @@ function isTomorrow(iso: string): boolean {
   return new Date(iso).toDateString() !== new Date().toDateString();
 }
 
+function timeOfDayMinutes(iso: string): number {
+  const d = new Date(iso);
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+// Tides are semi-diurnal -- a day can have a low tide before sunrise AND
+// another one later that's actually usable. The literal "next" low tide
+// chronologically isn't necessarily the one behind a day's best-window
+// score, so flag it when it falls outside daylight rather than implying
+// it's the window to plan around.
+function daylightNote(lowTideIso: string, sunriseIso: string, sunsetIso: string): string | null {
+  const t = timeOfDayMinutes(lowTideIso);
+  const sunrise = timeOfDayMinutes(sunriseIso);
+  const sunset = timeOfDayMinutes(sunsetIso);
+  if (t < sunrise) return 'before sunrise, not a usable window';
+  if (t > sunset) return 'after sunset, not a usable window';
+  return null;
+}
+
 // Every multi-day date is a plain YYYY-MM-DD label, not tied to the user's
 // timezone (this app has no per-user timezone info anywhere) -- parsing at
 // noon UTC keeps the weekday name stable regardless of device timezone.
@@ -236,6 +255,10 @@ export function Score({ navigation, route }: Props) {
                 <Text style={[styles.windowNote, { color: t.muted, marginTop: 6 }]}>
                   Next low tide: {formatTime(nextLowTide.time)}
                   {isTomorrow(nextLowTide.time) ? ' (tomorrow)' : ''}
+                  {result && (() => {
+                    const note = daylightNote(nextLowTide.time, result.conditions.weather.sunrise, result.conditions.weather.sunset);
+                    return note ? ` — ${note}` : '';
+                  })()}
                 </Text>
               )}
             </Card>
