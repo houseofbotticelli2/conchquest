@@ -1,10 +1,12 @@
+import { pool } from '../config/db';
+import { env } from '../config/env';
 import { NormalizedConditions, ShellingScoreResult } from '../types';
 import { getTideEventsForRange, deriveTideConditions } from './noaaTides';
 import { getWaveConditions } from './noaaBuoys';
 import { getCurrentWeather, getForecast, getUvIndex, ForecastBlock } from './openWeather';
 import { getMoonPhase } from './moonPhase';
 import { computeShellingScore } from './scoringEngine';
-import { degToCompass } from '../utils/units';
+import { round, degToCompass } from '../utils/units';
 import { ensureTideStationsSynced, ensureBuoyStationsSynced } from './noaaStations';
 
 // OpenWeather's free-tier forecast endpoint only covers ~5 days at 3-hour
@@ -28,7 +30,45 @@ function nearestBlock(blocks: ForecastBlock[], at: Date): ForecastBlock | null {
   }, blocks[0]);
 }
 
+function bucket(lat: number, lon: number) {
+  return { latBucket: round(lat, 2), lonBucket: round(lon, 2) };
+}
+
+// Same shape as conditionsAggregator.ts's conditions_cache -- this route just
+// never used it. Reuses conditionsCacheTtlMinutes since it's the same
+// underlying freshness question (today's entry is scored against "now").
+async function readCache(lat: number, lon: number): Promise<MultiDayEntry[] | null> {
+  const { latBucket, lonBucket } = bucket(lat, lon);
+  const result = await pool.query<{ payload: MultiDayEntry[] }>(
+    `SELECT payload FROM multi_day_forecast_cache
+     WHERE lat_bucket = $1 AND lon_bucket = $2 AND expires_at > now()
+     ORDER BY fetched_at DESC LIMIT 1`,
+    [latBucket, lonBucket]
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  return row.payload.map((entry) => ({ ...entry, conditions: { ...entry.conditions, meta: { ...entry.conditions.meta, cacheHit: true } } }));
+}
+
+async function writeCache(lat: number, lon: number, payload: MultiDayEntry[]): Promise<void> {
+  const { latBucket, lonBucket } = bucket(lat, lon);
+  const expiresAt = new Date(Date.now() + env.conditionsCacheTtlMinutes * 60_000).toISOString();
+  await pool.query(
+    `INSERT INTO multi_day_forecast_cache (lat_bucket, lon_bucket, payload, expires_at) VALUES ($1, $2, $3, $4)`,
+    [latBucket, lonBucket, JSON.stringify(payload), expiresAt]
+  );
+}
+
 export async function getMultiDayForecast(lat: number, lon: number): Promise<MultiDayEntry[]> {
+  const cached = await readCache(lat, lon);
+  if (cached) return cached;
+
+  const entries = await fetchMultiDayForecast(lat, lon);
+  await writeCache(lat, lon, entries);
+  return entries;
+}
+
+async function fetchMultiDayForecast(lat: number, lon: number): Promise<MultiDayEntry[]> {
   await Promise.all([ensureTideStationsSynced(), ensureBuoyStationsSynced()]);
 
   const now = new Date();
