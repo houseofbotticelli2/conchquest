@@ -22,7 +22,7 @@ const SHOW_BREAKDOWN_BUTTON = false;
 
 // Falls back to Sanibel Island if location permission is denied and no
 // beach is nearby/selected.
-const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867 };
+const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867, label: 'Sanibel Island' };
 
 export function Score({ navigation, route }: Props) {
   const { theme: t } = useTheme();

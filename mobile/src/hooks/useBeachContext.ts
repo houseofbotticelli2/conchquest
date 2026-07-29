@@ -36,7 +36,7 @@ export interface BeachContext {
 // pin picker: auto-snaps to a saved beach within NEARBY_RADIUS_FEET of the
 // device's GPS fix, falls back to reverse-geocoding the current city when
 // no beach is nearby, and lets the user override either via the picker.
-export function useBeachContext(defaultLocation: { lat: number; lon: number }): BeachContext {
+export function useBeachContext(defaultLocation: { lat: number; lon: number; label: string }): BeachContext {
   const [beaches, setBeaches] = useState<SavedLocation[]>([]);
   const [deviceLocation, setDeviceLocation] = useState<DeviceLocation | null>(null);
   const [mode, setMode] = useState<Mode>({ kind: 'auto' });
@@ -73,6 +73,16 @@ export function useBeachContext(defaultLocation: { lat: number; lon: number }): 
 
   const location = selectedBeach ? selectedBeach.location : (deviceLocation ?? defaultLocation);
 
+  // True only when we've silently fallen back to the hardcoded default
+  // location (device location unavailable/denied, no beach selected) --
+  // distinct from "a real device location resolved but isn't near any
+  // saved beach," which shows the reverse-geocoded city instead. Without
+  // this, the UI looked identical in both cases ("No Beach", no subtitle),
+  // which made a fallback-location result look like a real current-location
+  // result -- e.g. showing Sanibel's tide data with no indication it wasn't
+  // the user's actual position.
+  const isUsingDefaultLocation = !selectedBeach && !deviceLocation;
+
   useEffect(() => {
     if (selectedBeach || !deviceLocation) {
       setGeocodedCity(null);
@@ -101,7 +111,7 @@ export function useBeachContext(defaultLocation: { lat: number; lon: number }): 
     selectedBeach,
     location,
     titleLabel: selectedBeach ? selectedBeach.name : 'No Beach',
-    subLabel: selectedBeach ? selectedBeach.city : geocodedCity,
+    subLabel: selectedBeach ? selectedBeach.city : isUsingDefaultLocation ? defaultLocation.label : geocodedCity,
     pickerOpen,
     setPickerOpen,
     selectBeach,
