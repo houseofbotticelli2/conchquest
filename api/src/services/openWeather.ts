@@ -13,10 +13,17 @@ export interface ForecastBlock {
   time: string;
   windSpeedMph: number;
   windDeg: number;
+  tempF: number;
+  conditions: string | null;
 }
 
 interface ForecastResponse {
-  list: { dt: number; wind: { speed: number; deg: number } }[];
+  list: {
+    dt: number;
+    wind: { speed: number; deg: number };
+    main: { temp: number };
+    weather: { description: string }[];
+  }[];
 }
 
 export async function getCurrentWeather(
@@ -68,5 +75,7 @@ export async function getForecast(lat: number, lon: number): Promise<ForecastBlo
     time: new Date(block.dt * 1000).toISOString(),
     windSpeedMph: block.wind.speed,
     windDeg: block.wind.deg,
+    tempF: block.main.temp,
+    conditions: block.weather[0]?.description ?? null,
   }));
 }

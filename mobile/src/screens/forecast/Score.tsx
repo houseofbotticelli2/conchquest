@@ -10,7 +10,7 @@ import { Btn } from '../../components/Btn';
 import { ScoreRing } from '../../components/ScoreRing';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { ForecastStackParamList } from '../../navigation/types';
-import { getScore, ShellingScoreResult } from '../../lib/api';
+import { getMultiDayScore, MultiDayScoreEntry } from '../../lib/api';
 import { useBeachContext } from '../../hooks/useBeachContext';
 
 type Props = NativeStackScreenProps<ForecastStackParamList, 'Score'>;
@@ -23,14 +23,43 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
+function formatTimeShort(iso: string): string {
+  // "8:15 AM" -> "8:15a", to fit the narrow day-strip chip.
+  return formatTime(iso).replace(' ', '').replace('AM', 'a').replace('PM', 'p');
+}
+
 function isTomorrow(iso: string): boolean {
   return new Date(iso).toDateString() !== new Date().toDateString();
+}
+
+// Every multi-day date is a plain YYYY-MM-DD label, not tied to the user's
+// timezone (this app has no per-user timezone info anywhere) -- parsing at
+// noon UTC keeps the weekday name stable regardless of device timezone.
+function weekdayLabel(date: string): string {
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short' });
+}
+
+function weekdayFull(date: string): string {
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long' });
+}
+
+function dayChipLabel(index: number, date: string): string {
+  if (index === 0) return 'Today';
+  if (index === 1) return 'Tmrw';
+  return weekdayLabel(date);
+}
+
+function daySentenceLabel(index: number, date: string): string {
+  if (index === 0) return 'today';
+  if (index === 1) return 'tomorrow';
+  return weekdayFull(date);
 }
 
 export function Score({ navigation, route }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
-  const [result, setResult] = useState<ShellingScoreResult | null>(null);
+  const [days, setDays] = useState<MultiDayScoreEntry[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,12 +76,13 @@ export function Score({ navigation, route }: Props) {
     }
   }, [alertBeachId, beaches]);
 
-  const fetchScore = useCallback(async () => {
+  const fetchDays = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getScore(location.lat, location.lon);
-      setResult(data);
+      const data = await getMultiDayScore(location.lat, location.lon);
+      setDays(data);
+      setSelectedIndex(0);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load score');
     } finally {
@@ -61,8 +91,12 @@ export function Score({ navigation, route }: Props) {
   }, [location.lat, location.lon]);
 
   useEffect(() => {
-    fetchScore();
-  }, [fetchScore]);
+    fetchDays();
+  }, [fetchDays]);
+
+  const result = days[selectedIndex] ?? null;
+  const isToday = selectedIndex === 0;
+  const bestIndex = days.length > 0 ? days.reduce((best, d, i) => (d.score > days[best].score ? i : best), 0) : -1;
 
   const chips = result
     ? [
@@ -71,16 +105,24 @@ export function Score({ navigation, route }: Props) {
             ? 'TIDE N/A'
             : `TIDE ${result.conditions.tide.movement === 'falling' ? '↓' : result.conditions.tide.movement === 'rising' ? '↑' : '~'}`,
           color: t.sea,
+          unavailable: false,
         },
-        { label: `WIND ${Math.round(result.conditions.wind.speedMph)}mph`, color: t.sea },
-        {
-          label: result.conditions.waves.heightFt != null ? `WAVES ${result.conditions.waves.heightFt.toFixed(1)}ft` : 'WAVES N/A',
-          color: '#D9B36C',
-        },
+        { label: `WIND ${Math.round(result.conditions.wind.speedMph)}mph`, color: t.sea, unavailable: false },
+        // No wave forecast exists for future days (only a live buoy reading
+        // for today) -- gray those out instead of showing a fabricated N/A
+        // that looks the same as every other chip.
+        !isToday
+          ? { label: 'WAVES N/A', color: t.muted, unavailable: true }
+          : {
+              label: result.conditions.waves.heightFt != null ? `WAVES ${result.conditions.waves.heightFt.toFixed(1)}ft` : 'WAVES N/A',
+              color: '#D9B36C',
+              unavailable: false,
+            },
       ]
     : [];
 
   const nextLowTide = result?.conditions.tide?.nextEvents.find((e) => e.type === 'low') ?? null;
+  const sentenceLabel = result ? daySentenceLabel(selectedIndex, result.date) : '';
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
@@ -130,7 +172,39 @@ export function Score({ navigation, route }: Props) {
         {!loading && error && (
           <View style={styles.centerBox}>
             <Text style={[styles.errorText, { color: t.accentDeep }]}>{error}</Text>
-            <Btn label="Retry" variant="ghost" onPress={fetchScore} style={{ marginTop: 12 }} />
+            <Btn label="Retry" variant="ghost" onPress={fetchDays} style={{ marginTop: 12 }} />
+          </View>
+        )}
+
+        {!loading && !error && days.length > 0 && (
+          <View style={styles.dayStripWrap}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayStrip}>
+              {days.map((d, i) => {
+                const selected = i === selectedIndex;
+                const isBest = i === bestIndex;
+                return (
+                  <TouchableOpacity
+                    key={d.date}
+                    onPress={() => setSelectedIndex(i)}
+                    style={[
+                      styles.dayChip,
+                      { backgroundColor: selected ? t.text : t.surface, borderColor: selected ? t.text : t.borderSoft },
+                    ]}
+                  >
+                    {isBest && (
+                      <Text style={[styles.bestBadge, { backgroundColor: t.accent }]}>Best</Text>
+                    )}
+                    <Text style={[styles.dayChipLabel, { color: selected ? t.bg : t.muted }]}>
+                      {dayChipLabel(i, d.date).toUpperCase()}
+                    </Text>
+                    <Text style={[styles.dayChipScore, { color: selected ? t.bg : scoreColor(d.score, t) }]}>{d.score}</Text>
+                    <Text style={[styles.dayChipWindow, { color: selected ? t.bg : t.muted, opacity: selected ? 0.8 : 1 }]}>
+                      {d.bestWindow ? formatTimeShort(d.bestWindow.start) : '—'}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
         )}
 
@@ -142,7 +216,7 @@ export function Score({ navigation, route }: Props) {
             </View>
 
             <Card style={styles.windowCard}>
-              <Eyebrow>Best window today</Eyebrow>
+              <Eyebrow>Best window {sentenceLabel}</Eyebrow>
               {result.bestWindow ? (
                 <>
                   <Text style={[styles.windowTime, { color: t.text }]}>
@@ -152,8 +226,10 @@ export function Score({ navigation, route }: Props) {
                 </>
               ) : (
                 <>
-                  <Text style={[styles.windowTime, { color: t.text }]}>No shelling window today</Text>
-                  <Text style={[styles.windowNote, { color: t.sea }]}>Today's low tide falls at night, outside daylight hours.</Text>
+                  <Text style={[styles.windowTime, { color: t.text }]}>No shelling window {isToday ? 'today' : sentenceLabel}</Text>
+                  <Text style={[styles.windowNote, { color: t.sea }]}>
+                    {isToday ? "Today's" : `${sentenceLabel}'s`} low tide falls at night, outside daylight hours.
+                  </Text>
                 </>
               )}
               {nextLowTide && (
@@ -165,7 +241,7 @@ export function Score({ navigation, route }: Props) {
             </Card>
 
             <Card style={styles.windowCard}>
-              <Eyebrow>Today's conditions</Eyebrow>
+              <Eyebrow>Conditions {sentenceLabel}</Eyebrow>
               <Text style={[styles.windowTime, { color: t.text }]}>
                 {result.conditions.weather.tempF != null ? `${Math.round(result.conditions.weather.tempF)}°F` : '--°F'}
                 {result.conditions.weather.conditions ? ` · ${result.conditions.weather.conditions}` : ''}
@@ -177,7 +253,14 @@ export function Score({ navigation, route }: Props) {
 
             <View style={styles.chipsRow}>
               {chips.map((c) => (
-                <Text key={c.label} style={[styles.chip, { backgroundColor: t.surface, borderColor: t.border, color: c.color }]}>
+                <Text
+                  key={c.label}
+                  style={[
+                    styles.chip,
+                    { backgroundColor: t.surface, borderColor: c.unavailable ? t.muted : t.border, color: c.color },
+                    c.unavailable && styles.chipUnavailable,
+                  ]}
+                >
                   {c.label}
                 </Text>
               ))}
@@ -208,6 +291,35 @@ const styles = StyleSheet.create({
   placeSub: { fontFamily: fonts.data, fontSize: 11 },
   centerBox: { paddingVertical: 60, alignItems: 'center', paddingHorizontal: 24 },
   errorText: { fontFamily: fonts.body, fontSize: 14, textAlign: 'center' },
+  dayStripWrap: { marginTop: 2, marginBottom: 4 },
+  dayStrip: { paddingHorizontal: 16, gap: 8 },
+  dayChip: {
+    width: 60,
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingVertical: 9,
+    paddingBottom: 8,
+    alignItems: 'center',
+  },
+  dayChipLabel: { fontFamily: fonts.data, fontSize: 9.5, letterSpacing: 0.4 },
+  dayChipScore: { fontFamily: fonts.displayBold, fontSize: 21, marginTop: 3, lineHeight: 24 },
+  dayChipWindow: { fontFamily: fonts.data, fontSize: 8.5, marginTop: 4 },
+  bestBadge: {
+    position: 'absolute',
+    top: -7,
+    right: 6,
+    color: '#fff',
+    fontFamily: fonts.data,
+    fontSize: 7,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  chipUnavailable: { borderStyle: 'dashed', opacity: 0.75 },
   ringWrap: { paddingVertical: 12, alignItems: 'center' },
   confidence: { fontFamily: fonts.data, fontSize: 11, marginTop: 8, letterSpacing: 0.4, textTransform: 'uppercase' },
   windowCard: { marginHorizontal: 16, marginBottom: 12 },

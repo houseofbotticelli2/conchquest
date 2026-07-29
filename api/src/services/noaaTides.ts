@@ -69,12 +69,69 @@ function toEvent(p: RawPrediction): TideEvent {
   };
 }
 
-export async function getTideConditions(lat: number, lon: number, now: Date): Promise<TideConditions | null> {
+interface TideStationInfo {
+  stationId: string;
+  name: string;
+  distanceFeet: number;
+}
+
+// Pure -- computes tide state (level/movement/upcoming events) at an
+// arbitrary instant from an already-fetched event list. Shared by the live
+// "now" path (getTideConditions) and the multi-day forecast, which evaluates
+// this at a representative time for each future day rather than the real
+// current time.
+export function deriveTideConditions(station: TideStationInfo, events: TideEvent[], at: Date): TideConditions {
+  const atMs = at.getTime();
+  let prev: TideEvent | null = null;
+  let next: TideEvent | null = null;
+  for (const event of events) {
+    const eventMs = new Date(event.time).getTime();
+    if (eventMs <= atMs) prev = event;
+    if (eventMs > atMs && !next) next = event;
+  }
+
+  let currentLevelFt: number | null = null;
+  let percentToNextExtreme: number | null = null;
+  let movement: TideConditions['movement'] = 'unknown';
+
+  if (prev && next) {
+    const prevMs = new Date(prev.time).getTime();
+    const nextMs = new Date(next.time).getTime();
+    const fraction = (atMs - prevMs) / (nextMs - prevMs);
+    // Tide rise/fall approximates a cosine curve between consecutive
+    // high/low extremes far better than a linear interpolation.
+    currentLevelFt = prev.heightFt + (next.heightFt - prev.heightFt) * (1 - Math.cos(Math.PI * fraction)) / 2;
+    percentToNextExtreme = fraction * 100;
+
+    const minutesFromTurn = Math.min(atMs - prevMs, nextMs - atMs) / 60_000;
+    if (minutesFromTurn < 15) {
+      movement = 'slack';
+    } else {
+      movement = next.heightFt > prev.heightFt ? 'rising' : 'falling';
+    }
+  }
+
+  const upcomingEvents = events.filter((e) => new Date(e.time).getTime() > atMs).slice(0, 4);
+
+  return {
+    stationId: station.stationId,
+    stationName: station.name,
+    distanceFeet: station.distanceFeet,
+    currentLevelFt,
+    percentToNextExtreme,
+    movement,
+    nextEvents: upcomingEvents,
+  };
+}
+
+export async function getTideEventsForRange(
+  lat: number,
+  lon: number,
+  begin: Date,
+  end: Date
+): Promise<{ station: TideStationInfo; events: TideEvent[] } | null> {
   const station = await findNearestTideStation(lat, lon);
   if (!station) return null;
-
-  const begin = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const end = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
   let predictions: RawPrediction[];
   try {
@@ -86,46 +143,15 @@ export async function getTideConditions(lat: number, lon: number, now: Date): Pr
     return null;
   }
   const events = predictions.map(toEvent).sort((a, b) => a.time.localeCompare(b.time));
+  return { station, events };
+}
 
-  const nowMs = now.getTime();
-  let prev: TideEvent | null = null;
-  let next: TideEvent | null = null;
-  for (const event of events) {
-    const eventMs = new Date(event.time).getTime();
-    if (eventMs <= nowMs) prev = event;
-    if (eventMs > nowMs && !next) next = event;
-  }
+export async function getTideConditions(lat: number, lon: number, now: Date): Promise<TideConditions | null> {
+  const begin = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const end = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
-  let currentLevelFt: number | null = null;
-  let percentToNextExtreme: number | null = null;
-  let movement: TideConditions['movement'] = 'unknown';
+  const result = await getTideEventsForRange(lat, lon, begin, end);
+  if (!result) return null;
 
-  if (prev && next) {
-    const prevMs = new Date(prev.time).getTime();
-    const nextMs = new Date(next.time).getTime();
-    const fraction = (nowMs - prevMs) / (nextMs - prevMs);
-    // Tide rise/fall approximates a cosine curve between consecutive
-    // high/low extremes far better than a linear interpolation.
-    currentLevelFt = prev.heightFt + (next.heightFt - prev.heightFt) * (1 - Math.cos(Math.PI * fraction)) / 2;
-    percentToNextExtreme = fraction * 100;
-
-    const minutesFromTurn = Math.min(nowMs - prevMs, nextMs - nowMs) / 60_000;
-    if (minutesFromTurn < 15) {
-      movement = 'slack';
-    } else {
-      movement = next.heightFt > prev.heightFt ? 'rising' : 'falling';
-    }
-  }
-
-  const upcomingEvents = events.filter((e) => new Date(e.time).getTime() > nowMs).slice(0, 4);
-
-  return {
-    stationId: station.stationId,
-    stationName: station.name,
-    distanceFeet: station.distanceFeet,
-    currentLevelFt,
-    percentToNextExtreme,
-    movement,
-    nextEvents: upcomingEvents,
-  };
+  return deriveTideConditions(result.station, result.events, now);
 }

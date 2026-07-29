@@ -79,6 +79,15 @@ export function getScore(lat: number, lon: number): Promise<ShellingScoreResult>
   return apiFetch<ShellingScoreResult>(`/api/score?lat=${lat}&lon=${lon}`);
 }
 
+export interface MultiDayScoreEntry extends ShellingScoreResult {
+  date: string; // YYYY-MM-DD
+}
+
+export async function getMultiDayScore(lat: number, lon: number): Promise<MultiDayScoreEntry[]> {
+  const { days } = await apiFetch<{ days: MultiDayScoreEntry[] }>(`/api/score/multi-day?lat=${lat}&lon=${lon}`);
+  return days;
+}
+
 export type FindCondition = 'pristine' | 'good' | 'fair' | 'poor' | 'fragment';
 
 export interface Find {
