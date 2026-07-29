@@ -11,7 +11,7 @@ Task numbers are stable references, not priority order.
 - [ ] #60 Build password reset flow + fix Supabase redirect URL
 - [ ] #64 Harden Railway build: keep secrets out of Nixpacks build stage
 - [ ] #65 Add Google Maps API key for Android map rendering
-- [ ] #66 Fix Profile avatar "change photo" not working on iOS
+- [ ] #66 Fix Profile avatar "change photo" not working on iOS (fix implemented, needs verification on a real iOS device/simulator)
 - [ ] #67 Generate Shelling Strategy card via Claude API (currently just concatenates the factor explanations; already moved to surface from tapping "Best Window Today" with a "coming soon" banner)
 
 ## Completed
