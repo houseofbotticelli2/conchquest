@@ -12,7 +12,7 @@ Task numbers are stable references, not priority order.
 - [ ] #64 Harden Railway build: keep secrets out of Nixpacks build stage
 - [ ] #65 Add Google Maps API key for Android map rendering
 - [ ] #66 Fix Profile avatar "change photo" not working on iOS
-- [ ] #67 Generate Shelling Strategy card via Claude API (currently just concatenates the factor explanations)
+- [ ] #67 Generate Shelling Strategy card via Claude API (currently just concatenates the factor explanations) and move it to surface from tapping "Best Window Today" instead of living on the Score Breakdown screen
 
 ## Completed
 

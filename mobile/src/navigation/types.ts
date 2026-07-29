@@ -11,6 +11,7 @@ export type OnboardingStackParamList = {
 export type ForecastStackParamList = {
   Score: { beachId?: string } | undefined;
   Detail: { result: ShellingScoreResult; beachLabel: string };
+  ConditionsDetail: { result: ShellingScoreResult; dayOffset: number; dayLabel: string; beachLabel: string };
 };
 
 export type MapStackParamList = {

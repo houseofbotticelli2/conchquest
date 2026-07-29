@@ -4,7 +4,7 @@ import { NormalizedConditions } from '../types';
 import { ensureTideStationsSynced, ensureBuoyStationsSynced } from './noaaStations';
 import { getTideConditions } from './noaaTides';
 import { getWaveConditions } from './noaaBuoys';
-import { getCurrentWeather } from './openWeather';
+import { getCurrentWeather, getUvIndex } from './openWeather';
 import { getMoonPhase } from './moonPhase';
 import { round } from '../utils/units';
 
@@ -52,10 +52,11 @@ export async function getConditions(lat: number, lon: number): Promise<Normalize
   await Promise.all([ensureTideStationsSynced(), ensureBuoyStationsSynced()]);
 
   const now = new Date();
-  const [tide, waves, currentWeather] = await Promise.all([
+  const [tide, waves, currentWeather, uvIndex] = await Promise.all([
     getTideConditions(lat, lon, now),
     getWaveConditions(lat, lon),
     getCurrentWeather(lat, lon),
+    getUvIndex(lat, lon),
   ]);
 
   const moon = getMoonPhase(now);
@@ -75,7 +76,7 @@ export async function getConditions(lat: number, lon: number): Promise<Normalize
       observedAt: null,
       stale: true,
     },
-    weather: currentWeather.weather,
+    weather: { ...currentWeather.weather, uvIndex },
     moon,
     meta: { fetchedAt, expiresAt, cacheHit: false },
   };

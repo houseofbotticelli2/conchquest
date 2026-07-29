@@ -278,16 +278,28 @@ export function Score({ navigation, route }: Props) {
               )}
             </Card>
 
-            <Card style={styles.windowCard}>
-              <Eyebrow>Conditions {sentenceLabel}</Eyebrow>
-              <Text style={[styles.windowTime, { color: t.text }]}>
-                {result.conditions.weather.tempF != null ? `${Math.round(result.conditions.weather.tempF)}°F` : '--°F'}
-                {result.conditions.weather.conditions ? ` · ${result.conditions.weather.conditions}` : ''}
-              </Text>
-              <Text style={[styles.windowNote, { color: t.muted }]}>
-                Sunrise {formatTime(result.conditions.weather.sunrise)} · Sunset {formatTime(result.conditions.weather.sunset)}
-              </Text>
-            </Card>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() =>
+                navigation.navigate('ConditionsDetail', {
+                  result,
+                  dayOffset: selectedIndex,
+                  dayLabel: sentenceLabel,
+                  beachLabel: titleLabel,
+                })
+              }
+            >
+              <Card style={styles.windowCard}>
+                <Eyebrow>Conditions {sentenceLabel}</Eyebrow>
+                <Text style={[styles.windowTime, { color: t.text }]}>
+                  {result.conditions.weather.tempF != null ? `${Math.round(result.conditions.weather.tempF)}°F` : '--°F'}
+                  {result.conditions.weather.conditions ? ` · ${result.conditions.weather.conditions}` : ''}
+                </Text>
+                <Text style={[styles.windowNote, { color: t.muted }]}>
+                  Sunrise {formatTime(result.conditions.weather.sunrise)} · Sunset {formatTime(result.conditions.weather.sunset)}
+                </Text>
+              </Card>
+            </TouchableOpacity>
 
             <View style={styles.chipsRow}>
               {chips.map((c) => (

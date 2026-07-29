@@ -54,7 +54,7 @@ export interface NormalizedConditions {
   } | null;
   wind: { speedMph: number; gustMph: number | null; directionDeg: number; directionCompass: string };
   waves: { heightFt: number | null; periodSec: number | null; directionDeg: number | null; stale: boolean };
-  weather: { tempF: number | null; conditions: string | null; sunrise: string; sunset: string };
+  weather: { tempF: number | null; conditions: string | null; sunrise: string; sunset: string; humidity: number | null; uvIndex: number | null };
   moon: { phaseName: string; illumination: number; isSpringTide: boolean };
 }
 
@@ -86,6 +86,21 @@ export interface MultiDayScoreEntry extends ShellingScoreResult {
 export async function getMultiDayScore(lat: number, lon: number): Promise<MultiDayScoreEntry[]> {
   const { days } = await apiFetch<{ days: MultiDayScoreEntry[] }>(`/api/score/multi-day?lat=${lat}&lon=${lon}`);
   return days;
+}
+
+export interface HourlyBlock {
+  time: string;
+  tempF: number;
+  conditions: string | null;
+  precipChance: number | null;
+  humidity: number | null;
+}
+
+export async function getHourlyTrend(lat: number, lon: number, dayOffset: number): Promise<HourlyBlock[]> {
+  const { blocks } = await apiFetch<{ blocks: HourlyBlock[] }>(
+    `/api/score/hourly?lat=${lat}&lon=${lon}&dayOffset=${dayOffset}`
+  );
+  return blocks;
 }
 
 export type FindCondition = 'pristine' | 'good' | 'fair' | 'poor' | 'fragment';

@@ -1,7 +1,7 @@
 import { NormalizedConditions, ShellingScoreResult } from '../types';
 import { getTideEventsForRange, deriveTideConditions } from './noaaTides';
 import { getWaveConditions } from './noaaBuoys';
-import { getCurrentWeather, getForecast, ForecastBlock } from './openWeather';
+import { getCurrentWeather, getForecast, getUvIndex, ForecastBlock } from './openWeather';
 import { getMoonPhase } from './moonPhase';
 import { computeShellingScore } from './scoringEngine';
 import { degToCompass } from '../utils/units';
@@ -35,11 +35,12 @@ export async function getMultiDayForecast(lat: number, lon: number): Promise<Mul
   const rangeBegin = new Date(now.getTime() - DAY_MS);
   const rangeEnd = new Date(now.getTime() + MULTI_DAY_COUNT * DAY_MS);
 
-  const [tideRange, currentWeather, todaysWaves, forecastBlocks] = await Promise.all([
+  const [tideRange, currentWeather, todaysWaves, forecastBlocks, todaysUvIndex] = await Promise.all([
     getTideEventsForRange(lat, lon, rangeBegin, rangeEnd),
     getCurrentWeather(lat, lon),
     getWaveConditions(lat, lon),
     getForecast(lat, lon),
+    getUvIndex(lat, lon),
   ]);
 
   // Anchor every future day's sunrise/sunset to today's real values shifted
@@ -84,7 +85,7 @@ export async function getMultiDayForecast(lat: number, lon: number): Promise<Mul
     let weather: NormalizedConditions['weather'];
     if (isToday) {
       wind = currentWeather.wind;
-      weather = currentWeather.weather;
+      weather = { ...currentWeather.weather, uvIndex: todaysUvIndex };
     } else {
       const block = nearestBlock(forecastBlocks, referenceTime);
       wind = block
@@ -95,6 +96,8 @@ export async function getMultiDayForecast(lat: number, lon: number): Promise<Mul
         conditions: block?.conditions ?? null,
         sunrise: sunrise.toISOString(),
         sunset: sunset.toISOString(),
+        humidity: block?.humidity ?? null,
+        uvIndex: null, // UV isn't forecastable via this endpoint -- only ever available for today
       };
     }
 

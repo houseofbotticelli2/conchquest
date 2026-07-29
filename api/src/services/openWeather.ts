@@ -4,7 +4,7 @@ import { degToCompass } from '../utils/units';
 
 interface CurrentWeatherResponse {
   wind: { speed: number; deg: number; gust?: number };
-  main: { temp: number };
+  main: { temp: number; humidity: number };
   weather: { main: string; description: string }[];
   sys: { sunrise: number; sunset: number };
 }
@@ -15,14 +15,17 @@ export interface ForecastBlock {
   windDeg: number;
   tempF: number;
   conditions: string | null;
+  humidity: number | null;
+  pop: number | null; // probability of precipitation, 0-1
 }
 
 interface ForecastResponse {
   list: {
     dt: number;
     wind: { speed: number; deg: number };
-    main: { temp: number };
+    main: { temp: number; humidity: number };
     weather: { description: string }[];
+    pop?: number;
   }[];
 }
 
@@ -54,8 +57,38 @@ export async function getCurrentWeather(
       conditions: body.weather[0]?.description ?? null,
       sunrise: new Date(body.sys.sunrise * 1000).toISOString(),
       sunset: new Date(body.sys.sunset * 1000).toISOString(),
+      humidity: body.main.humidity ?? null,
+      uvIndex: null, // filled in separately by getUvIndex -- a different, less reliable endpoint
     },
   };
+}
+
+interface UvResponse {
+  value: number;
+}
+
+// OpenWeather's dedicated UV endpoint is deprecated (no replacement in the
+// free-tier weather/forecast APIs this app otherwise uses) -- it could stop
+// working without notice, so failures here are swallowed and just mean the
+// UV field is omitted rather than the whole conditions fetch failing.
+export async function getUvIndex(lat: number, lon: number): Promise<number | null> {
+  try {
+    const url = new URL('https://api.openweathermap.org/data/2.5/uvi');
+    url.searchParams.set('lat', String(lat));
+    url.searchParams.set('lon', String(lon));
+    url.searchParams.set('appid', env.openWeatherApiKey);
+
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      console.error(`OpenWeather UV index request failed: ${response.status}`);
+      return null;
+    }
+    const body = (await response.json()) as UvResponse;
+    return typeof body.value === 'number' ? body.value : null;
+  } catch (err) {
+    console.error('OpenWeather UV index request failed:', err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 export async function getForecast(lat: number, lon: number): Promise<ForecastBlock[]> {
@@ -77,5 +110,7 @@ export async function getForecast(lat: number, lon: number): Promise<ForecastBlo
     windDeg: block.wind.deg,
     tempF: block.main.temp,
     conditions: block.weather[0]?.description ?? null,
+    humidity: block.main.humidity ?? null,
+    pop: typeof block.pop === 'number' ? block.pop : null,
   }));
 }

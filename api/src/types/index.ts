@@ -42,6 +42,8 @@ export interface WeatherConditions {
   conditions: string | null;
   sunrise: string; // ISO 8601
   sunset: string; // ISO 8601
+  humidity: number | null; // percent, 0-100
+  uvIndex: number | null; // null when unavailable (e.g. future days, or the UV endpoint failing)
 }
 
 export interface MoonConditions {
