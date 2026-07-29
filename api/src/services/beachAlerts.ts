@@ -11,6 +11,7 @@ const ALERT_COOLDOWN_HOURS = 12;
 interface AlertCandidateRow {
   id: string;
   name: string;
+  city: string | null;
   lat: number;
   lon: number;
   alert_threshold_score: number;
@@ -19,7 +20,7 @@ interface AlertCandidateRow {
 
 async function fetchAlertCandidates(): Promise<AlertCandidateRow[]> {
   const result = await pool.query<AlertCandidateRow>(
-    `SELECT sl.id, sl.name, ST_Y(sl.geog::geometry) AS lat, ST_X(sl.geog::geometry) AS lon,
+    `SELECT sl.id, sl.name, sl.city, ST_Y(sl.geog::geometry) AS lat, ST_X(sl.geog::geometry) AS lon,
             sl.alert_threshold_score, u.push_token
      FROM saved_locations sl
      JOIN users u ON u.id = sl.user_id
@@ -41,10 +42,12 @@ export async function checkBeachAlerts(): Promise<void> {
       const { score } = computeShellingScore(conditions);
 
       if (score >= beach.alert_threshold_score) {
+        const beachLabel = beach.city ? `${beach.name} (${beach.city})` : beach.name;
         await sendPushNotification(
           beach.push_token,
           '🐚 Great shelling conditions!',
-          `${beach.name} just hit a Shellcast score of ${score} -- time to go check it out.`
+          `${beachLabel} just hit a Shellcast score of ${score} -- time to go check it out.`,
+          { beachId: beach.id }
         );
         await pool.query(`UPDATE saved_locations SET last_alerted_at = now() WHERE id = $1`, [beach.id]);
         sent += 1;

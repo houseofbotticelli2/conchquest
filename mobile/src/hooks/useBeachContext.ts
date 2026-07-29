@@ -29,6 +29,7 @@ export interface BeachContext {
   pickerOpen: boolean;
   setPickerOpen: (v: boolean) => void;
   selectBeach: (beach: SavedLocation | null) => void;
+  selectBeachById: (id: string) => void;
 }
 
 // Shared "which beach am I looking at" logic behind Shellcast's and Map's
@@ -91,6 +92,10 @@ export function useBeachContext(defaultLocation: { lat: number; lon: number }): 
     setPickerOpen(false);
   }
 
+  function selectBeachById(id: string) {
+    setMode({ kind: 'beach', id });
+  }
+
   return {
     beaches,
     selectedBeach,
@@ -100,5 +105,6 @@ export function useBeachContext(defaultLocation: { lat: number; lon: number }): 
     pickerOpen,
     setPickerOpen,
     selectBeach,
+    selectBeachById,
   };
 }

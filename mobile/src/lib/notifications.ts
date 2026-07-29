@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { registerPushToken, unregisterPushToken } from './api';
+import { navigateToBeachAlert } from '../navigation/navigationRef';
 
 const PROJECT_ID = Constants.expoConfig?.extra?.eas?.projectId;
 
@@ -40,4 +41,22 @@ export async function enableBeachAlerts(): Promise<NotificationSetupResult> {
 
 export async function disableBeachAlerts(): Promise<void> {
   await unregisterPushToken();
+}
+
+// Tapping a beach-alert push should land on Shellcast already showing the
+// beach that triggered it, not whatever beach auto-detect would otherwise pick.
+export function setupNotificationTapHandler(): () => void {
+  function handleResponse(response: Notifications.NotificationResponse) {
+    const beachId = response.notification.request.content.data?.beachId;
+    if (typeof beachId === 'string') {
+      navigateToBeachAlert(beachId);
+    }
+  }
+
+  Notifications.getLastNotificationResponseAsync().then((response) => {
+    if (response) handleResponse(response);
+  });
+
+  const subscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
+  return () => subscription.remove();
 }

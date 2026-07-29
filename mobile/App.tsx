@@ -1,5 +1,5 @@
 import 'react-native-url-polyfill/auto';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { IBMPlexMono_500Medium, IBMPlexMono_600SemiBold } from '@expo-google-fon
 import { ThemeProvider } from './src/theme/ThemeProvider';
 import { AuthProvider } from './src/auth/AuthProvider';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { setupNotificationTapHandler } from './src/lib/notifications';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -22,6 +23,8 @@ export default function App() {
     IBMPlexMono_500Medium,
     IBMPlexMono_600SemiBold,
   });
+
+  useEffect(() => setupNotificationTapHandler(), []);
 
   if (!fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: '#F2ECE4' }} />;

@@ -9,7 +9,7 @@ export type OnboardingStackParamList = {
 };
 
 export type ForecastStackParamList = {
-  Score: undefined;
+  Score: { beachId?: string } | undefined;
   Detail: { result: ShellingScoreResult };
 };
 

@@ -27,15 +27,25 @@ function isTomorrow(iso: string): boolean {
   return new Date(iso).toDateString() !== new Date().toDateString();
 }
 
-export function Score({ navigation }: Props) {
+export function Score({ navigation, route }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
   const [result, setResult] = useState<ShellingScoreResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { beaches, selectedBeach, location, titleLabel, subLabel, pickerOpen, setPickerOpen, selectBeach } =
+  const { beaches, selectedBeach, location, titleLabel, subLabel, pickerOpen, setPickerOpen, selectBeach, selectBeachById } =
     useBeachContext(DEFAULT_LOCATION);
+
+  // A tapped beach-alert push notification carries the beach that triggered
+  // it -- jump straight to that beach instead of leaving auto-detect in charge.
+  const alertBeachId = route.params?.beachId;
+  useEffect(() => {
+    if (alertBeachId && beaches.some((b) => b.id === alertBeachId)) {
+      selectBeachById(alertBeachId);
+      navigation.setParams({ beachId: undefined });
+    }
+  }, [alertBeachId, beaches]);
 
   const fetchScore = useCallback(async () => {
     setLoading(true);
