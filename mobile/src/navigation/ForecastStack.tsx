@@ -4,6 +4,7 @@ import { ForecastStackParamList } from './types';
 import { Score } from '../screens/forecast/Score';
 import { Detail } from '../screens/forecast/Detail';
 import { ConditionsDetail } from '../screens/forecast/ConditionsDetail';
+import { StrategyDetail } from '../screens/forecast/StrategyDetail';
 
 const Stack = createNativeStackNavigator<ForecastStackParamList>();
 
@@ -13,6 +14,7 @@ export function ForecastStack() {
       <Stack.Screen name="Score" component={Score} />
       <Stack.Screen name="Detail" component={Detail} />
       <Stack.Screen name="ConditionsDetail" component={ConditionsDetail} />
+      <Stack.Screen name="StrategyDetail" component={StrategyDetail} />
     </Stack.Navigator>
   );
 }

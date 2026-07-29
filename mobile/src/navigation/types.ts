@@ -12,6 +12,7 @@ export type ForecastStackParamList = {
   Score: { beachId?: string } | undefined;
   Detail: { result: ShellingScoreResult; beachLabel: string };
   ConditionsDetail: { result: ShellingScoreResult; dayOffset: number; dayLabel: string; beachLabel: string };
+  StrategyDetail: { result: ShellingScoreResult; dayLabel: string; isToday: boolean; beachLabel: string };
 };
 
 export type MapStackParamList = {

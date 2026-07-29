@@ -12,6 +12,7 @@ import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { ForecastStackParamList } from '../../navigation/types';
 import { getMultiDayScore, MultiDayScoreEntry } from '../../lib/api';
 import { useBeachContext } from '../../hooks/useBeachContext';
+import { formatTime, formatTimeShort, isTomorrow, daylightNote, dayChipLabel, daySentenceLabel } from '../../lib/forecastFormat';
 
 type Props = NativeStackScreenProps<ForecastStackParamList, 'Score'>;
 
@@ -22,61 +23,6 @@ const SHOW_BREAKDOWN_BUTTON = false;
 // Falls back to Sanibel Island if location permission is denied and no
 // beach is nearby/selected.
 const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867 };
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
-
-function formatTimeShort(iso: string): string {
-  // "8:15 AM" -> "8:15a", to fit the narrow day-strip chip.
-  return formatTime(iso).replace(' ', '').replace('AM', 'a').replace('PM', 'p');
-}
-
-function isTomorrow(iso: string): boolean {
-  return new Date(iso).toDateString() !== new Date().toDateString();
-}
-
-function timeOfDayMinutes(iso: string): number {
-  const d = new Date(iso);
-  return d.getHours() * 60 + d.getMinutes();
-}
-
-// Tides are semi-diurnal -- a day can have a low tide before sunrise AND
-// another one later that's actually usable. The literal "next" low tide
-// chronologically isn't necessarily the one behind a day's best-window
-// score, so flag it when it falls outside daylight rather than implying
-// it's the window to plan around.
-function daylightNote(lowTideIso: string, sunriseIso: string, sunsetIso: string): string | null {
-  const t = timeOfDayMinutes(lowTideIso);
-  const sunrise = timeOfDayMinutes(sunriseIso);
-  const sunset = timeOfDayMinutes(sunsetIso);
-  if (t < sunrise) return 'before sunrise, not a usable window';
-  if (t > sunset) return 'after sunset, not a usable window';
-  return null;
-}
-
-// Every multi-day date is a plain YYYY-MM-DD label, not tied to the user's
-// timezone (this app has no per-user timezone info anywhere) -- parsing at
-// noon UTC keeps the weekday name stable regardless of device timezone.
-function weekdayLabel(date: string): string {
-  return new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short' });
-}
-
-function weekdayFull(date: string): string {
-  return new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long' });
-}
-
-function dayChipLabel(index: number, date: string): string {
-  if (index === 0) return 'Today';
-  if (index === 1) return 'Tmrw';
-  return weekdayLabel(date);
-}
-
-function daySentenceLabel(index: number, date: string): string {
-  if (index === 0) return 'today';
-  if (index === 1) return 'tomorrow';
-  return weekdayFull(date);
-}
 
 export function Score({ navigation, route }: Props) {
   const { theme: t } = useTheme();
@@ -249,34 +195,41 @@ export function Score({ navigation, route }: Props) {
               <Text style={[styles.confidence, { color: t.muted }]}>Confidence: {result.confidence}</Text>
             </TouchableOpacity>
 
-            <Card style={styles.windowCard}>
-              <Eyebrow>Best window {sentenceLabel}</Eyebrow>
-              {result.bestWindow ? (
-                <>
-                  <Text style={[styles.windowTime, { color: t.text }]}>
-                    {formatTime(result.bestWindow.start)} – {formatTime(result.bestWindow.end)}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() =>
+                navigation.navigate('StrategyDetail', { result, dayLabel: sentenceLabel, isToday, beachLabel: titleLabel })
+              }
+            >
+              <Card style={styles.windowCard}>
+                <Eyebrow>Best window {sentenceLabel}</Eyebrow>
+                {result.bestWindow ? (
+                  <>
+                    <Text style={[styles.windowTime, { color: t.text }]}>
+                      {formatTime(result.bestWindow.start)} – {formatTime(result.bestWindow.end)}
+                    </Text>
+                    <Text style={[styles.windowNote, { color: t.sea }]}>{result.bestWindow.reason}</Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={[styles.windowTime, { color: t.text }]}>No shelling window {isToday ? 'today' : sentenceLabel}</Text>
+                    <Text style={[styles.windowNote, { color: t.sea }]}>
+                      {isToday ? "Today's" : `${sentenceLabel}'s`} low tide falls at night, outside daylight hours.
+                    </Text>
+                  </>
+                )}
+                {nextLowTide && (
+                  <Text style={[styles.windowNote, { color: t.muted, marginTop: 6 }]}>
+                    Next low tide: {formatTime(nextLowTide.time)}
+                    {isTomorrow(nextLowTide.time) ? ' (tomorrow)' : ''}
+                    {result && (() => {
+                      const note = daylightNote(nextLowTide.time, result.conditions.weather.sunrise, result.conditions.weather.sunset);
+                      return note ? ` — ${note}` : '';
+                    })()}
                   </Text>
-                  <Text style={[styles.windowNote, { color: t.sea }]}>{result.bestWindow.reason}</Text>
-                </>
-              ) : (
-                <>
-                  <Text style={[styles.windowTime, { color: t.text }]}>No shelling window {isToday ? 'today' : sentenceLabel}</Text>
-                  <Text style={[styles.windowNote, { color: t.sea }]}>
-                    {isToday ? "Today's" : `${sentenceLabel}'s`} low tide falls at night, outside daylight hours.
-                  </Text>
-                </>
-              )}
-              {nextLowTide && (
-                <Text style={[styles.windowNote, { color: t.muted, marginTop: 6 }]}>
-                  Next low tide: {formatTime(nextLowTide.time)}
-                  {isTomorrow(nextLowTide.time) ? ' (tomorrow)' : ''}
-                  {result && (() => {
-                    const note = daylightNote(nextLowTide.time, result.conditions.weather.sunrise, result.conditions.weather.sunset);
-                    return note ? ` — ${note}` : '';
-                  })()}
-                </Text>
-              )}
-            </Card>
+                )}
+              </Card>
+            </TouchableOpacity>
 
             <TouchableOpacity
               activeOpacity={0.8}

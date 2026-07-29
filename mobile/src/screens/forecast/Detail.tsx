@@ -4,7 +4,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Card } from '../../components/Card';
-import { Eyebrow } from '../../components/Eyebrow';
 import { NavBar } from '../../components/NavBar';
 import { ForecastStackParamList } from '../../navigation/types';
 
@@ -49,11 +48,6 @@ export function Detail({ navigation, route }: Props) {
           })}
         </View>
 
-        <Card style={styles.strategyCard}>
-          <Eyebrow>Shelling strategy</Eyebrow>
-          <Text style={[styles.strategyText, { color: t.body }]}>{result.explanation}</Text>
-        </Card>
-
         <Card dark>
           <View style={styles.totalRow}>
             <Text style={[styles.totalLabel, { color: t.muted }]}>TOTAL SCORE</Text>
@@ -75,8 +69,6 @@ const styles = StyleSheet.create({
   barTrack: { height: 6, borderRadius: 3 },
   barFill: { height: 6, borderRadius: 3 },
   factorNote: { fontFamily: fonts.data, fontSize: 10, marginTop: 3 },
-  strategyCard: { marginBottom: 12 },
-  strategyText: { fontFamily: fonts.body, fontSize: 13, lineHeight: 20 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel: { fontFamily: fonts.data, fontSize: 11, letterSpacing: 0.6 },
   totalScore: { fontFamily: fonts.displayBold, fontSize: 28 },
