@@ -103,6 +103,13 @@ export async function getHourlyTrend(lat: number, lon: number, dayOffset: number
   return blocks;
 }
 
+// Server-side reverse geocoding, used only on web (expo-location's reverse
+// geocoding is native-hardware-only; its web shim throws unconditionally).
+export async function reverseGeocode(lat: number, lon: number): Promise<string | null> {
+  const { city } = await apiFetch<{ city: string | null }>(`/api/geocode/reverse?lat=${lat}&lon=${lon}`);
+  return city;
+}
+
 export interface StrategyResult {
   strategy: string;
   source: 'ai' | 'fallback';

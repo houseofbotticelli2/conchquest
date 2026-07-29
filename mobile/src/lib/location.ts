@@ -1,4 +1,6 @@
 import * as Location from 'expo-location';
+import { Platform } from 'react-native';
+import { reverseGeocode as reverseGeocodeBackend } from './api';
 
 export type LocationPermissionResult = 'granted' | 'denied';
 
@@ -29,10 +31,21 @@ export async function getCurrentLocation(): Promise<DeviceLocation | null> {
   }
 }
 
-// Best-effort city name for a coordinate, via on-device reverse geocoding
-// (no backend call). Returns null if it fails or nothing usable comes back --
-// callers should treat that as "leave it blank", not an error.
+// Best-effort city name for a coordinate. Returns null if it fails or
+// nothing usable comes back -- callers should treat that as "leave it
+// blank", not an error. On native (iOS/Android) this reverse-geocodes
+// on-device for free; on web, expo-location's reverse geocoding is
+// unimplemented (throws unconditionally), so it goes through a small
+// backend endpoint that calls OpenWeather's geocoding API instead.
 export async function reverseGeocodeCity(location: DeviceLocation): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    try {
+      return await reverseGeocodeBackend(location.lat, location.lon);
+    } catch {
+      return null;
+    }
+  }
+
   try {
     const results = await Location.reverseGeocodeAsync({ latitude: location.lat, longitude: location.lon });
     const first = results[0];

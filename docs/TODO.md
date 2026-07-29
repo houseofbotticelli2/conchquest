@@ -11,7 +11,6 @@ Task numbers are stable references, not priority order.
 - [ ] #60 Build password reset flow + fix Supabase redirect URL
 - [ ] #64 Harden Railway build: keep secrets out of Nixpacks build stage
 - [ ] #65 Add Google Maps API key for Android map rendering
-- [ ] #68 Monitor OpenAI spend for Shelling Strategy feature (#67)
 
 ## Completed
 

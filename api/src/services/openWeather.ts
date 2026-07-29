@@ -91,6 +91,31 @@ export async function getUvIndex(lat: number, lon: number): Promise<number | nul
   }
 }
 
+interface ReverseGeocodeResult {
+  name: string;
+  state?: string;
+  country: string;
+}
+
+// Used to fill in a city name for the "No Beach" subtitle on the web
+// platform -- expo-location's reverse geocoding is native-hardware-only
+// (its web shim throws unconditionally), so web needs a server-side lookup
+// instead. Native iOS/Android keep using the free on-device geocoding.
+export async function getReverseGeocode(lat: number, lon: number): Promise<string | null> {
+  const url = new URL('https://api.openweathermap.org/geo/1.0/reverse');
+  url.searchParams.set('lat', String(lat));
+  url.searchParams.set('lon', String(lon));
+  url.searchParams.set('limit', '1');
+  url.searchParams.set('appid', env.openWeatherApiKey);
+
+  const response = await fetch(url.toString());
+  if (!response.ok) {
+    throw new Error(`OpenWeather reverse geocode request failed: ${response.status}`);
+  }
+  const body = (await response.json()) as ReverseGeocodeResult[];
+  return body[0]?.name ?? null;
+}
+
 export async function getForecast(lat: number, lon: number): Promise<ForecastBlock[]> {
   const url = new URL('https://api.openweathermap.org/data/2.5/forecast');
   url.searchParams.set('lat', String(lat));
