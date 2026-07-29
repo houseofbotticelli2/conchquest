@@ -151,7 +151,10 @@ export function Score({ navigation, route }: Props) {
                   <Text style={[styles.windowNote, { color: t.sea }]}>{result.bestWindow.reason}</Text>
                 </>
               ) : (
-                <Text style={[styles.windowNote, { color: t.muted }]}>No daylight low tide in today's forecast window.</Text>
+                <>
+                  <Text style={[styles.windowTime, { color: t.text }]}>No shelling window today</Text>
+                  <Text style={[styles.windowNote, { color: t.sea }]}>Today's low tide falls at night, outside daylight hours.</Text>
+                </>
               )}
               {nextLowTide && (
                 <Text style={[styles.windowNote, { color: t.muted, marginTop: 6 }]}>
