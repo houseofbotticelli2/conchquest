@@ -15,12 +15,16 @@ interface ConfirmDialogProps {
   message?: string;
   buttons: ConfirmDialogButton[];
   onClose: () => void;
+  // iOS only (a no-op on Android/web) -- fires once the native dismiss
+  // animation actually finishes, for callers that need to present another
+  // Modal right after this one closes without the two racing/stacking.
+  onDismiss?: () => void;
 }
 
 // Cross-platform replacement for Alert.alert — react-native-web's Alert
 // module is a no-op stub, so anything relying on Alert.alert for a
 // confirmation silently does nothing when the app runs as web.
-export function ConfirmDialog({ visible, title, message, buttons, onClose }: ConfirmDialogProps) {
+export function ConfirmDialog({ visible, title, message, buttons, onClose, onDismiss }: ConfirmDialogProps) {
   const { theme: t } = useTheme();
 
   function handlePress(button: ConfirmDialogButton) {
@@ -29,7 +33,7 @@ export function ConfirmDialog({ visible, title, message, buttons, onClose }: Con
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} onDismiss={onDismiss}>
       <View style={styles.overlay}>
         <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
         <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.border }]}>

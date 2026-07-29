@@ -6,6 +6,10 @@ import { fonts } from '../theme/tokens';
 interface SlideUpSheetProps {
   visible: boolean;
   onClose: () => void;
+  // iOS only (a no-op on Android/web) -- fires once the native dismiss
+  // animation actually finishes, for callers that need to present another
+  // Modal right after this one closes without the two racing/stacking.
+  onDismiss?: () => void;
   title: string;
   children: React.ReactNode;
 }
@@ -13,7 +17,7 @@ interface SlideUpSheetProps {
 const DISMISS_DISTANCE = 100;
 const DISMISS_VELOCITY = 0.5;
 
-export function SlideUpSheet({ visible, onClose, title, children }: SlideUpSheetProps) {
+export function SlideUpSheet({ visible, onClose, onDismiss, title, children }: SlideUpSheetProps) {
   const { theme: t } = useTheme();
   const translateY = useRef(new Animated.Value(0)).current;
 
@@ -41,7 +45,7 @@ export function SlideUpSheet({ visible, onClose, title, children }: SlideUpSheet
   ).current;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} onDismiss={onDismiss}>
       <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
       <Animated.View style={[styles.sheet, { backgroundColor: t.bg, transform: [{ translateY }] }]}>
         <View {...panResponder.panHandlers} style={styles.dragArea}>

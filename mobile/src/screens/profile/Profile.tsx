@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -163,6 +163,24 @@ export function Profile({ navigation }: Props) {
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileErrorMsg, setProfileErrorMsg] = useState<string | null>(null);
   const [avatarSourceOpen, setAvatarSourceOpen] = useState(false);
+  // On iOS, RN's Modal is backed by a real presented view controller --
+  // opening the avatar-source dialog (or the system picker) while the Edit
+  // Profile sheet's own Modal is still up/mid-dismiss stacks two/three
+  // presentations and silently fails to show. These defer opening the next
+  // one until the previous Modal's native dismiss animation has actually
+  // finished (Modal's onDismiss, iOS only -- a no-op elsewhere, which is
+  // fine since Android/web don't have this restriction).
+  const [avatarPickerRequested, setAvatarPickerRequested] = useState(false);
+  const [pendingPickerSource, setPendingPickerSource] = useState<'camera' | 'library' | null>(null);
+
+  function openChangePhoto() {
+    if (Platform.OS === 'ios') {
+      setAvatarPickerRequested(true);
+      setEditProfileOpen(false);
+    } else {
+      setAvatarSourceOpen(true);
+    }
+  }
 
   function startEditingProfile() {
     setEditName(displayName);
@@ -180,6 +198,7 @@ export function Profile({ navigation }: Props) {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       setProfileErrorMsg('Enable photo library access in Settings to change your profile photo.');
+      setEditProfileOpen(true);
       return;
     }
 
@@ -189,14 +208,15 @@ export function Profile({ navigation }: Props) {
       allowsEditing: true,
       aspect: [1, 1],
     });
-    if (result.canceled) return;
-    applyAvatarAsset(result.assets[0]);
+    if (!result.canceled) applyAvatarAsset(result.assets[0]);
+    setEditProfileOpen(true);
   }
 
   async function handlePickAvatarFromCamera() {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
       setProfileErrorMsg('Enable camera access in Settings to take a profile photo.');
+      setEditProfileOpen(true);
       return;
     }
 
@@ -205,8 +225,8 @@ export function Profile({ navigation }: Props) {
       allowsEditing: true,
       aspect: [1, 1],
     });
-    if (result.canceled) return;
-    applyAvatarAsset(result.assets[0]);
+    if (!result.canceled) applyAvatarAsset(result.assets[0]);
+    setEditProfileOpen(true);
   }
 
   async function saveProfile() {
@@ -396,8 +416,18 @@ export function Profile({ navigation }: Props) {
         </View>
       </ScrollView>
 
-      <SlideUpSheet visible={editProfileOpen} onClose={() => setEditProfileOpen(false)} title="Edit profile">
-        <TouchableOpacity style={styles.editAvatarWrap} onPress={() => setAvatarSourceOpen(true)}>
+      <SlideUpSheet
+        visible={editProfileOpen}
+        onClose={() => setEditProfileOpen(false)}
+        onDismiss={() => {
+          if (avatarPickerRequested) {
+            setAvatarPickerRequested(false);
+            setAvatarSourceOpen(true);
+          }
+        }}
+        title="Edit profile"
+      >
+        <TouchableOpacity style={styles.editAvatarWrap} onPress={openChangePhoto}>
           <View style={[styles.avatar, styles.editAvatar, { backgroundColor: t.navBg }]}>
             {editPhoto || profile?.avatarUrl ? (
               <Image source={{ uri: editPhoto?.uri ?? profile!.avatarUrl! }} style={styles.avatarPhoto} />
@@ -443,11 +473,26 @@ export function Profile({ navigation }: Props) {
         visible={avatarSourceOpen}
         title="Change photo"
         buttons={[
-          { text: 'Camera', onPress: handlePickAvatarFromCamera },
-          { text: 'Photos', onPress: handlePickAvatarFromLibrary },
+          {
+            text: 'Camera',
+            onPress: () => (Platform.OS === 'ios' ? setPendingPickerSource('camera') : handlePickAvatarFromCamera()),
+          },
+          {
+            text: 'Photos',
+            onPress: () => (Platform.OS === 'ios' ? setPendingPickerSource('library') : handlePickAvatarFromLibrary()),
+          },
           { text: 'Cancel', style: 'cancel' },
         ]}
         onClose={() => setAvatarSourceOpen(false)}
+        onDismiss={() => {
+          if (pendingPickerSource === 'camera') {
+            setPendingPickerSource(null);
+            handlePickAvatarFromCamera();
+          } else if (pendingPickerSource === 'library') {
+            setPendingPickerSource(null);
+            handlePickAvatarFromLibrary();
+          }
+        }}
       />
 
       <ConfirmDialog
