@@ -43,15 +43,15 @@ export function useBeachContext(defaultLocation: { lat: number; lon: number }): 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [geocodedCity, setGeocodedCity] = useState<string | null>(null);
 
-  useEffect(() => {
-    getCurrentLocation().then(setDeviceLocation);
-  }, []);
-
+  // Re-fetches every time this screen regains focus, not just once on mount --
+  // otherwise "Current Location" would keep showing wherever you were when
+  // the screen first loaded, even after walking somewhere else and back.
   useFocusEffect(
     useCallback(() => {
       listSavedLocations()
         .then(setBeaches)
         .catch(() => setBeaches([]));
+      getCurrentLocation().then(setDeviceLocation);
     }, [])
   );
 
