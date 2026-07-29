@@ -57,7 +57,11 @@ function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
 }
 
 const HELP_ITEMS = [
-  { icon: '🌊', title: 'Shellcast', body: 'Get a Shelling Score for a beach based on tide, wind, waves, and moon phase.' },
+  {
+    icon: '🌊',
+    title: 'Shellcast',
+    body: 'Get a Shelling Score for a beach based on tide, wind, waves, and moon phase. Tap the score circle for the full breakdown, "Best Window" for the shelling strategy, or "Conditions" for humidity, UV, and the hourly forecast.',
+  },
   { icon: '🧭', title: 'Map', body: 'See your position, browse shells the community has logged nearby, and use the pin to pick a saved beach.' },
   { icon: '🐚', title: 'My Shells', body: 'Log a new find with its species, condition, photo, and whether the location is shown publicly. Tap the book icon to browse the shell species library.' },
   { icon: '🏖️', title: 'Beaches', body: 'Save your favorite beaches, mark a home beach, and get notified when one hits a Shelling Score you set.' },
