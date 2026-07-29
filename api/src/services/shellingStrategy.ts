@@ -40,10 +40,16 @@ async function readStrategyCacheRow(lat: number, lon: number): Promise<StrategyC
      ORDER BY fetched_at DESC LIMIT 1`,
     [latBucket, lonBucket]
   );
-  return result.rows[0] ?? null;
+  const row = result.rows[0] ?? null;
+  console.log(
+    `[strategy-cache] READ rawLatLon=${lat},${lon} bucket=${latBucket},${lonBucket} ` +
+      (row ? `rowId=${row.id} strategyText=${row.strategy_text ? 'present' : 'null'}` : 'no matching row')
+  );
+  return row;
 }
 
 async function writeStrategyText(id: string, text: string): Promise<void> {
+  console.log(`[strategy-cache] WRITE rowId=${id}`);
   await pool.query(`UPDATE conditions_cache SET strategy_text = $1, strategy_generated_at = now() WHERE id = $2`, [
     text,
     id,

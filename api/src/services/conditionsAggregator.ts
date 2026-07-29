@@ -26,7 +26,11 @@ async function readCache(lat: number, lon: number): Promise<NormalizedConditions
     [latBucket, lonBucket]
   );
   const row = result.rows[0];
-  if (!row) return null;
+  if (!row) {
+    console.log(`[conditions-cache] MISS bucket=${latBucket},${lonBucket}`);
+    return null;
+  }
+  console.log(`[conditions-cache] HIT bucket=${latBucket},${lonBucket} expiresAt=${row.expires_at.toISOString()}`);
   return { ...row.payload, meta: { ...row.payload.meta, cacheHit: true } };
 }
 
@@ -38,6 +42,7 @@ async function writeCache(
   ndbcStationId: string | null
 ): Promise<void> {
   const { latBucket, lonBucket } = bucket(lat, lon);
+  console.log(`[conditions-cache] WRITE bucket=${latBucket},${lonBucket} expiresAt=${payload.meta.expiresAt}`);
   await pool.query(
     `INSERT INTO conditions_cache (lat_bucket, lon_bucket, noaa_station_id, ndbc_station_id, payload, expires_at)
      VALUES ($1, $2, $3, $4, $5, $6)`,
