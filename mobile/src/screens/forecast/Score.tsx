@@ -291,8 +291,8 @@ const styles = StyleSheet.create({
   placeSub: { fontFamily: fonts.data, fontSize: 11 },
   centerBox: { paddingVertical: 60, alignItems: 'center', paddingHorizontal: 24 },
   errorText: { fontFamily: fonts.body, fontSize: 14, textAlign: 'center' },
-  dayStripWrap: { marginTop: 2, marginBottom: 4, paddingTop: 9 },
-  dayStrip: { paddingHorizontal: 16, gap: 8 },
+  dayStripWrap: { marginTop: 2, marginBottom: 4 },
+  dayStrip: { paddingHorizontal: 16, paddingTop: 9, gap: 8 },
   dayChip: {
     width: 60,
     borderRadius: 16,
