@@ -60,7 +60,12 @@ const HELP_ITEMS = [
   {
     icon: '🌊',
     title: 'Shellcast',
-    body: 'Get a Shelling Score for a beach based on tide, wind, waves, and moon phase. Tap the score circle for the full breakdown, "Best Window" for the shelling strategy, or "Conditions" for humidity, UV, and the hourly forecast.',
+    body: 'Get a Shelling Score for a beach based on tide, wind, waves, and moon phase. Tap for more:',
+    bullets: [
+      'The score circle — full factor breakdown',
+      '"Best Window" — the shelling strategy',
+      '"Conditions" — humidity, UV, and the hourly forecast',
+    ],
   },
   { icon: '🧭', title: 'Map', body: 'See your position, browse shells the community has logged nearby, and use the pin to pick a saved beach.' },
   { icon: '🐚', title: 'My Shells', body: 'Log a new find with its species, condition, photo, and whether the location is shown publicly. Tap the book icon to browse the shell species library.' },
@@ -297,6 +302,11 @@ export function Profile({ navigation }: Props) {
             <View style={{ flex: 1 }}>
               <Text style={[styles.helpTitle, { color: t.text }]}>{item.title}</Text>
               <Text style={[styles.helpBody, { color: t.muted }]}>{item.body}</Text>
+              {item.bullets?.map((bullet) => (
+                <Text key={bullet} style={[styles.helpBullet, { color: t.muted }]}>
+                  {'•'} {bullet}
+                </Text>
+              ))}
             </View>
           </View>
         ))}
@@ -464,6 +474,7 @@ const styles = StyleSheet.create({
   helpRow: { flexDirection: 'row', gap: 12, paddingVertical: 10, alignItems: 'flex-start' },
   helpTitle: { fontFamily: fonts.bodySemiBold, fontSize: 14, marginBottom: 2 },
   helpBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
+  helpBullet: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
   userRow: { paddingHorizontal: 18, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1 },
   avatar: { width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarPhoto: { width: '100%', height: '100%' },
