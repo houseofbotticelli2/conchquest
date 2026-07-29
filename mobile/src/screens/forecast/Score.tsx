@@ -218,7 +218,7 @@ export function Score({ navigation, route }: Props) {
                     </Text>
                     <Text style={[styles.dayChipScore, { color: selected ? t.bg : scoreColor(d.score, t) }]}>{d.score}</Text>
                     <Text style={[styles.dayChipWindow, { color: selected ? t.bg : t.muted, opacity: selected ? 0.8 : 1 }]}>
-                      {d.bestWindow ? formatTimeShort(d.bestWindow.start) : '—'}
+                      {d.bestWindow ? formatTimeShort(d.bestWindow.lowTideTime) : '—'}
                     </Text>
                   </TouchableOpacity>
                 );

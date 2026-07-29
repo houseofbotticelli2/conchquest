@@ -69,7 +69,7 @@ export interface ScoreFactor {
 export interface ShellingScoreResult {
   score: number;
   confidence: 'low' | 'medium' | 'high';
-  bestWindow: { start: string; end: string; reason: string } | null;
+  bestWindow: { start: string; end: string; lowTideTime: string; reason: string } | null;
   explanation: string;
   factors: ScoreFactor[];
   conditions: NormalizedConditions;
