@@ -11,6 +11,7 @@ import { MapStack } from './MapStack';
 import { CollectionStack } from './CollectionStack';
 import { BeachesStack } from './BeachesStack';
 import { ProfileStack } from './ProfileStack';
+import { ShellIcon } from '../components/icons/ShellIcon';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -22,10 +23,10 @@ const TAB_LABELS: Record<keyof MainTabParamList, string> = {
   ProfileTab: 'Profile',
 };
 
-const TAB_ICONS: Record<keyof MainTabParamList, { family: 'ionicons' | 'mci'; active: string; inactive: string }> = {
+const TAB_ICONS: Record<keyof MainTabParamList, { family: 'ionicons' | 'mci' | 'shell'; active: string; inactive: string }> = {
   ForecastTab: { family: 'ionicons', active: 'sunny', inactive: 'sunny-outline' },
   MapTab: { family: 'ionicons', active: 'compass', inactive: 'compass-outline' },
-  CollectionTab: { family: 'ionicons', active: 'albums', inactive: 'albums-outline' },
+  CollectionTab: { family: 'shell', active: 'shell', inactive: 'shell' },
   BeachesTab: { family: 'mci', active: 'umbrella-beach', inactive: 'umbrella-beach-outline' },
   ProfileTab: { family: 'ionicons', active: 'person', inactive: 'person-outline' },
 };
@@ -48,6 +49,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             }
           };
 
+          const iconColor = isActive ? '#fff' : t.muted;
           const IconComponent = icon.family === 'mci' ? MaterialCommunityIcons : Ionicons;
 
           return (
@@ -56,13 +58,17 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               onPress={onPress}
               style={[styles.item, isActive && { backgroundColor: t.accent }]}
             >
-              <IconComponent
-                name={(isActive ? icon.active : icon.inactive) as never}
-                size={20}
-                color={isActive ? '#fff' : t.muted}
-                style={styles.icon}
-              />
-              <Text style={[styles.label, { color: isActive ? '#fff' : t.muted }]} numberOfLines={1}>
+              {icon.family === 'shell' ? (
+                <ShellIcon size={20} color={iconColor} filled={isActive} />
+              ) : (
+                <IconComponent
+                  name={(isActive ? icon.active : icon.inactive) as never}
+                  size={20}
+                  color={iconColor}
+                  style={styles.icon}
+                />
+              )}
+              <Text style={[styles.label, { color: iconColor }]} numberOfLines={1}>
                 {label}
               </Text>
             </TouchableOpacity>
