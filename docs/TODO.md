@@ -9,7 +9,6 @@ Task numbers are stable references, not priority order.
 - [ ] #46 Build premium subscriptions via RevenueCat (PRD MVP item)
 - [ ] #47 Build admin/moderation console (PRD MVP item)
 - [ ] #60 Build password reset flow + fix Supabase redirect URL
-- [ ] #62 Build multi-day forecast (not just today's snapshot)
 - [ ] #64 Harden Railway build: keep secrets out of Nixpacks build stage
 - [ ] #65 Add Google Maps API key for Android map rendering
 - [ ] #66 Fix Profile avatar "change photo" not working on iOS
@@ -70,4 +69,5 @@ Task numbers are stable references, not priority order.
 - [x] #56 Wire FindDetail screen to real data (own + community finds)
 - [x] #57 Build Edit a Find flow from My Shells
 - [x] #59 Make Profile editable (display name, shelling-since year)
+- [x] #62 Build multi-day forecast (not just today's snapshot)
 - [x] #63 Build push notifications for beach alert thresholds
