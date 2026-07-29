@@ -15,6 +15,10 @@ import { useBeachContext } from '../../hooks/useBeachContext';
 
 type Props = NativeStackScreenProps<ForecastStackParamList, 'Score'>;
 
+// Tapping the score ring now opens the breakdown directly -- flip this back
+// to true to bring back the explicit button underneath the chips instead.
+const SHOW_BREAKDOWN_BUTTON = false;
+
 // Falls back to Sanibel Island if location permission is denied and no
 // beach is nearby/selected.
 const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867 };
@@ -197,7 +201,12 @@ export function Score({ navigation, route }: Props) {
 
         {!loading && !error && days.length > 0 && (
           <View style={styles.dayStripWrap}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayStrip}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.dayStrip}
+              style={styles.dayScrollView}
+            >
               {days.map((d, i) => {
                 const selected = i === selectedIndex;
                 const isBest = i === bestIndex;
@@ -229,10 +238,16 @@ export function Score({ navigation, route }: Props) {
 
         {!loading && !error && result && (
           <>
-            <View style={styles.ringWrap}>
+            <TouchableOpacity
+              style={styles.ringWrap}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('Detail', { result, beachLabel: titleLabel })}
+              accessibilityRole="button"
+              accessibilityLabel="See score breakdown"
+            >
               <ScoreRing score={result.score} size={150} />
               <Text style={[styles.confidence, { color: t.muted }]}>Confidence: {result.confidence}</Text>
-            </View>
+            </TouchableOpacity>
 
             <Card style={styles.windowCard}>
               <Eyebrow>Best window {sentenceLabel}</Eyebrow>
@@ -289,9 +304,11 @@ export function Score({ navigation, route }: Props) {
               ))}
             </View>
 
-            <View style={styles.footer}>
-              <Btn label="See score breakdown" onPress={() => navigation.navigate('Detail', { result, beachLabel: titleLabel })} />
-            </View>
+            {SHOW_BREAKDOWN_BUTTON && (
+              <View style={styles.footer}>
+                <Btn label="See score breakdown" onPress={() => navigation.navigate('Detail', { result, beachLabel: titleLabel })} />
+              </View>
+            )}
           </>
         )}
       </ScrollView>
@@ -315,7 +332,11 @@ const styles = StyleSheet.create({
   centerBox: { paddingVertical: 60, alignItems: 'center', paddingHorizontal: 24 },
   errorText: { fontFamily: fonts.body, fontSize: 14, textAlign: 'center' },
   dayStripWrap: { marginTop: 2, marginBottom: 4 },
-  dayStrip: { paddingHorizontal: 16, paddingTop: 9, gap: 8 },
+  dayScrollView: { flexGrow: 0 },
+  // flexGrow: 1 + justifyContent: 'center' centers the chips when they fit
+  // within the screen width (the common case), while still scrolling
+  // normally left-to-right if they ever don't (a wider font size, more days).
+  dayStrip: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 16, paddingTop: 9, gap: 8 },
   dayChip: {
     width: 60,
     borderRadius: 16,
