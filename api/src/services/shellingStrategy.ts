@@ -27,33 +27,31 @@ function bucket(lat: number, lon: number) {
   return { latBucket: round(lat, 2), lonBucket: round(lon, 2) };
 }
 
-interface StrategyCacheRow {
-  id: string;
-  strategy_text: string | null;
-}
-
-async function readStrategyCacheRow(lat: number, lon: number): Promise<StrategyCacheRow | null> {
+// Dedicated table, independent of conditions_cache -- see the migration
+// comment for why (conditions_cache is only ever populated by the single-day
+// GET /api/score route; the Score screen actually uses the multi-day
+// forecast, which never writes there, so a strategy cache piggybacked on it
+// could never find a row to attach to). Keyed by day offset in addition to
+// location, since each day on the multi-day strip needs its own cached text.
+async function readStrategyCache(lat: number, lon: number, dayOffset: number): Promise<string | null> {
   const { latBucket, lonBucket } = bucket(lat, lon);
-  const result = await pool.query<StrategyCacheRow>(
-    `SELECT id, strategy_text FROM conditions_cache
-     WHERE lat_bucket = $1 AND lon_bucket = $2 AND expires_at > now()
-     ORDER BY fetched_at DESC LIMIT 1`,
-    [latBucket, lonBucket]
+  const result = await pool.query<{ strategy_text: string }>(
+    `SELECT strategy_text FROM shelling_strategy_cache
+     WHERE lat_bucket = $1 AND lon_bucket = $2 AND day_offset = $3 AND expires_at > now()
+     ORDER BY generated_at DESC LIMIT 1`,
+    [latBucket, lonBucket, dayOffset]
   );
-  const row = result.rows[0] ?? null;
-  console.log(
-    `[strategy-cache] READ rawLatLon=${lat},${lon} bucket=${latBucket},${lonBucket} ` +
-      (row ? `rowId=${row.id} strategyText=${row.strategy_text ? 'present' : 'null'}` : 'no matching row')
-  );
-  return row;
+  return result.rows[0]?.strategy_text ?? null;
 }
 
-async function writeStrategyText(id: string, text: string): Promise<void> {
-  console.log(`[strategy-cache] WRITE rowId=${id}`);
-  await pool.query(`UPDATE conditions_cache SET strategy_text = $1, strategy_generated_at = now() WHERE id = $2`, [
-    text,
-    id,
-  ]);
+async function writeStrategyCache(lat: number, lon: number, dayOffset: number, text: string): Promise<void> {
+  const { latBucket, lonBucket } = bucket(lat, lon);
+  const expiresAt = new Date(Date.now() + env.strategyCacheTtlMinutes * 60_000).toISOString();
+  await pool.query(
+    `INSERT INTO shelling_strategy_cache (lat_bucket, lon_bucket, day_offset, strategy_text, expires_at)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [latBucket, lonBucket, dayOffset, text, expiresAt]
+  );
 }
 
 interface RareFindRow {
@@ -172,13 +170,14 @@ export async function getShellingStrategy(
   beachLabel: string,
   dayLabel: string,
   bestWindowStart: string | null,
-  bestWindowEnd: string | null
+  bestWindowEnd: string | null,
+  dayOffset: number
 ): Promise<StrategyResult> {
   const { lat, lon } = result.conditions.location;
 
-  const cacheRow = await readStrategyCacheRow(lat, lon);
-  if (cacheRow?.strategy_text) {
-    return { strategy: cacheRow.strategy_text, source: 'ai' };
+  const cached = await readStrategyCache(lat, lon, dayOffset);
+  if (cached) {
+    return { strategy: cached, source: 'ai' };
   }
 
   try {
@@ -199,9 +198,7 @@ export async function getShellingStrategy(
     );
     const strategy = await callOpenAI(systemPrompt, userPayload);
 
-    if (cacheRow) {
-      await writeStrategyText(cacheRow.id, strategy);
-    }
+    await writeStrategyCache(lat, lon, dayOffset, strategy);
 
     return { strategy, source: 'ai' };
   } catch (err) {

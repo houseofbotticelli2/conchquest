@@ -61,12 +61,13 @@ scoreRouter.get('/hourly', async (req, res, next) => {
 });
 
 scoreRouter.post('/strategy', async (req, res, next) => {
-  const { result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd } = (req.body ?? {}) as {
+  const { result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd, dayOffset } = (req.body ?? {}) as {
     result?: ShellingScoreResult;
     beachLabel?: string;
     dayLabel?: string;
     bestWindowStart?: string | null;
     bestWindowEnd?: string | null;
+    dayOffset?: number;
   };
 
   if (!result || typeof result !== 'object' || !Array.isArray(result.factors) || !result.conditions?.location) {
@@ -77,9 +78,20 @@ scoreRouter.post('/strategy', async (req, res, next) => {
     res.status(400).json({ error: 'Body must include string "beachLabel" and "dayLabel"' });
     return;
   }
+  if (typeof dayOffset !== 'number' || !Number.isInteger(dayOffset) || dayOffset < 0) {
+    res.status(400).json({ error: 'Body must include a non-negative integer "dayOffset"' });
+    return;
+  }
 
   try {
-    const strategy = await getShellingStrategy(result, beachLabel, dayLabel, bestWindowStart ?? null, bestWindowEnd ?? null);
+    const strategy = await getShellingStrategy(
+      result,
+      beachLabel,
+      dayLabel,
+      bestWindowStart ?? null,
+      bestWindowEnd ?? null,
+      dayOffset
+    );
     res.json(strategy);
   } catch (err) {
     next(err);

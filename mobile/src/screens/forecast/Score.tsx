@@ -198,7 +198,13 @@ export function Score({ navigation, route }: Props) {
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() =>
-                navigation.navigate('StrategyDetail', { result, dayLabel: sentenceLabel, isToday, beachLabel: titleLabel })
+                navigation.navigate('StrategyDetail', {
+                  result,
+                  dayOffset: selectedIndex,
+                  dayLabel: sentenceLabel,
+                  isToday,
+                  beachLabel: titleLabel,
+                })
               }
             >
               <Card style={styles.windowCard}>

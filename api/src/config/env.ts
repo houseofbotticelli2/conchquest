@@ -23,6 +23,7 @@ export const env = {
   openWeatherApiKey: required('OPENWEATHER_API_KEY'),
   openaiApiKey: required('OPENAI_API_KEY'),
   conditionsCacheTtlMinutes: optionalNumber('CONDITIONS_CACHE_TTL_MINUTES', 20),
+  strategyCacheTtlMinutes: optionalNumber('STRATEGY_CACHE_TTL_MINUTES', 1440),
   noaaStationRefreshDays: optionalNumber('NOAA_STATION_REFRESH_DAYS', 30),
   bucketUrl: required('BUCKET_ENDPOINT'),
   bucketName: required('RAILWAY_BUCKET_NAME'),

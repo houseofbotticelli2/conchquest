@@ -19,7 +19,7 @@ type Props = NativeStackScreenProps<ForecastStackParamList, 'StrategyDetail'>;
 
 export function StrategyDetail({ navigation, route }: Props) {
   const { theme: t } = useTheme();
-  const { result, dayLabel, isToday, beachLabel } = route.params;
+  const { result, dayOffset, dayLabel, isToday, beachLabel } = route.params;
   const nextLowTide = result.conditions.tide?.nextEvents.find((e) => e.type === 'low') ?? null;
 
   const [strategyText, setStrategyText] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export function StrategyDetail({ navigation, route }: Props) {
     const bestWindowEnd = result.bestWindow ? formatTime(result.bestWindow.end) : null;
 
     const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), STRATEGY_TIMEOUT_MS));
-    Promise.race([getStrategy(result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd), timeout])
+    Promise.race([getStrategy(result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd, dayOffset), timeout])
       .then((res) => {
         if (cancelled) return;
         if (res) {
@@ -59,7 +59,7 @@ export function StrategyDetail({ navigation, route }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [result, beachLabel, dayLabel]);
+  }, [result, beachLabel, dayLabel, dayOffset]);
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>

@@ -11,7 +11,8 @@ Task numbers are stable references, not priority order.
 - [ ] #60 Build password reset flow + fix Supabase redirect URL
 - [ ] #64 Harden Railway build: keep secrets out of Nixpacks build stage
 - [ ] #65 Add Google Maps API key for Android map rendering
-- [ ] #68 Monitor OpenAI spend for Shelling Strategy feature (#67); revisit caching (dedicated day-scoped cache) if the ~20min regeneration frequency drives cost/volume higher than expected
+- [ ] #68 Monitor OpenAI spend for Shelling Strategy feature (#67)
+- [ ] #69 Add caching to the multi-day forecast (/api/score/multi-day) -- it calls NOAA/OpenWeather/NDBC live on every request with no caching at all, unlike single-day GET /api/score; discovered while debugging #67's cache
 
 ## Completed
 
@@ -72,4 +73,4 @@ Task numbers are stable references, not priority order.
 - [x] #62 Build multi-day forecast (not just today's snapshot)
 - [x] #63 Build push notifications for beach alert thresholds
 - [x] #66 Fix Profile avatar "change photo" not working on iOS
-- [x] #67 Generate Shelling Strategy card via GPT-4o-mini (OpenAI) -- new POST /api/score/strategy endpoint, cached via conditions_cache's existing ~20min TTL, falls back to the concatenated factor explanation on error/timeout; verified live end-to-end
+- [x] #67 Generate Shelling Strategy card via GPT-4o-mini (OpenAI) -- new POST /api/score/strategy endpoint, cached in its own dedicated shelling_strategy_cache table (keyed by location + day offset, ~24h TTL -- switched from piggybacking on conditions_cache after discovering the Score screen's multi-day forecast never populates that table), falls back to the concatenated factor explanation on error/timeout; verified live end-to-end
