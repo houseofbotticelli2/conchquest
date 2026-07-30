@@ -47,7 +47,7 @@ The project already has a preview profile configured for this in
 `mobile/eas.json`, so no new setup is needed there — it's just a different
 command than the one used for day-to-day dev-client work.
 
-For contrast: the **dev client** (covered in `docs/ONBOARDING.md`) is for
+For contrast: the **dev client** (covered in `docs/WINDOWS_SETUP.md`/`docs/MAC_SETUP.md`) is for
 active development — it reloads instantly when code changes, but needs
 Metro running nearby. A **standalone build** (this guide) is for handing
 someone a finished, self-sufficient copy of the app — it never reloads
@@ -115,7 +115,9 @@ needed in the next steps.
 
 ### Step 2 — Android testers: installing the app
 
-Android is the simple case — there is no registration step at all.
+Android is the simple case — there is no registration step at all. No
+Android phone to test with? `docs/ANDROID_EMULATOR_SETUP.md` covers running
+the same install link/`.apk` in an Android Studio emulator instead.
 
 1. Open the install link on the Android phone (tapping it from a text
    message or email works fine).
@@ -198,7 +200,7 @@ required any time the change involves anything beyond pure
 JavaScript/TypeScript logic: a new native library, a new permission, an
 updated app icon, a change to `app.json`'s native configuration, and so on.
 This is the exact same underlying rule that governs when the dev client
-needs a fresh EAS build too (see `docs/ONBOARDING.md` and `CLAUDE.md`'s
+needs a fresh EAS build too (see `docs/WINDOWS_SETUP.md`/`docs/MAC_SETUP.md` and `CLAUDE.md`'s
 gotchas section) — native code can only ever be added by a real build,
 never by a JS-only push.
 

@@ -1,20 +1,14 @@
-# Conchquest — Windows Setup Guide
+# Conchquest — Mac Setup Guide
 
-This walks through setting up a Windows machine to run Conchquest locally and work on it with Claude Code. On a Mac? Use `docs/MAC_SETUP.md` instead — the two diverge mainly in steps 1-3 (shell/Node/Git); everything from repo access onward is the same.
+This walks through setting up a Mac to run Conchquest locally and work on it with Claude Code. On Windows? Use `docs/WINDOWS_SETUP.md` instead — the two diverge mainly in steps 1-3 (shell/Node/Git); everything from repo access onward is the same.
 
-## 1. Install WSL2 (recommended)
+## 1. Command line tools
 
-Claude Code and most of this project's tooling (npm, Postgres client, shell scripts) work best in a Unix-like shell. On Windows, that means **WSL2** (Windows Subsystem for Linux).
+macOS's Terminal (or any shell you prefer — zsh is the default) works fine directly, no WSL-style layer needed. If you've never used the command line on this Mac before, installing Xcode's Command Line Tools first gets you `git` and a working `clang`/build toolchain that some npm packages need:
 
-1. Open PowerShell **as Administrator** and run:
-   ```
-   wsl --install
-   ```
-2. Restart when prompted. This installs Ubuntu by default.
-3. On first launch of the Ubuntu app, set a username/password (this is separate from your Windows login).
-4. From here on, do all the steps below **inside the Ubuntu/WSL terminal**, not PowerShell.
-
-> If you'd rather not use WSL, Git Bash (bundled with Git for Windows) works for basic use, but some commands may behave differently. WSL2 is the smoother path.
+```bash
+xcode-select --install
+```
 
 ## 2. Install Node.js
 
@@ -24,7 +18,7 @@ Check https://github.com/nvm-sh/nvm/releases for the current nvm version, then (
 
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-source ~/.bashrc
+source ~/.zshrc
 nvm install 24
 nvm use 24
 node --version   # should print v24.x
@@ -34,7 +28,7 @@ node --version   # should print v24.x
 
 ## 3. Install Git and configure it
 
-Git usually ships with WSL/Ubuntu already — check with `git --version`. If that fails: `sudo apt update && sudo apt install git -y`.
+If step 1's Command Line Tools install completed, `git` is already available — check with `git --version`. If it's still missing, `brew install git` (installing [Homebrew](https://brew.sh) first if you don't have it) also works.
 
 Then set your identity:
 
@@ -102,7 +96,7 @@ npm start
 This starts the Expo dev server (Metro bundler). From there you have options:
 - Press `w` to open the web preview in a browser (fastest for quick UI iteration, but this doesn't reflect real-device behavior — notch/status-bar spacing and native-only features won't show up correctly here).
 - Test on a real phone using the **Conchquest dev client** app (not the generic Expo Go app — this project is on a newer Expo SDK than Expo Go currently supports, so it needs a custom dev client build). Ask Mark for the install link. A few things to know:
-  - **Android**: just open the link on the phone and install — no extra setup needed. No Android phone handy? See `docs/ANDROID_EMULATOR_SETUP.md` for running the same build in an emulator on your own machine.
+  - **Android**: just open the link on the phone and install — no extra setup needed. No Android phone handy? See `docs/ANDROID_EMULATOR_SETUP.md` for running the same build in an emulator on your own Mac — this is generally a smoother experience on Mac than Windows since Android Studio's emulator is well-supported on both Apple Silicon and Intel Macs.
   - **iOS**: the build is ad-hoc distributed, which means your specific iPhone has to be registered with Mark's Apple Developer account *before* the install link will work on it — ask Mark to register your device first. You'll also likely need to enable **Settings → Privacy & Security → Developer Mode** on the iPhone (it'll prompt for this and a restart) before the installed app will actually open.
   - Once installed, the dev client needs to connect to a Metro server (the one from `npm start` above) running on the same WiFi network as the phone — pick the one on port 8081 if it shows more than one option.
 

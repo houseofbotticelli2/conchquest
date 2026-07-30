@@ -1,9 +1,13 @@
 # Getting Started on Conchquest
 
-Welcome — you've already gone through `docs/ONBOARDING.md` and have your
-environment set up (repo cloned, dependencies installed, backend/mobile
-running locally, dev client connected). This is the next step: how to
-actually start working on the project with Claude Code.
+Welcome — you've already gone through `docs/WINDOWS_SETUP.md` or
+`docs/MAC_SETUP.md` and have your environment set up (repo cloned,
+dependencies installed, backend/mobile running locally, dev client
+connected). This is the next step: how to actually start working on the
+project with Claude Code.
+
+New here and not sure which doc to open? See `docs/README.md` for a full
+map of everything in this folder.
 
 ## Overall Architecture
 
@@ -39,10 +43,11 @@ they fit together:
   reasoning as the shared database.
 - **Expo / EAS** — used two different ways: day-to-day, the Expo **dev
   client** lets code changes show up instantly while developing (see
-  `docs/ONBOARDING.md`); separately, **EAS Build** produces a real,
-  installable standalone app (no dev-client/Metro dependency at all) for
-  handing to a tester, and **EAS Update** pushes JS-only updates to those
-  installs afterward (see `docs/Standalone Build Guide.docx`).
+  `docs/WINDOWS_SETUP.md`/`docs/MAC_SETUP.md`); separately, **EAS Build**
+  produces a real, installable standalone app (no dev-client/Metro
+  dependency at all) for handing to a tester, and **EAS Update** pushes
+  JS-only updates to those installs afterward (see
+  `docs/STANDALONE_BUILD_GUIDE.md`).
 
 In short: the phone in your hand only ever talks to two things over the
 internet — Supabase (for login) and the Railway-hosted API (for everything
@@ -61,9 +66,15 @@ photo bucket, both of which are private by design.
   sync with the task tracker. This is where to look for what to work on next.
 - **`docs/STANDALONE_BUILD_GUIDE.md`** — if you want a permanently installed
   copy of the app on a phone (not the day-to-day dev-client workflow from
-  `docs/ONBOARDING.md`), this walks through it in detail. Read it before
-  asking Mark for an iOS device registration — it explains exactly which
-  steps only he can do (and why) versus what you can do yourself.
+  `docs/WINDOWS_SETUP.md`/`docs/MAC_SETUP.md`), this walks through it in
+  detail. Read it before asking Mark for an iOS device registration — it
+  explains exactly which steps only he can do (and why) versus what you can
+  do yourself.
+- **`docs/ANDROID_EMULATOR_SETUP.md`** — no physical Android device? This
+  covers running any Android build (dev-client or standalone) in an Android
+  Studio emulator instead, including a couple of non-obvious gotchas around
+  mock GPS location and verifying native config changes actually took
+  effect.
 
 ## Picking a task
 
@@ -127,5 +138,6 @@ top of whatever a given project's `CLAUDE.md` already says.
 ## If you get stuck
 
 Ping Mark for anything needing his accounts (Expo/EAS builds, Apple Developer
-device registration, Railway/Supabase credentials) — see `docs/ONBOARDING.md`
+device registration, Railway/Supabase credentials) — see
+`docs/WINDOWS_SETUP.md`/`docs/MAC_SETUP.md`
 for which of those you already have versus what routes through him.

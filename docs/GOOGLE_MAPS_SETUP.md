@@ -36,19 +36,34 @@ Maps key isn't sensitive the way an unrestricted one would be.
 
 ## 3. Add it to `mobile/app.json`
 
-The `android` block currently has no `config` key. Add:
+**Important:** the key must go through `react-native-maps`' own config-plugin
+option in the `plugins` array -- **not** the generic
+`android.config.googleMaps.apiKey` field. `react-native-maps` ships its own
+Expo config plugin, which takes priority; if that plugin's option is left
+unset, it actively *strips* any Maps API key meta-data from the built
+manifest, even if `android.config.googleMaps.apiKey` is set. This fails
+silently at build time -- the build succeeds, but the app crashes at runtime
+with `RuntimeException: API key not found` the moment a map screen opens.
+
+In the `plugins` array, change:
 
 ```json
-"android": {
-  "package": "com.conchquest.app",
-  "config": {
-    "googleMaps": {
-      "apiKey": "YOUR_KEY_HERE"
-    }
-  },
-  "adaptiveIcon": { ... }
-}
+"react-native-maps"
 ```
+
+to:
+
+```json
+[
+  "react-native-maps",
+  {
+    "androidGoogleMapsApiKey": "YOUR_KEY_HERE"
+  }
+]
+```
+
+Don't add anything under `android.config.googleMaps` -- it's a dead end for
+this package and just invites confusion later.
 
 ## 4. Rebuild
 
@@ -64,3 +79,8 @@ eas build --platform android --profile development
 Once deployed, task #65 is resolved and the map will render tiles on
 Android -- which also unblocks a map-based location picker as a future
 option for manually setting a beach's location.
+
+No Android device to verify on? See `docs/ANDROID_EMULATOR_SETUP.md` for
+running the rebuilt app in an emulator, including how to directly confirm
+the API key actually made it into a given build's manifest by inspecting it
+rather than trusting build success alone.

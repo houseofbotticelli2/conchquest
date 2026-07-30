@@ -10,7 +10,6 @@ Task numbers are stable references, not priority order.
 - [ ] #47 Build admin/moderation console (PRD MVP item; should also include OpenAI usage/spend monitoring for #67 once built)
 - [ ] #60 Build password reset flow + fix Supabase redirect URL
 - [ ] #64 Harden Railway build: keep secrets out of Nixpacks build stage
-- [ ] #65 Add Google Maps API key for Android map rendering
 
 ## Completed
 
@@ -74,3 +73,4 @@ Task numbers are stable references, not priority order.
 - [x] #67 Generate Shelling Strategy card via GPT-4o-mini (OpenAI) -- new POST /api/score/strategy endpoint, cached in its own dedicated shelling_strategy_cache table (keyed by location + day offset, ~24h TTL -- switched from piggybacking on conditions_cache after discovering the Score screen's multi-day forecast never populates that table), falls back to the concatenated factor explanation on error/timeout; verified live end-to-end
 - [x] #69 Add caching to the multi-day forecast (/api/score/multi-day) -- new multi_day_forecast_cache table (whole 5-day array per location bucket, reuses conditionsCacheTtlMinutes); verified locally that a repeat request hits the cache instead of re-fetching from NOAA/OpenWeather/NDBC
 - [x] #70 Day-strip label: use weekday for all future days, not "Tmrw"; also made beach city read-only in add/edit flows since it's derived from lat/lon (not independently changeable)
+- [x] #65 Add Google Maps API key for Android map rendering -- restricted by package name + SHA-1 fingerprint; key must be passed via the react-native-maps plugin's `androidGoogleMapsApiKey` option in app.json's plugins array, NOT the generic `android.config.googleMaps.apiKey` field (that field is only a fallback for packages with no config plugin of their own -- react-native-maps ships its own, which silently strips any existing manifest meta-data when its own option is unset); verified by pulling the built APK and inspecting AndroidManifest.xml directly
