@@ -44,7 +44,12 @@
           "locationAlwaysAndWhenInUsePermission": "Conchquest uses your location to fetch tide and weather conditions for nearby beaches."
         }
       ],
-      "react-native-maps"
+      [
+        "react-native-maps",
+        {
+          "androidGoogleMapsApiKey": "AIzaSyDzdbTD_u5dEGTLPN3CpagqeVy9BdLRDqw"
+        }
+      ]
     ],
     "extra": {
       "eas": {
