@@ -43,7 +43,6 @@ export function weekdayFull(date: string): string {
 
 export function dayChipLabel(index: number, date: string): string {
   if (index === 0) return 'Today';
-  if (index === 1) return 'Tmrw';
   return weekdayLabel(date);
 }
 

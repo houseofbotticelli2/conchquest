@@ -46,7 +46,6 @@ export function Beaches(_props: Props) {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [editCity, setEditCity] = useState('');
   const [editAlert, setEditAlert] = useState(0);
   const [savingEdit, setSavingEdit] = useState(false);
   const [addErrorMsg, setAddErrorMsg] = useState<string | null>(null);
@@ -141,7 +140,6 @@ export function Beaches(_props: Props) {
   function startEditing(beach: SavedLocation) {
     setEditingId(beach.id);
     setEditName(beach.name);
-    setEditCity(beach.city ?? '');
     setEditAlert(beach.alertThresholdScore ?? beach.score);
   }
 
@@ -153,7 +151,7 @@ export function Beaches(_props: Props) {
     if (!editName.trim()) return;
     setSavingEdit(true);
     try {
-      await updateSavedLocation(id, { name: editName.trim(), city: editCity.trim(), alertThresholdScore: editAlert });
+      await updateSavedLocation(id, { name: editName.trim(), alertThresholdScore: editAlert });
       await fetchBeaches();
       setEditingId(null);
     } catch (e) {
@@ -192,13 +190,10 @@ export function Beaches(_props: Props) {
               style={[styles.addInput, { borderColor: t.border, color: t.text }]}
             />
 
-            <TextInput
-              value={newCity}
-              onChangeText={setNewCity}
-              placeholder="City (e.g. Sanibel, FL)"
-              placeholderTextColor={t.muted}
-              style={[styles.addInput, { borderColor: t.border, color: t.text, marginTop: 8 }]}
-            />
+            <View style={styles.addSection}>
+              <Text style={[styles.editLabel, { color: t.muted }]}>CITY</Text>
+              <Text style={[styles.readOnlyValue, { color: t.text }]}>{newCity || DEFAULT_LOCATION.label}</Text>
+            </View>
 
             <TouchableOpacity style={styles.homeToggleRow} onPress={() => setNewAlertEnabled((v) => !v)} hitSlop={8}>
               <Ionicons name={newAlertEnabled ? 'checkbox' : 'square-outline'} size={20} color={t.text} />
@@ -337,13 +332,7 @@ export function Beaches(_props: Props) {
 
                   <View style={styles.editSection}>
                     <Text style={[styles.editLabel, { color: t.muted }]}>CITY</Text>
-                    <TextInput
-                      value={editCity}
-                      onChangeText={setEditCity}
-                      placeholder="e.g. Sanibel, FL"
-                      placeholderTextColor={t.muted}
-                      style={[styles.nameInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
-                    />
+                    <Text style={[styles.readOnlyValue, { color: t.text }]}>{b.city || DEFAULT_LOCATION.label}</Text>
                   </View>
 
                   <View style={styles.editSection}>
@@ -422,6 +411,7 @@ const styles = StyleSheet.create({
   addBox: { borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 14 },
   addInput: { fontFamily: fonts.body, fontSize: 13, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12 },
   addSection: { gap: 6, marginTop: 12 },
+  readOnlyValue: { fontFamily: fonts.body, fontSize: 13, paddingVertical: 8 },
   homeToggleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
   homeToggleText: { fontFamily: fonts.body, fontSize: 13 },
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12, marginBottom: 10 },
