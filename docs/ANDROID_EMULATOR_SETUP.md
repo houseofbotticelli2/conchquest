@@ -66,6 +66,22 @@ This is the part that's easy to get wrong: **the emulated phone's own Settings a
 
 That pushes a real mock GPS fix to the emulator's location provider. Conchquest re-fetches location on screen focus, not continuously — after sending a new location, switch away from and back to the screen you're testing (e.g. Map or Shellcast) to see it pick up the change.
 
+### If the Extended Controls GUI doesn't respond
+
+Sometimes clicking **SAVE POINT** or **SET LOCATION** in Extended Controls silently does nothing (the button may even show as greyed out with no obvious reason). If that happens, push the location directly through the emulator console instead, via `adb`:
+
+```bash
+adb -s emulator-5554 emu geo fix <longitude> <latitude>
+```
+
+**Note the argument order: longitude first, then latitude** — the opposite of how coordinates are normally written (`lat, lon`), and an easy mistake to make. For example, to set a fix near Orlando, FL (28.323243, -81.301359):
+
+```bash
+adb -s emulator-5554 emu geo fix -81.301359 28.323243
+```
+
+A successful push prints `OK`. This bypasses the GUI entirely and is the more reliable option when Extended Controls is being flaky. Swap `emulator-5554` for whatever `adb devices` shows if you have more than one emulator running.
+
 ## 6. Verifying a native config change actually took effect
 
 Native config changes (like a new permission, or the Google Maps API key — see `docs/GOOGLE_MAPS_SETUP.md`) only take effect in a **new build**, and it's worth directly confirming the installed app actually has what you expect rather than assuming the build succeeded correctly:
@@ -89,5 +105,6 @@ This directly answers "did my config change actually make it into this build?" i
 |---|---|
 | `RuntimeException: API key not found` when opening a map screen | The installed build's manifest has no Google Maps API key meta-data — see `docs/GOOGLE_MAPS_SETUP.md` for the correct place to configure it (it's easy to set it in a way that gets silently dropped during the native build) |
 | Moving the "Location" slider in the emulated phone's Settings does nothing | Expected — use Extended Controls → Location (step 5 above) instead, not the device's own Settings |
+| Extended Controls' SAVE POINT / SET LOCATION buttons don't respond | Use `adb emu geo fix <longitude> <latitude>` instead (step 5 above) |
 | `zsh: command not found: adb` | Use the full path (`~/Library/Android/sdk/platform-tools/adb`) or add it to PATH, per step 4 above |
 | App screen shows stale data after sending a new mock location | Conchquest only re-fetches location on screen focus — leave and re-enter the screen |
