@@ -132,22 +132,15 @@ export function Profile({ navigation }: Props) {
           // use defaults
         }
 
-        try {
-          const [findsResult, beachesResult] = await Promise.all([listMyFinds(recentFindsLimit), listSavedLocations()]);
-          setFinds(findsResult);
-          setBeaches(beachesResult.slice(0, recentBeachesLimit));
-        } catch {
-          setFinds([]);
-          setBeaches([]);
-        }
-
-        try {
-          setStats(await getFindStats());
-        } catch {
-          setStats({ totalFinds: 0, rareFinds: 0, speciesCount: 0 });
-        }
-
-        await fetchProfile();
+        const [findsResult, beachesResult, statsResult] = await Promise.all([
+          listMyFinds(recentFindsLimit).catch(() => []),
+          listSavedLocations(recentBeachesLimit).catch(() => []),
+          getFindStats().catch(() => ({ totalFinds: 0, rareFinds: 0, speciesCount: 0 })),
+          fetchProfile(),
+        ]);
+        setFinds(findsResult);
+        setBeaches(beachesResult);
+        setStats(statsResult);
         setLoading(false);
       })();
     }, [fetchProfile])

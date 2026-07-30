@@ -309,8 +309,9 @@ export interface UpdateSavedLocationInput {
   isHome?: boolean;
 }
 
-export function listSavedLocations(): Promise<SavedLocation[]> {
-  return apiFetch<SavedLocation[]>('/api/saved-locations');
+export function listSavedLocations(limit?: number): Promise<SavedLocation[]> {
+  const query = limit !== undefined ? `?limit=${limit}` : '';
+  return apiFetch<SavedLocation[]>(`/api/saved-locations${query}`);
 }
 
 export function createSavedLocation(input: CreateSavedLocationInput): Promise<SavedLocation> {

@@ -51,9 +51,27 @@ const SELECT_COLUMNS = `
 
 savedLocationsRouter.get('/', async (req, res, next) => {
   try {
+    const rawLimit = req.query.limit;
+    let limit: number | null = null;
+    if (rawLimit !== undefined) {
+      const parsed = Number(rawLimit);
+      if (!Number.isInteger(parsed) || parsed < 1) {
+        res.status(400).json({ error: 'Query param limit must be a positive integer' });
+        return;
+      }
+      limit = parsed;
+    }
+
+    // Applying the limit in SQL (rather than fetching every saved beach and
+    // slicing client-side) matters here because each row's response requires
+    // a live conditions/score computation (see toResponse below) -- fetching
+    // unbounded rows means computing that for beaches that won't even be
+    // displayed, which is expensive on any conditions_cache miss.
     const result = await pool.query<SavedLocationRow>(
-      `SELECT ${SELECT_COLUMNS} FROM saved_locations WHERE user_id = $1 ORDER BY is_home DESC, created_at DESC`,
-      [req.user!.id]
+      `SELECT ${SELECT_COLUMNS} FROM saved_locations WHERE user_id = $1
+       ORDER BY is_home DESC, created_at DESC
+       ${limit !== null ? 'LIMIT $2' : ''}`,
+      limit !== null ? [req.user!.id, limit] : [req.user!.id]
     );
 
     const enriched = await Promise.all(result.rows.map(toResponse));
