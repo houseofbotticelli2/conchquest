@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from '../config/env';
 
@@ -55,4 +55,33 @@ export function getDownloadUrl(key: string): Promise<string> {
   return getSignedUrl(client, new GetObjectCommand({ Bucket: env.bucketName, Key: key }), {
     expiresIn: DOWNLOAD_URL_EXPIRES_SECONDS,
   });
+}
+
+// Uploads are keyed as `{folder}/{userId}/{uuid}.{ext}` (see createUploadUrl),
+// so everything a user ever uploaded -- finds and avatar -- lives under these
+// two prefixes. Deleting by prefix means we don't need to trust the DB rows
+// (which are already gone by the time this runs) to enumerate what to remove.
+export async function deleteUserPhotos(userId: string): Promise<void> {
+  for (const folder of Object.values(FOLDER_BY_PURPOSE)) {
+    const prefix = `${folder}/${userId}/`;
+    let continuationToken: string | undefined;
+
+    do {
+      const listing = await client.send(
+        new ListObjectsV2Command({ Bucket: env.bucketName, Prefix: prefix, ContinuationToken: continuationToken })
+      );
+      const keys = (listing.Contents ?? []).map((obj) => obj.Key).filter((key): key is string => !!key);
+
+      if (keys.length > 0) {
+        await client.send(
+          new DeleteObjectsCommand({
+            Bucket: env.bucketName,
+            Delete: { Objects: keys.map((Key) => ({ Key })) },
+          })
+        );
+      }
+
+      continuationToken = listing.IsTruncated ? listing.NextContinuationToken : undefined;
+    } while (continuationToken);
+  }
 }
