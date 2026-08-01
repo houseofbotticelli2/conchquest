@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,9 +7,20 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
 import { Btn } from '../../components/Btn';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { ShellingMap } from '../../components/ShellingMap';
 import { BeachesStackParamList } from '../../navigation/types';
 import { listSavedLocations, createSavedLocation, updateSavedLocation, deleteSavedLocation, SavedLocation } from '../../lib/api';
 import { getCurrentLocation, reverseGeocodeCity, DeviceLocation } from '../../lib/location';
+
+// Shown in place of the draggable map on web, where react-native-maps has no
+// implementation -- see ShellingMap.web.tsx.
+function MapUnavailableOnWeb({ color }: { color: string }) {
+  return (
+    <Text style={{ fontFamily: fonts.body, fontSize: 12, color, padding: 12, textAlign: 'center' }}>
+      Fine-tuning a beach's exact position by dragging the pin isn't available on web -- use the mobile app.
+    </Text>
+  );
+}
 
 type Props = NativeStackScreenProps<BeachesStackParamList, 'Beaches'>;
 
@@ -47,10 +58,30 @@ export function Beaches(_props: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editAlert, setEditAlert] = useState(0);
+  const [editLocation, setEditLocation] = useState<DeviceLocation | null>(null);
+  const [editCity, setEditCity] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [addErrorMsg, setAddErrorMsg] = useState<string | null>(null);
   const [saveErrorMsg, setSaveErrorMsg] = useState<string | null>(null);
   const [removeTarget, setRemoveTarget] = useState<SavedLocation | null>(null);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const cardOffsetsRef = useRef<Record<string, number>>({});
+
+  // Scroll the tapped beach's card to the top of the visible area once its
+  // edit panel expands -- otherwise the panel (name, city, map, alert,
+  // actions) is usually taller than what's visible and starts mid-scroll.
+  // Deferred a tick so this measures the panel's *expanded* layout, not
+  // where the card was before it grew.
+  useEffect(() => {
+    if (!editingId) return;
+    const y = cardOffsetsRef.current[editingId];
+    if (y === undefined) return;
+    const timeout = setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(0, y - 12), animated: true });
+    }, 50);
+    return () => clearTimeout(timeout);
+  }, [editingId]);
 
   const fetchBeaches = useCallback(async () => {
     setLoading(true);
@@ -102,6 +133,13 @@ export function Beaches(_props: Props) {
     });
   }
 
+  function handleNewLocationDragEnd(loc: DeviceLocation) {
+    setNewLocation(loc);
+    reverseGeocodeCity(loc).then((city) => {
+      if (city) setNewCity(city);
+    });
+  }
+
   async function handleAdd() {
     if (!newName.trim() || !newCity.trim()) return;
     setSaving(true);
@@ -141,17 +179,30 @@ export function Beaches(_props: Props) {
     setEditingId(beach.id);
     setEditName(beach.name);
     setEditAlert(beach.alertThresholdScore ?? beach.score);
+    setEditLocation(beach.location);
+    setEditCity(beach.city ?? '');
   }
 
   function cancelEditing() {
     setEditingId(null);
   }
 
+  function handleEditLocationDragEnd(loc: DeviceLocation) {
+    setEditLocation(loc);
+    reverseGeocodeCity(loc).then((city) => {
+      if (city) setEditCity(city);
+    });
+  }
+
   async function handleDoneEditing(id: string) {
     if (!editName.trim()) return;
     setSavingEdit(true);
     try {
-      await updateSavedLocation(id, { name: editName.trim(), alertThresholdScore: editAlert });
+      await updateSavedLocation(id, {
+        name: editName.trim(),
+        alertThresholdScore: editAlert,
+        ...(editLocation ? { lat: editLocation.lat, lon: editLocation.lon, city: editCity } : {}),
+      });
       await fetchBeaches();
       setEditingId(null);
     } catch (e) {
@@ -179,7 +230,7 @@ export function Beaches(_props: Props) {
           <Ionicons name="add-circle-outline" size={26} color={t.text} />
         </TouchableOpacity>
       </View>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
         {adding && (
           <View style={[styles.addBox, { backgroundColor: t.surface, borderColor: t.border }]}>
             <TextInput
@@ -193,6 +244,18 @@ export function Beaches(_props: Props) {
             <View style={styles.addSection}>
               <Text style={[styles.editLabel, { color: t.muted }]}>CITY</Text>
               <Text style={[styles.readOnlyValue, { color: t.text }]}>{newCity || DEFAULT_LOCATION.label}</Text>
+            </View>
+
+            <View style={styles.addSection}>
+              <Text style={[styles.editLabel, { color: t.muted }]}>LOCATION (DRAG PIN TO ADJUST)</Text>
+              <View style={[styles.mapBox, { borderColor: t.border }]}>
+                <ShellingMap
+                  latitude={(newLocation ?? DEFAULT_LOCATION).lat}
+                  longitude={(newLocation ?? DEFAULT_LOCATION).lon}
+                  onCenterMarkerDragEnd={handleNewLocationDragEnd}
+                  fallback={<MapUnavailableOnWeb color={t.muted} />}
+                />
+              </View>
             </View>
 
             <TouchableOpacity style={styles.homeToggleRow} onPress={() => setNewAlertEnabled((v) => !v)} hitSlop={8}>
@@ -268,6 +331,9 @@ export function Beaches(_props: Props) {
           visibleBeaches.map((b) => (
             <View
               key={b.id}
+              onLayout={(e) => {
+                cardOffsetsRef.current[b.id] = e.nativeEvent.layout.y;
+              }}
               style={[
                 styles.beachCard,
                 { backgroundColor: t.surface, borderColor: b.isHome ? t.accent : t.border, borderWidth: b.isHome ? 1.5 : 1 },
@@ -332,7 +398,19 @@ export function Beaches(_props: Props) {
 
                   <View style={styles.editSection}>
                     <Text style={[styles.editLabel, { color: t.muted }]}>CITY</Text>
-                    <Text style={[styles.readOnlyValue, { color: t.text }]}>{b.city || DEFAULT_LOCATION.label}</Text>
+                    <Text style={[styles.readOnlyValue, { color: t.text }]}>{editCity || DEFAULT_LOCATION.label}</Text>
+                  </View>
+
+                  <View style={styles.editSection}>
+                    <Text style={[styles.editLabel, { color: t.muted }]}>LOCATION (DRAG PIN TO ADJUST)</Text>
+                    <View style={[styles.mapBox, { borderColor: t.border }]}>
+                      <ShellingMap
+                        latitude={(editLocation ?? b.location).lat}
+                        longitude={(editLocation ?? b.location).lon}
+                        onCenterMarkerDragEnd={handleEditLocationDragEnd}
+                        fallback={<MapUnavailableOnWeb color={t.muted} />}
+                      />
+                    </View>
                   </View>
 
                   <View style={styles.editSection}>
@@ -412,6 +490,7 @@ const styles = StyleSheet.create({
   addInput: { fontFamily: fonts.body, fontSize: 13, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12 },
   addSection: { gap: 6, marginTop: 12 },
   readOnlyValue: { fontFamily: fonts.body, fontSize: 13, paddingVertical: 8 },
+  mapBox: { height: 280, borderRadius: 8, overflow: 'hidden', borderWidth: 1 },
   homeToggleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
   homeToggleText: { fontFamily: fonts.body, fontSize: 13 },
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12, marginBottom: 10 },

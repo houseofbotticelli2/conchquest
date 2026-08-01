@@ -307,6 +307,8 @@ export interface UpdateSavedLocationInput {
   notes?: string;
   alertThresholdScore?: number;
   isHome?: boolean;
+  lat?: number;
+  lon?: number;
 }
 
 export function listSavedLocations(limit?: number): Promise<SavedLocation[]> {

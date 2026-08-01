@@ -116,7 +116,18 @@ savedLocationsRouter.post('/', async (req, res, next) => {
 savedLocationsRouter.patch('/:id', async (req, res, next) => {
   const client = await pool.connect();
   try {
-    const { name, city, notes, alertThresholdScore, isHome } = req.body ?? {};
+    const { name, city, notes, alertThresholdScore, isHome, lat, lon } = req.body ?? {};
+
+    const hasLat = lat !== undefined;
+    const hasLon = lon !== undefined;
+    if (hasLat !== hasLon) {
+      res.status(400).json({ error: 'lat and lon must both be provided together' });
+      return;
+    }
+    if (hasLat && (typeof lat !== 'number' || typeof lon !== 'number' || lat < -90 || lat > 90 || lon < -180 || lon > 180)) {
+      res.status(400).json({ error: 'lat and lon must be valid coordinates' });
+      return;
+    }
 
     await client.query('BEGIN');
 
@@ -124,16 +135,32 @@ savedLocationsRouter.patch('/:id', async (req, res, next) => {
       await client.query(`UPDATE saved_locations SET is_home = false WHERE user_id = $1`, [req.user!.id]);
     }
 
+    // geog can't be COALESCE'd against a possibly-null parameter the way the
+    // other columns are -- when lat/lon aren't provided, this expression
+    // must evaluate to the column's current value, not a NULL point.
     const result = await client.query<SavedLocationRow>(
       `UPDATE saved_locations
        SET name = COALESCE($1, name),
            city = COALESCE($2, city),
            notes = COALESCE($3, notes),
            alert_threshold_score = COALESCE($4, alert_threshold_score),
-           is_home = COALESCE($5, is_home)
-       WHERE id = $6 AND user_id = $7
+           is_home = COALESCE($5, is_home),
+           geog = CASE WHEN $6::double precision IS NOT NULL
+                       THEN ST_SetSRID(ST_MakePoint($7, $6), 4326)::geography
+                       ELSE geog END
+       WHERE id = $8 AND user_id = $9
        RETURNING ${SELECT_COLUMNS}`,
-      [name ?? null, city ?? null, notes ?? null, alertThresholdScore ?? null, isHome ?? null, req.params.id, req.user!.id]
+      [
+        name ?? null,
+        city ?? null,
+        notes ?? null,
+        alertThresholdScore ?? null,
+        isHome ?? null,
+        hasLat ? lat : null,
+        hasLat ? lon : null,
+        req.params.id,
+        req.user!.id,
+      ]
     );
 
     if (result.rows.length === 0) {
