@@ -2,6 +2,7 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   displayName: string | null;
+  role: 'user' | 'admin';
 }
 
 export interface TideEvent {

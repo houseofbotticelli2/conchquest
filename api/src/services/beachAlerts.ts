@@ -8,7 +8,7 @@ import { getConfigNumber } from './appConfig';
 // much time has passed -- otherwise a beach sitting above threshold would
 // re-alert every single job run. Also comfortably covers the gap between a
 // day's two low tides, so a single alert per window can't double-fire.
-const ALERT_COOLDOWN_HOURS = 12;
+const DEFAULT_ALERT_COOLDOWN_HOURS = 12;
 
 const DEFAULT_LEAD_TIME_HOURS = 3;
 
@@ -22,7 +22,7 @@ interface AlertCandidateRow {
   push_token: string;
 }
 
-async function fetchAlertCandidates(): Promise<AlertCandidateRow[]> {
+async function fetchAlertCandidates(cooldownHours: number): Promise<AlertCandidateRow[]> {
   const result = await pool.query<AlertCandidateRow>(
     `SELECT sl.id, sl.name, sl.city, ST_Y(sl.geog::geometry) AS lat, ST_X(sl.geog::geometry) AS lon,
             sl.alert_threshold_score, u.push_token
@@ -31,14 +31,17 @@ async function fetchAlertCandidates(): Promise<AlertCandidateRow[]> {
      WHERE sl.alert_threshold_score IS NOT NULL
        AND u.push_token IS NOT NULL
        AND (sl.last_alerted_at IS NULL OR sl.last_alerted_at < now() - ($1 || ' hours')::interval)`,
-    [ALERT_COOLDOWN_HOURS]
+    [cooldownHours]
   );
   return result.rows;
 }
 
 export async function checkBeachAlerts(): Promise<void> {
-  const candidates = await fetchAlertCandidates();
-  const leadTimeHours = await getConfigNumber('beach_alert_lead_time_hours', DEFAULT_LEAD_TIME_HOURS);
+  const [cooldownHours, leadTimeHours] = await Promise.all([
+    getConfigNumber('beach_alert_cooldown_hours', DEFAULT_ALERT_COOLDOWN_HOURS),
+    getConfigNumber('beach_alert_lead_time_hours', DEFAULT_LEAD_TIME_HOURS),
+  ]);
+  const candidates = await fetchAlertCandidates(cooldownHours);
   let sent = 0;
 
   for (const beach of candidates) {

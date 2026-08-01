@@ -1,8 +1,10 @@
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
-import { requireAuth } from './middleware/auth';
+import { requireAuth, requireAdmin } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { adminRouter } from './routes/admin';
+import { cacheCleanupRunsRouter } from './routes/cacheCleanupRuns';
 import { conditionsRouter } from './routes/conditions';
 import { configRouter } from './routes/config';
 import { findsRouter } from './routes/finds';
@@ -32,7 +34,9 @@ app.use('/api/geocode', requireAuth, geocodeRouter);
 app.use('/api/species', requireAuth, speciesRouter);
 app.use('/api/saved-locations', requireAuth, savedLocationsRouter);
 app.use('/api/uploads', requireAuth, uploadsRouter);
-app.use('/api/noaa-failures', requireAuth, noaaFailuresRouter);
+app.use('/api/noaa-failures', requireAuth, requireAdmin, noaaFailuresRouter);
+app.use('/api/cache-cleanup-runs', requireAuth, requireAdmin, cacheCleanupRunsRouter);
+app.use('/api/admin', requireAuth, requireAdmin, adminRouter);
 app.use('/api/profile', requireAuth, profileRouter);
 app.use('/api/push-token', requireAuth, pushTokenRouter);
 

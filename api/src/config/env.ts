@@ -20,6 +20,11 @@ export const env = {
   port: optionalNumber('PORT', 3000),
   databaseUrl: required('DATABASE_URL'),
   supabaseUrl: required('SUPABASE_URL'),
+  // Only needed for admin-console user deletion (calling Supabase's Admin API
+  // to remove the actual auth account, not just our mirrored `users` row) --
+  // optional, not required(), so the main API still boots fine without it.
+  // Never send this to any client; it must only ever be used server-side.
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
   openWeatherApiKey: required('OPENWEATHER_API_KEY'),
   openaiApiKey: required('OPENAI_API_KEY'),
   conditionsCacheTtlMinutes: optionalNumber('CONDITIONS_CACHE_TTL_MINUTES', 20),

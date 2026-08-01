@@ -2,13 +2,13 @@ import OpenAI from 'openai';
 import { pool } from '../config/db';
 import { env } from '../config/env';
 import { ShellingScoreResult } from '../types';
-import { getConfigString } from './appConfig';
+import { getConfigString, getConfigNumber } from './appConfig';
 import { getForecast } from './openWeather';
 import { round, feetToMeters } from '../utils/units';
 
 const STRATEGY_TIMEOUT_MS = 5000;
-const STRATEGY_TEMPERATURE = 0.5;
-const STRATEGY_MAX_TOKENS = 200;
+const DEFAULT_STRATEGY_TEMPERATURE = 0.5;
+const DEFAULT_STRATEGY_MAX_TOKENS = 200;
 const RARE_RARITIES = ['rare', 'very_rare'];
 const RARE_FIND_RADIUS_FEET = 16_000; // ~3mi, matches finds/nearby's default radius
 const RARE_FIND_LOOKBACK_DAYS = 7;
@@ -143,11 +143,16 @@ function buildUserPayload(
 }
 
 async function callOpenAI(systemPrompt: string, userPayload: unknown): Promise<string> {
+  const [temperature, maxTokens] = await Promise.all([
+    getConfigNumber('shelling_strategy_temperature', DEFAULT_STRATEGY_TEMPERATURE),
+    getConfigNumber('shelling_strategy_max_tokens', DEFAULT_STRATEGY_MAX_TOKENS),
+  ]);
+
   const response = await getClient().chat.completions.create(
     {
       model: 'gpt-4o-mini',
-      temperature: STRATEGY_TEMPERATURE,
-      max_tokens: STRATEGY_MAX_TOKENS,
+      temperature,
+      max_tokens: maxTokens,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: JSON.stringify(userPayload) },
@@ -164,6 +169,74 @@ async function callOpenAI(systemPrompt: string, userPayload: unknown): Promise<s
 export interface StrategyResult {
   strategy: string;
   source: 'ai' | 'fallback';
+}
+
+// Canned sample payloads matching buildUserPayload's shape exactly -- lets
+// the admin console test a candidate system prompt against realistic
+// conditions without needing a real beach/day and without touching the
+// strategy cache (a "test" should always hit OpenAI fresh, never a cached
+// answer from a previous prompt version).
+const TEST_SCENARIOS: Record<string, ReturnType<typeof buildUserPayload>> = {
+  strong: {
+    beach: 'Sanibel Lighthouse Beach',
+    dayLabel: 'Thursday',
+    confidence: 'high',
+    bestWindowStart: '2:10 PM',
+    bestWindowEnd: '4:35 PM',
+    bestWindowOutsideDaylight: false,
+    factors: [
+      { label: 'Tide', explanation: 'Low tide falls midday with a strong outgoing pull' },
+      { label: 'Wind', explanation: 'Light and steady, easy walking conditions' },
+    ],
+    conditions: { windMph: 6, waveHeightFt: 1.2, weatherSummary: 'clear sky', uvIndex: 7, precipChancePercent: 5 },
+    recentRareFinds: ['Junonia (spotted 3 days ago)'],
+  },
+  thin: {
+    beach: 'Blind Pass',
+    dayLabel: 'today',
+    confidence: 'low',
+    bestWindowStart: null,
+    bestWindowEnd: null,
+    bestWindowOutsideDaylight: false,
+    factors: [{ label: 'Wave data', explanation: 'Nearest buoy reading is stale' }],
+    conditions: { windMph: 11, waveHeightFt: null, weatherSummary: 'partly cloudy', uvIndex: 9, precipChancePercent: 15 },
+    recentRareFinds: [],
+  },
+  rain: {
+    beach: "Bowman's Beach",
+    dayLabel: 'tomorrow',
+    confidence: 'medium',
+    bestWindowStart: '10:15 AM',
+    bestWindowEnd: '12:40 PM',
+    bestWindowOutsideDaylight: false,
+    factors: [{ label: 'Precipitation', explanation: 'Rain showers likely through midday' }],
+    conditions: { windMph: 9, waveHeightFt: 1.8, weatherSummary: 'rain showers', uvIndex: 4, precipChancePercent: 65 },
+    recentRareFinds: ['Scotch Bonnet (spotted 2 days ago)'],
+  },
+  night: {
+    beach: 'Turner Beach',
+    dayLabel: 'today',
+    confidence: 'high',
+    bestWindowStart: null,
+    bestWindowEnd: null,
+    bestWindowOutsideDaylight: true,
+    factors: [{ label: 'Tide', explanation: "Today's low falls well after sunset" }],
+    conditions: { windMph: 7, waveHeightFt: 0.9, weatherSummary: 'clear', uvIndex: 8, precipChancePercent: 5 },
+    recentRareFinds: [],
+  },
+};
+
+export type TestScenario = keyof typeof TEST_SCENARIOS;
+export const TEST_SCENARIO_KEYS = Object.keys(TEST_SCENARIOS) as TestScenario[];
+
+// Deliberately bypasses both the cache and the fallback-to-explanation
+// behavior of getShellingStrategy -- this is meant to show the admin exactly
+// what OpenAI returns (or exactly how it fails) for a candidate prompt,
+// not a cached answer from a previous version or a masked failure.
+export async function testStrategyPrompt(systemPrompt: string, scenario: TestScenario): Promise<string> {
+  const userPayload = TEST_SCENARIOS[scenario];
+  if (!userPayload) throw new Error(`Unknown scenario: ${scenario}`);
+  return callOpenAI(systemPrompt, userPayload);
 }
 
 export async function getShellingStrategy(

@@ -6,6 +6,12 @@
       "runtimeExecutable": "sh",
       "runtimeArgs": ["-c", "cd mobile && npx expo start --web --port 8082"],
       "port": 8082
+    },
+    {
+      "name": "conchquest-admin",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd admin && npm run dev -- --port 5173"],
+      "port": 5173
     }
   ]
 }
