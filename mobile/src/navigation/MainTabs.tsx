@@ -31,9 +31,19 @@ const TAB_ICONS: Record<keyof MainTabParamList, { family: 'ionicons' | 'mci' | '
   ProfileTab: { family: 'ionicons', active: 'person', inactive: 'person-outline' },
 };
 
-function CustomTabBar({ state, navigation }: BottomTabBarProps) {
+function CustomTabBar({ state, navigation, descriptors }: BottomTabBarProps) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
+
+  // Lets a screen deep in a tab's stack (e.g. the Map screen going
+  // fullscreen) hide this bar via navigation.getParent()?.setOptions({
+  // tabBarStyle: { display: 'none' } }) -- this custom tabBar ignores
+  // tabBarStyle for everything else, so it has to check it explicitly.
+  const activeOptions = descriptors[state.routes[state.index].key]?.options;
+  if ((activeOptions?.tabBarStyle as { display?: string } | undefined)?.display === 'none') {
+    return null;
+  }
+
   return (
     <View style={[styles.wrap, { backgroundColor: t.bg, paddingBottom: Math.max(insets.bottom, 8) + 12 }]}>
       <View style={[styles.bar, { backgroundColor: t.navBg }]}>

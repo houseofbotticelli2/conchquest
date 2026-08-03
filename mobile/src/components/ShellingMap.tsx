@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { StyleSheet, ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
+import { StyleSheet, ViewStyle, StyleProp, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import MapView, { Marker, Region, LatLng } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface ShellingMapMarker {
   id: string;
@@ -31,6 +32,17 @@ export interface ShellingMapProps {
   // release -- used by the add/edit beach flows to let the user fine-tune a
   // beach's exact location. Unused (no-op) when showCenterMarker is false.
   onCenterMarkerDragEnd?: (coords: { lat: number; lon: number }) => void;
+  // Fires on any tap on the map surface itself -- used by the Map screen to
+  // expand a collapsed map to fullscreen on first touch. Rendered behind
+  // (i.e. z-order below) the layers/recenter buttons below, so it never
+  // swallows their taps. Unset (default) leaves the map's normal gestures
+  // completely alone.
+  onCollapsedTap?: () => void;
+  // True once the map is genuinely edge-to-edge (no longer inset in a small
+  // box with its own margin from the screen edge) -- pushes the layers/
+  // recenter buttons out past the safe-area insets instead of sitting flush
+  // against the notch/home-indicator area.
+  edgeToEdge?: boolean;
   style?: StyleProp<ViewStyle>;
   // Web-only fallback content, unused on native -- kept in the shared prop
   // type so call sites don't need platform checks of their own.
@@ -49,10 +61,13 @@ export function ShellingMap({
   showsUserLocation = false,
   showCenterMarker = true,
   onCenterMarkerDragEnd,
+  onCollapsedTap,
+  edgeToEdge = false,
   style,
 }: ShellingMapProps) {
   const region: Region = { latitude, longitude, latitudeDelta, longitudeDelta };
   const mapRef = useRef<MapView>(null);
+  const insets = useSafeAreaInsets();
   const [mapType, setMapType] = useState<'standard' | 'hybrid'>('hybrid');
 
   function handleCenterMarkerDragEnd(coordinate: LatLng) {
@@ -103,11 +118,24 @@ export function ShellingMap({
           />
         ))}
       </MapView>
-      <TouchableOpacity style={styles.mapTypeBtn} onPress={toggleMapType} hitSlop={8}>
+      {onCollapsedTap && (
+        <TouchableWithoutFeedback onPress={onCollapsedTap}>
+          <View style={StyleSheet.absoluteFill} />
+        </TouchableWithoutFeedback>
+      )}
+      <TouchableOpacity
+        style={[styles.mapTypeBtn, { top: 10 + (edgeToEdge ? insets.top : 0), right: 10 + (edgeToEdge ? insets.right : 0) }]}
+        onPress={toggleMapType}
+        hitSlop={8}
+      >
         <Ionicons name="layers" size={20} color="#1a2e35" />
       </TouchableOpacity>
       {showCenterMarker && (
-        <TouchableOpacity style={styles.recenterBtn} onPress={recenterOnMarker} hitSlop={8}>
+        <TouchableOpacity
+          style={[styles.recenterBtn, { bottom: 10 + (edgeToEdge ? insets.bottom : 0), right: 10 + (edgeToEdge ? insets.right : 0) }]}
+          onPress={recenterOnMarker}
+          hitSlop={8}
+        >
           <Ionicons name="locate" size={20} color="#1a2e35" />
         </TouchableOpacity>
       )}
@@ -119,8 +147,6 @@ const styles = StyleSheet.create({
   map: { width: '100%', height: '100%' },
   recenterBtn: {
     position: 'absolute',
-    right: 10,
-    bottom: 10,
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -135,8 +161,6 @@ const styles = StyleSheet.create({
   },
   mapTypeBtn: {
     position: 'absolute',
-    right: 10,
-    top: 10,
     width: 36,
     height: 36,
     borderRadius: 18,

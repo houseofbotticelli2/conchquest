@@ -1,8 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import Svg, { Rect, Circle, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
@@ -54,10 +55,12 @@ function isToday(iso: string): boolean {
 export function MapScreen({ navigation }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { user } = useAuth();
   const [finds, setFinds] = useState<NearbyFind[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState(0);
+  const [mapExpanded, setMapExpanded] = useState(false);
 
   const { beaches, selectedBeach, location, titleLabel, subLabel, pickerOpen, setPickerOpen, selectBeach } =
     useBeachContext(DEFAULT_LOCATION);
@@ -71,6 +74,25 @@ export function MapScreen({ navigation }: Props) {
         .finally(() => setLoading(false));
     }, [location.lat, location.lon])
   );
+
+  // Reset to the normal layout every time this screen regains focus (e.g.
+  // returning from a find's detail page), so a fullscreen map never lingers
+  // unexpectedly from a previous visit.
+  useFocusEffect(
+    useCallback(() => {
+      setMapExpanded(false);
+    }, [])
+  );
+
+  // CustomTabBar (in MainTabs) checks the active route's tabBarStyle to
+  // decide whether to render itself at all -- this is the nested-screen way
+  // to reach the parent Tab.Navigator's option from inside MapStack.
+  useEffect(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: mapExpanded ? { display: 'none' } : undefined });
+    return () => {
+      navigation.getParent()?.setOptions({ tabBarStyle: undefined });
+    };
+  }, [mapExpanded, navigation]);
 
   // Nearby finds only carry a display-name string, not a user id, so
   // "Mine" matches on the same label the backend derives (display_name,
@@ -87,16 +109,74 @@ export function MapScreen({ navigation }: Props) {
     });
   }, [finds, activeFilter, myLabel]);
 
+  // Measured rather than guessed, since the header's real height depends on
+  // the device's safe-area inset and whether subLabel is present -- the
+  // pinned (non-expanded) map box needs to sit flush beneath it.
+  const [headerHeight, setHeaderHeight] = useState(0);
+
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <View>
-          <Text style={[styles.title, { color: t.text }]}>{titleLabel}</Text>
-          {subLabel && <Text style={[styles.titleSub, { color: t.muted }]}>{subLabel}</Text>}
+      <View style={{ flex: 1, display: mapExpanded ? 'none' : 'flex' }}>
+        <View
+          style={[styles.header, { paddingTop: insets.top + 12 }]}
+          onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+        >
+          <View>
+            <Text style={[styles.title, { color: t.text }]}>{titleLabel}</Text>
+            {subLabel && <Text style={[styles.titleSub, { color: t.muted }]}>{subLabel}</Text>}
+          </View>
+          <TouchableOpacity onPress={() => setPickerOpen(true)}>
+            <Text style={{ fontSize: 20 }}>📍</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={() => setPickerOpen(true)}>
-          <Text style={{ fontSize: 20 }}>📍</Text>
-        </TouchableOpacity>
+
+        <View style={styles.mapBoxSpacer} />
+
+        <ScrollView>
+          <View style={styles.filtersRow}>
+            {FILTERS.map((f, i) => (
+              <Text
+                key={f.label}
+                onPress={() => setActiveFilter(i)}
+                style={[
+                  styles.filterChip,
+                  { borderColor: t.border, backgroundColor: i === activeFilter ? t.navBg : t.surface, color: i === activeFilter ? t.navText : t.muted },
+                ]}
+              >
+                {f.label}
+              </Text>
+            ))}
+          </View>
+
+          <View style={styles.sectionHeader}>
+            <Eyebrow>Recent finds nearby</Eyebrow>
+          </View>
+          <View style={styles.list}>
+            {loading && <ActivityIndicator color={t.accent} style={{ marginVertical: 12 }} />}
+            {!loading && finds.length === 0 && (
+              <Text style={[styles.emptyText, { color: t.muted }]}>No community finds nearby yet.</Text>
+            )}
+            {!loading && finds.length > 0 && visibleFinds.length === 0 && (
+              <Text style={[styles.emptyText, { color: t.muted }]}>No finds match this filter.</Text>
+            )}
+            {!loading &&
+              visibleFinds.map((f) => (
+                <FindRow
+                  key={f.id}
+                  icon="🐚"
+                  bg={t.surfaceAlt}
+                  name={f.speciesName ?? 'Unidentified shell'}
+                  sub=""
+                  dateSuffix={formatFindDate(f.foundAt)}
+                  condition={f.condition}
+                  notes={f.notes}
+                  badge={toBadgeType(f.speciesRarity)}
+                  photoUrl={f.photoUrl}
+                  onPress={() => navigation.navigate('FindDetail', { findId: f.id })}
+                />
+              ))}
+          </View>
+        </ScrollView>
       </View>
 
       <SlideUpSheet visible={pickerOpen} onClose={() => setPickerOpen(false)} title="Choose a beach">
@@ -117,8 +197,21 @@ export function MapScreen({ navigation }: Props) {
         ))}
       </SlideUpSheet>
 
-      <ScrollView>
-        <View style={[styles.mapBox, { borderColor: t.border }]}>
+      <View
+        style={[
+          styles.mapBox,
+          mapExpanded && styles.mapBoxExpanded,
+          { borderColor: t.border },
+          // Explicit pixel width/height rather than relying on top+bottom
+          // (or left+right) to auto-resolve the size of an absolutely
+          // positioned view -- that inference doesn't reliably reach the
+          // native side the same way across RN versions/architectures, so
+          // this spells out the exact box instead of hoping Yoga infers it.
+          mapExpanded
+            ? { top: 0, left: 0, width: windowWidth, height: windowHeight }
+            : { top: headerHeight, left: 14, width: windowWidth - 28, height: 270 },
+        ]}
+      >
           <ShellingMap
             latitude={location.lat}
             longitude={location.lon}
@@ -131,6 +224,8 @@ export function MapScreen({ navigation }: Props) {
               pinColor: markerColorForRarity(f.speciesRarity),
             }))}
             onSelectMarker={(id) => navigation.navigate('FindDetail', { findId: id })}
+            onCollapsedTap={!mapExpanded ? () => setMapExpanded(true) : undefined}
+            edgeToEdge={mapExpanded}
             fallback={
               <Svg viewBox="0 0 292 155" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
                 <Rect width={292} height={155} fill="#B8D4E0" />
@@ -163,52 +258,17 @@ export function MapScreen({ navigation }: Props) {
               </Svg>
             }
           />
-        </View>
-
-        <View style={styles.filtersRow}>
-          {FILTERS.map((f, i) => (
-            <Text
-              key={f.label}
-              onPress={() => setActiveFilter(i)}
-              style={[
-                styles.filterChip,
-                { borderColor: t.border, backgroundColor: i === activeFilter ? t.navBg : t.surface, color: i === activeFilter ? t.navText : t.muted },
-              ]}
-            >
-              {f.label}
-            </Text>
-          ))}
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Eyebrow>Recent finds nearby</Eyebrow>
-        </View>
-        <View style={styles.list}>
-          {loading && <ActivityIndicator color={t.accent} style={{ marginVertical: 12 }} />}
-          {!loading && finds.length === 0 && (
-            <Text style={[styles.emptyText, { color: t.muted }]}>No community finds nearby yet.</Text>
-          )}
-          {!loading && finds.length > 0 && visibleFinds.length === 0 && (
-            <Text style={[styles.emptyText, { color: t.muted }]}>No finds match this filter.</Text>
-          )}
-          {!loading &&
-            visibleFinds.map((f) => (
-              <FindRow
-                key={f.id}
-                icon="🐚"
-                bg={t.surfaceAlt}
-                name={f.speciesName ?? 'Unidentified shell'}
-                sub=""
-                dateSuffix={formatFindDate(f.foundAt)}
-                condition={f.condition}
-                notes={f.notes}
-                badge={toBadgeType(f.speciesRarity)}
-                photoUrl={f.photoUrl}
-                onPress={() => navigation.navigate('FindDetail', { findId: f.id })}
-              />
-            ))}
-        </View>
-      </ScrollView>
+        {mapExpanded && (
+          <TouchableOpacity
+            style={[styles.collapseBtn, { bottom: insets.bottom + 20 }]}
+            onPress={() => setMapExpanded(false)}
+            hitSlop={8}
+          >
+            <Ionicons name="contract" size={16} color="#1a2e35" />
+            <Text style={styles.collapseBtnLabel}>Done</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
@@ -226,7 +286,31 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: fonts.display, fontSize: 18, fontWeight: '600' },
   titleSub: { fontFamily: fonts.data, fontSize: 11 },
-  mapBox: { marginHorizontal: 14, marginBottom: 10, borderRadius: 10, overflow: 'hidden', borderWidth: 1, height: 270 },
+  // Positioned absolutely (relative to `screen`) rather than sitting inline
+  // in the scrollable content, so it can grow from a pinned 270px box into a
+  // fullscreen overlay without remounting the underlying MapView.
+  mapBox: { position: 'absolute', borderRadius: 10, overflow: 'hidden', borderWidth: 1, zIndex: 1 },
+  mapBoxExpanded: { borderRadius: 0, borderWidth: 0, zIndex: 10 },
+  // Reserves the same vertical space the pinned map box occupies, so the
+  // filters/list content below starts in the right place.
+  mapBoxSpacer: { height: 280 },
+  collapseBtn: {
+    position: 'absolute',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'white',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  collapseBtnLabel: { fontFamily: fonts.bodySemiBold, fontSize: 13, color: '#1a2e35' },
   filtersRow: { paddingHorizontal: 14, paddingBottom: 10, flexDirection: 'row', gap: 6 },
   filterChip: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4, borderWidth: 1, borderRadius: 20, paddingVertical: 4, paddingHorizontal: 10, overflow: 'hidden' },
   sectionHeader: { paddingHorizontal: 14, paddingBottom: 4 },
