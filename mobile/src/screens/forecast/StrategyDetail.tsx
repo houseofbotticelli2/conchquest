@@ -6,8 +6,9 @@ import { fonts } from '../../theme/tokens';
 import { Card } from '../../components/Card';
 import { Eyebrow } from '../../components/Eyebrow';
 import { NavBar } from '../../components/NavBar';
+import { NowBadge } from '../../components/NowBadge';
 import { ForecastStackParamList } from '../../navigation/types';
-import { formatTime, isTomorrow, daylightNote } from '../../lib/forecastFormat';
+import { formatTime, isTomorrow, isWithinWindow, daylightNote } from '../../lib/forecastFormat';
 import { getStrategy } from '../../lib/api';
 
 // Generous relative to the backend's own 5s OpenAI timeout -- this only
@@ -21,9 +22,9 @@ export function StrategyDetail({ navigation, route }: Props) {
   const { theme: t } = useTheme();
   const { result, dayOffset, dayLabel, isToday, beachLabel } = route.params;
   const nextLowTide = result.conditions.tide?.nextEvents.find((e) => e.type === 'low') ?? null;
+  const windowIsNow = result.bestWindow ? isWithinWindow(result.bestWindow.start, result.bestWindow.end) : false;
 
   const [strategyText, setStrategyText] = useState<string | null>(null);
-  const [isAiGenerated, setIsAiGenerated] = useState(false);
   const [loadingStrategy, setLoadingStrategy] = useState(true);
 
   useEffect(() => {
@@ -39,18 +40,11 @@ export function StrategyDetail({ navigation, route }: Props) {
     Promise.race([getStrategy(result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd, dayOffset), timeout])
       .then((res) => {
         if (cancelled) return;
-        if (res) {
-          setStrategyText(res.strategy);
-          setIsAiGenerated(res.source === 'ai');
-        } else {
-          setStrategyText(result.explanation);
-          setIsAiGenerated(false);
-        }
+        setStrategyText(res ? res.strategy : result.explanation);
       })
       .catch(() => {
         if (cancelled) return;
         setStrategyText(result.explanation);
-        setIsAiGenerated(false);
       })
       .finally(() => {
         if (!cancelled) setLoadingStrategy(false);
@@ -66,19 +60,27 @@ export function StrategyDetail({ navigation, route }: Props) {
       <NavBar title="Shelling strategy" left="← Back" onLeft={() => navigation.goBack()} right={beachLabel} />
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.windowCard}>
-          <Eyebrow>Best window {dayLabel}</Eyebrow>
+          <View style={styles.windowHeader}>
+            <Eyebrow style={styles.windowEyebrow}>Best window {dayLabel}</Eyebrow>
+            {windowIsNow && <NowBadge />}
+          </View>
           {result.bestWindow ? (
             <>
               <Text style={[styles.windowTime, { color: t.text }]}>
                 {formatTime(result.bestWindow.start)} – {formatTime(result.bestWindow.end)}
               </Text>
-              <Text style={[styles.windowNote, { color: t.sea }]}>{result.bestWindow.reason}</Text>
+              <Text style={[styles.windowNote, { color: t.sea }]}>
+                {result.bestWindow.reason}
+                {!result.bestWindow.isDaylight ? ' 🔦 After dark — bring a light.' : ''}
+              </Text>
             </>
           ) : (
             <>
               <Text style={[styles.windowTime, { color: t.text }]}>No shelling window {isToday ? 'today' : dayLabel}</Text>
               <Text style={[styles.windowNote, { color: t.sea }]}>
-                {isToday ? "Today's" : `${dayLabel}'s`} low tide falls at night, outside daylight hours.
+                {result.restrictShellingToDaylight
+                  ? `${isToday ? "Today's" : `${dayLabel}'s`} low tide falls at night, outside daylight hours.`
+                  : `No low tide data available for ${isToday ? 'today' : dayLabel}.`}
               </Text>
             </>
           )}
@@ -86,23 +88,17 @@ export function StrategyDetail({ navigation, route }: Props) {
             <Text style={[styles.windowNote, { color: t.muted, marginTop: 6 }]}>
               Next low tide: {formatTime(nextLowTide.time)}
               {isTomorrow(nextLowTide.time) ? ' (tomorrow)' : ''}
-              {(() => {
-                const note = daylightNote(nextLowTide.time, result.conditions.weather.sunrise, result.conditions.weather.sunset);
-                return note ? ` — ${note}` : '';
-              })()}
+              {result.restrictShellingToDaylight &&
+                (() => {
+                  const note = daylightNote(nextLowTide.time, result.conditions.weather.sunrise, result.conditions.weather.sunset);
+                  return note ? ` — ${note}` : '';
+                })()}
             </Text>
           )}
         </Card>
 
         <Card style={styles.strategyCard}>
-          <View style={styles.strategyHeader}>
-            <Eyebrow style={styles.strategyEyebrow}>Shelling strategy</Eyebrow>
-            {isAiGenerated && (
-              <View style={[styles.aiTag, { borderColor: t.accent }]}>
-                <Text style={[styles.aiTagText, { color: t.accentDeep }]}>✨ AI-generated</Text>
-              </View>
-            )}
-          </View>
+          <Eyebrow>Shelling strategy</Eyebrow>
           {loadingStrategy ? (
             <ActivityIndicator color={t.accent} style={styles.strategyLoading} />
           ) : (
@@ -118,13 +114,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { padding: 16, paddingBottom: 24, gap: 12 },
   windowCard: {},
+  windowHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  windowEyebrow: { marginBottom: 0 },
   windowTime: { fontFamily: fonts.display, fontSize: 20, fontWeight: '600', marginBottom: 2 },
   windowNote: { fontFamily: fonts.data, fontSize: 12 },
   strategyCard: {},
-  strategyHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  strategyEyebrow: { marginBottom: 0 },
-  aiTag: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 4 },
-  aiTagText: { fontFamily: fonts.bodySemiBold, fontSize: 11 },
   strategyLoading: { marginTop: 10, alignSelf: 'flex-start' },
   strategyText: { fontFamily: fonts.body, fontSize: 13, lineHeight: 20 },
 });

@@ -18,7 +18,7 @@ scoreRouter.get('/', async (req, res, next) => {
 
   try {
     const conditions = await getConditions(coords.lat, coords.lon);
-    const result = computeShellingScore(conditions);
+    const result = computeShellingScore(conditions, new Date(), req.user!.restrictShellingToDaylight);
     res.json(result);
   } catch (err) {
     next(err);
@@ -33,7 +33,7 @@ scoreRouter.get('/multi-day', async (req, res, next) => {
   }
 
   try {
-    const days = await getMultiDayForecast(coords.lat, coords.lon);
+    const days = await getMultiDayForecast(coords.lat, coords.lon, req.user!.restrictShellingToDaylight);
     res.json({ days });
   } catch (err) {
     next(err);

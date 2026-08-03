@@ -225,7 +225,7 @@ export function Beaches(_props: Props) {
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={[styles.title, { color: t.text }]}>Beaches</Text>
+        <Text style={[styles.title, { color: t.text }]}>My Beaches</Text>
         <TouchableOpacity onPress={openAdd}>
           <Ionicons name="add-circle-outline" size={26} color={t.text} />
         </TouchableOpacity>

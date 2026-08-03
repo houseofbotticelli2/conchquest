@@ -187,31 +187,42 @@ function determineConfidence(conditions: NormalizedConditions): ShellingScoreRes
   return 'low';
 }
 
-function findBestWindow(conditions: NormalizedConditions): ShellingScoreResult['bestWindow'] {
+function findBestWindow(conditions: NormalizedConditions, restrictToDaylight: boolean): ShellingScoreResult['bestWindow'] {
   if (!conditions.tide) return null;
   const sunrise = new Date(conditions.weather.sunrise).getTime();
   const sunset = new Date(conditions.weather.sunset).getTime();
 
-  const daylightLow = conditions.tide.nextEvents.find((event: TideEvent) => {
+  const candidateLow = conditions.tide.nextEvents.find((event: TideEvent) => {
+    if (event.type !== 'low') return false;
+    if (!restrictToDaylight) return true;
     const t = new Date(event.time).getTime();
-    return event.type === 'low' && t > sunrise && t < sunset;
+    return t > sunrise && t < sunset;
   });
 
-  if (!daylightLow) return null;
+  if (!candidateLow) return null;
 
-  const eventMs = new Date(daylightLow.time).getTime();
-  const start = new Date(Math.max(sunrise, eventMs - 90 * 60_000));
-  const end = new Date(Math.min(sunset, eventMs + 90 * 60_000));
+  const eventMs = new Date(candidateLow.time).getTime();
+  let start = eventMs - 90 * 60_000;
+  let end = eventMs + 90 * 60_000;
+  if (restrictToDaylight) {
+    start = Math.max(sunrise, start);
+    end = Math.min(sunset, end);
+  }
 
   return {
-    start: start.toISOString(),
-    end: end.toISOString(),
-    lowTideTime: daylightLow.time,
+    start: new Date(start).toISOString(),
+    end: new Date(end).toISOString(),
+    lowTideTime: candidateLow.time,
     reason: 'The 90 minutes on either side of low tide typically expose the most productive ground.',
+    isDaylight: start >= sunrise && end <= sunset,
   };
 }
 
-export function computeShellingScore(conditions: NormalizedConditions, now: Date = new Date()): ShellingScoreResult {
+export function computeShellingScore(
+  conditions: NormalizedConditions,
+  now: Date = new Date(),
+  restrictShellingToDaylight = false
+): ShellingScoreResult {
   const factors = [
     scoreTideLevel(conditions),
     scoreTidalMovement(conditions),
@@ -224,9 +235,9 @@ export function computeShellingScore(conditions: NormalizedConditions, now: Date
 
   const score = factors.reduce((sum, f) => sum + f.points, 0);
   const confidence = determineConfidence(conditions);
-  const bestWindow = findBestWindow(conditions);
+  const bestWindow = findBestWindow(conditions, restrictShellingToDaylight);
 
   const explanation = factors.map((f) => f.explanation).join(' ');
 
-  return { score, confidence, bestWindow, explanation, factors, conditions };
+  return { score, confidence, bestWindow, restrictShellingToDaylight, explanation, factors, conditions };
 }

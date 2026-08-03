@@ -9,10 +9,19 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { Btn } from '../../components/Btn';
 import { ScoreRing } from '../../components/ScoreRing';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
+import { NowBadge } from '../../components/NowBadge';
 import { ForecastStackParamList } from '../../navigation/types';
 import { getMultiDayScore, MultiDayScoreEntry } from '../../lib/api';
 import { useBeachContext } from '../../hooks/useBeachContext';
-import { formatTime, formatTimeShort, isTomorrow, daylightNote, dayChipLabel, daySentenceLabel } from '../../lib/forecastFormat';
+import {
+  formatTime,
+  formatTimeShort,
+  isTomorrow,
+  isWithinWindow,
+  daylightNote,
+  dayChipLabel,
+  daySentenceLabel,
+} from '../../lib/forecastFormat';
 
 type Props = NativeStackScreenProps<ForecastStackParamList, 'Score'>;
 
@@ -92,6 +101,7 @@ export function Score({ navigation, route }: Props) {
 
   const nextLowTide = result?.conditions.tide?.nextEvents.find((e) => e.type === 'low') ?? null;
   const sentenceLabel = result ? daySentenceLabel(selectedIndex, result.date) : '';
+  const windowIsNow = result?.bestWindow ? isWithinWindow(result.bestWindow.start, result.bestWindow.end) : false;
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
@@ -208,19 +218,27 @@ export function Score({ navigation, route }: Props) {
               }
             >
               <Card style={styles.windowCard}>
-                <Eyebrow>Best window {sentenceLabel}</Eyebrow>
+                <View style={styles.windowHeader}>
+                  <Eyebrow style={styles.windowEyebrow}>Best window {sentenceLabel}</Eyebrow>
+                  {windowIsNow && <NowBadge />}
+                </View>
                 {result.bestWindow ? (
                   <>
                     <Text style={[styles.windowTime, { color: t.text }]}>
                       {formatTime(result.bestWindow.start)} – {formatTime(result.bestWindow.end)}
                     </Text>
-                    <Text style={[styles.windowNote, { color: t.sea }]}>{result.bestWindow.reason}</Text>
+                    <Text style={[styles.windowNote, { color: t.sea }]}>
+                      {result.bestWindow.reason}
+                      {!result.bestWindow.isDaylight ? ' 🔦 After dark — bring a light.' : ''}
+                    </Text>
                   </>
                 ) : (
                   <>
                     <Text style={[styles.windowTime, { color: t.text }]}>No shelling window {isToday ? 'today' : sentenceLabel}</Text>
                     <Text style={[styles.windowNote, { color: t.sea }]}>
-                      {isToday ? "Today's" : `${sentenceLabel}'s`} low tide falls at night, outside daylight hours.
+                      {result.restrictShellingToDaylight
+                        ? `${isToday ? "Today's" : `${sentenceLabel}'s`} low tide falls at night, outside daylight hours.`
+                        : `No low tide data available for ${isToday ? 'today' : sentenceLabel}.`}
                     </Text>
                   </>
                 )}
@@ -228,10 +246,12 @@ export function Score({ navigation, route }: Props) {
                   <Text style={[styles.windowNote, { color: t.muted, marginTop: 6 }]}>
                     Next low tide: {formatTime(nextLowTide.time)}
                     {isTomorrow(nextLowTide.time) ? ' (tomorrow)' : ''}
-                    {result && (() => {
-                      const note = daylightNote(nextLowTide.time, result.conditions.weather.sunrise, result.conditions.weather.sunset);
-                      return note ? ` — ${note}` : '';
-                    })()}
+                    {result &&
+                      result.restrictShellingToDaylight &&
+                      (() => {
+                        const note = daylightNote(nextLowTide.time, result.conditions.weather.sunrise, result.conditions.weather.sunset);
+                        return note ? ` — ${note}` : '';
+                      })()}
                   </Text>
                 )}
               </Card>
@@ -338,6 +358,8 @@ const styles = StyleSheet.create({
   ringWrap: { paddingVertical: 12, alignItems: 'center' },
   confidence: { fontFamily: fonts.data, fontSize: 11, marginTop: 8, letterSpacing: 0.4, textTransform: 'uppercase' },
   windowCard: { marginHorizontal: 16, marginBottom: 12 },
+  windowHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  windowEyebrow: { marginBottom: 0 },
   windowTime: { fontFamily: fonts.display, fontSize: 20, fontWeight: '600', marginBottom: 2 },
   windowNote: { fontFamily: fonts.data, fontSize: 12 },
   chipsRow: { paddingHorizontal: 16, paddingBottom: 12, flexDirection: 'row', gap: 6, flexWrap: 'wrap' },

@@ -3,6 +3,7 @@ export interface AuthenticatedUser {
   email: string;
   displayName: string | null;
   role: 'user' | 'admin';
+  restrictShellingToDaylight: boolean;
 }
 
 export interface TideEvent {
@@ -85,7 +86,16 @@ export interface ShellingScoreResult {
     end: string;
     lowTideTime: string;
     reason: string;
+    // Whether this specific window falls entirely within daylight -- true
+    // regardless of the user's own restrictShellingToDaylight preference, so
+    // the UI can show a "bring a light" hint even when night windows are
+    // allowed.
+    isDaylight: boolean;
   } | null;
+  // Echoes whether this result respected the daylight restriction, so the
+  // client knows how to interpret a null bestWindow (no low tide found at
+  // all vs. one that only exists at night) without a separate profile fetch.
+  restrictShellingToDaylight: boolean;
   explanation: string;
   factors: ScoreFactor[];
   conditions: NormalizedConditions;

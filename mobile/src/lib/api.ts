@@ -69,7 +69,11 @@ export interface ScoreFactor {
 export interface ShellingScoreResult {
   score: number;
   confidence: 'low' | 'medium' | 'high';
-  bestWindow: { start: string; end: string; lowTideTime: string; reason: string } | null;
+  bestWindow: { start: string; end: string; lowTideTime: string; reason: string; isDaylight: boolean } | null;
+  // Whether this result respected the daylight restriction -- tells the UI
+  // how to interpret a null bestWindow (no low tide at all vs. one that only
+  // falls at night) without a separate profile fetch.
+  restrictShellingToDaylight: boolean;
   explanation: string;
   factors: ScoreFactor[];
   conditions: NormalizedConditions;
@@ -342,12 +346,14 @@ export interface Profile {
   displayName: string | null;
   shellingSinceYear: number;
   avatarUrl: string | null;
+  restrictShellingToDaylight: boolean;
 }
 
 export interface UpdateProfileInput {
   displayName?: string;
   shellingSinceYear?: number;
   avatarKey?: string;
+  restrictShellingToDaylight?: boolean;
 }
 
 export function getProfile(): Promise<Profile> {

@@ -11,6 +11,14 @@ export function isTomorrow(iso: string): boolean {
   return new Date(iso).toDateString() !== new Date().toDateString();
 }
 
+// Both timestamps carry the actual date, not just a time-of-day -- comparing
+// against Date.now() directly is correct for any day (a future day's window
+// can never contain "now" without needing a separate isToday check).
+export function isWithinWindow(startIso: string, endIso: string): boolean {
+  const now = Date.now();
+  return now >= new Date(startIso).getTime() && now <= new Date(endIso).getTime();
+}
+
 function timeOfDayMinutes(iso: string): number {
   const d = new Date(iso);
   return d.getHours() * 60 + d.getMinutes();

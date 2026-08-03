@@ -19,7 +19,7 @@ const TAB_LABELS: Record<keyof MainTabParamList, string> = {
   ForecastTab: 'Shellcast',
   MapTab: 'Map',
   CollectionTab: 'My Shells',
-  BeachesTab: 'Beaches',
+  BeachesTab: 'My Beaches',
   ProfileTab: 'Profile',
 };
 

@@ -96,22 +96,17 @@ async function getPrecipChancePercent(lat: number, lon: number): Promise<number 
   }
 }
 
-// Whether the window falls outside daylight is computed here from raw ISO
-// instants, which is timezone-safe (comparing two absolute timestamps).
-// Rendering a *human-readable* local time, by contrast, is NOT safe to do
-// from a raw ISO string without knowing the beach's local timezone -- which
-// this server doesn't have -- so bestWindowStart/End must come pre-formatted
-// from the mobile client instead of being derived here. Passing the model
-// raw UTC ISO strings and asking it to render them as local time was the bug
-// that caused it to state the window ~4 hours off and wrongly recommend a
-// flashlight for a window that actually ended right at sunset.
+// bestWindow.isDaylight already carries this (scoringEngine.ts) -- kept as a
+// tiny wrapper so the prompt-building code below reads naturally.
+// Note: rendering a *human-readable* local time is NOT safe to do from a raw
+// ISO string without knowing the beach's local timezone, which this server
+// doesn't have -- bestWindowStart/End must come pre-formatted from the
+// mobile client instead of being derived here. Passing the model raw UTC ISO
+// strings and asking it to render them as local time was the bug that caused
+// it to state the window ~4 hours off and wrongly recommend a flashlight for
+// a window that actually ended right at sunset.
 function isBestWindowOutsideDaylight(result: ShellingScoreResult): boolean {
-  if (!result.bestWindow) return false;
-  const start = new Date(result.bestWindow.start).getTime();
-  const end = new Date(result.bestWindow.end).getTime();
-  const sunrise = new Date(result.conditions.weather.sunrise).getTime();
-  const sunset = new Date(result.conditions.weather.sunset).getTime();
-  return start < sunrise || end > sunset;
+  return result.bestWindow ? !result.bestWindow.isDaylight : false;
 }
 
 function buildUserPayload(

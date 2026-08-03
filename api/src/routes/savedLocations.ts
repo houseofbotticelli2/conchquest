@@ -21,9 +21,9 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
-async function toResponse(row: SavedLocationRow) {
+async function toResponse(row: SavedLocationRow, restrictShellingToDaylight: boolean) {
   const conditions = await getConditions(row.lat, row.lon);
-  const result = computeShellingScore(conditions);
+  const result = computeShellingScore(conditions, new Date(), restrictShellingToDaylight);
 
   const conditionSummary = result.bestWindow
     ? `Best window ${formatTime(result.bestWindow.start)}–${formatTime(result.bestWindow.end)}`
@@ -74,7 +74,7 @@ savedLocationsRouter.get('/', async (req, res, next) => {
       limit !== null ? [req.user!.id, limit] : [req.user!.id]
     );
 
-    const enriched = await Promise.all(result.rows.map(toResponse));
+    const enriched = await Promise.all(result.rows.map((row) => toResponse(row, req.user!.restrictShellingToDaylight)));
     res.json(enriched);
   } catch (err) {
     next(err);
@@ -107,7 +107,7 @@ savedLocationsRouter.post('/', async (req, res, next) => {
       [req.user!.id, name.trim(), lon, lat, city?.trim() || null, notes ?? null, alertThresholdScore ?? null, isFirst]
     );
 
-    res.status(201).json(await toResponse(result.rows[0]));
+    res.status(201).json(await toResponse(result.rows[0], req.user!.restrictShellingToDaylight));
   } catch (err) {
     next(err);
   }
@@ -170,7 +170,7 @@ savedLocationsRouter.patch('/:id', async (req, res, next) => {
     }
 
     await client.query('COMMIT');
-    res.json(await toResponse(result.rows[0]));
+    res.json(await toResponse(result.rows[0], req.user!.restrictShellingToDaylight));
   } catch (err) {
     await client.query('ROLLBACK');
     next(err);

@@ -69,7 +69,7 @@ const HELP_ITEMS = [
   },
   { icon: '🧭', title: 'Map', body: 'See your position, browse shells the community has logged nearby, and use the pin to pick a saved beach.' },
   { icon: '🐚', title: 'My Shells', body: 'Log a new find with its species, condition, photo, and whether the location is shown publicly. Tap the book icon to browse the shell species library.' },
-  { icon: '🏖️', title: 'Beaches', body: 'Save your favorite beaches, mark a home beach, and get notified when one hits a Shelling Score you set.' },
+  { icon: '🏖️', title: 'My Beaches', body: 'Save your favorite beaches, mark a home beach, and get notified when one hits a Shelling Score you set.' },
   { icon: '👤', title: 'Profile', body: 'Your recent finds, stats, and settings.' },
 ];
 
@@ -117,6 +117,16 @@ export function Profile({ navigation }: Props) {
       setProfile(null);
     }
   }, []);
+
+  async function handleToggleDaylightRestriction() {
+    if (!profile) return;
+    try {
+      setProfile(await updateProfile({ restrictShellingToDaylight: !profile.restrictShellingToDaylight }));
+    } catch {
+      // Non-critical setting -- leave it showing the last-known value rather
+      // than surfacing an error dialog for a toggle.
+    }
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -288,6 +298,16 @@ export function Profile({ navigation }: Props) {
         >
           <Text style={[styles.sheetRowText, { color: t.text }]}>Beach alert notifications</Text>
           <Ionicons name={notificationsEnabled ? 'checkbox' : 'square-outline'} size={20} color={t.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sheetRow, styles.sheetRowBetween, { borderTopColor: t.borderSoft }]}
+          onPress={handleToggleDaylightRestriction}
+        >
+          <View>
+            <Text style={[styles.sheetRowText, { color: t.text }]}>Daylight hours only</Text>
+            <Text style={[styles.sheetRowSub, { color: t.muted }]}>Off shows shelling windows at any hour, day or night.</Text>
+          </View>
+          <Ionicons name={profile?.restrictShellingToDaylight ? 'checkbox' : 'square-outline'} size={20} color={t.text} />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
@@ -509,6 +529,7 @@ const styles = StyleSheet.create({
   sheetRow: { paddingVertical: 14 },
   sheetRowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sheetRowText: { fontFamily: fonts.bodySemiBold, fontSize: 15 },
+  sheetRowSub: { fontFamily: fonts.body, fontSize: 12, marginTop: 2, maxWidth: 240 },
   helpRow: { flexDirection: 'row', gap: 12, paddingVertical: 10, alignItems: 'flex-start' },
   helpTitle: { fontFamily: fonts.bodySemiBold, fontSize: 14, marginBottom: 2 },
   helpBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },

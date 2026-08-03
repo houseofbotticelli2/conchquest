@@ -20,12 +20,13 @@ interface AlertCandidateRow {
   lon: number;
   alert_threshold_score: number;
   push_token: string;
+  restrict_shelling_to_daylight: boolean;
 }
 
 async function fetchAlertCandidates(cooldownHours: number): Promise<AlertCandidateRow[]> {
   const result = await pool.query<AlertCandidateRow>(
     `SELECT sl.id, sl.name, sl.city, ST_Y(sl.geog::geometry) AS lat, ST_X(sl.geog::geometry) AS lon,
-            sl.alert_threshold_score, u.push_token
+            sl.alert_threshold_score, u.push_token, u.restrict_shelling_to_daylight
      FROM saved_locations sl
      JOIN users u ON u.id = sl.user_id
      WHERE sl.alert_threshold_score IS NOT NULL
@@ -47,7 +48,7 @@ export async function checkBeachAlerts(): Promise<void> {
   for (const beach of candidates) {
     try {
       const conditions = await getConditions(beach.lat, beach.lon);
-      const { score, bestWindow } = computeShellingScore(conditions);
+      const { score, bestWindow } = computeShellingScore(conditions, new Date(), beach.restrict_shelling_to_daylight);
 
       // Only alert ahead of today's actual shelling window, so a sheller has
       // time to prepare -- not the instant the live score clears threshold.

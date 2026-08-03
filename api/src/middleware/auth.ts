@@ -20,22 +20,25 @@ declare global {
 const issuer = `${env.supabaseUrl}/auth/v1`;
 const jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
 
-// Role is intentionally never written here -- it's granted out-of-band
-// (directly in the database), not derived from anything in the JWT, so this
-// upsert must never touch it on conflict or every request would silently
-// reset an admin back to 'user'.
-async function upsertUserRecord(user: Omit<AuthenticatedUser, 'role'>): Promise<'user' | 'admin'> {
-  const result = await pool.query<{ role: 'user' | 'admin' }>(
+// Role and restrictShellingToDaylight are intentionally never written here --
+// role is granted out-of-band (directly in the database), and
+// restrictShellingToDaylight is set via PATCH /api/profile -- so this upsert
+// must never touch either on conflict, or every request would silently reset
+// them to their defaults.
+async function upsertUserRecord(
+  user: Omit<AuthenticatedUser, 'role' | 'restrictShellingToDaylight'>
+): Promise<Pick<AuthenticatedUser, 'role' | 'restrictShellingToDaylight'>> {
+  const result = await pool.query<{ role: 'user' | 'admin'; restrict_shelling_to_daylight: boolean }>(
     `INSERT INTO users (id, email, display_name)
      VALUES ($1, $2, $3)
      ON CONFLICT (id) DO UPDATE
      SET email = EXCLUDED.email,
          display_name = COALESCE(EXCLUDED.display_name, users.display_name),
          updated_at = now()
-     RETURNING role`,
+     RETURNING role, restrict_shelling_to_daylight`,
     [user.id, user.email, user.displayName]
   );
-  return result.rows[0].role;
+  return { role: result.rows[0].role, restrictShellingToDaylight: result.rows[0].restrict_shelling_to_daylight };
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -65,8 +68,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       email: typeof payload.email === 'string' ? payload.email : '',
       displayName,
     };
-    const role = await upsertUserRecord(baseUser);
-    req.user = { ...baseUser, role };
+    const { role, restrictShellingToDaylight } = await upsertUserRecord(baseUser);
+    req.user = { ...baseUser, role, restrictShellingToDaylight };
     next();
   } catch (err) {
     res.status(401).json({ error: 'Invalid or expired token' });

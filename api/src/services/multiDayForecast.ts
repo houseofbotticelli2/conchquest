@@ -37,38 +37,42 @@ function bucket(lat: number, lon: number) {
 // Same shape as conditionsAggregator.ts's conditions_cache -- this route just
 // never used it. Reuses conditionsCacheTtlMinutes since it's the same
 // underlying freshness question (today's entry is scored against "now").
-async function readCache(lat: number, lon: number): Promise<MultiDayEntry[] | null> {
+// Keyed by restrictShellingToDaylight too, not just location -- this cache
+// stores the fully-computed result (bestWindow included), and that bakes in
+// the daylight restriction, so two users with different preferences hitting
+// the same location bucket must not share a cache row.
+async function readCache(lat: number, lon: number, restrictShellingToDaylight: boolean): Promise<MultiDayEntry[] | null> {
   const { latBucket, lonBucket } = bucket(lat, lon);
   const result = await pool.query<{ payload: MultiDayEntry[] }>(
     `SELECT payload FROM multi_day_forecast_cache
-     WHERE lat_bucket = $1 AND lon_bucket = $2 AND expires_at > now()
+     WHERE lat_bucket = $1 AND lon_bucket = $2 AND restrict_shelling_to_daylight = $3 AND expires_at > now()
      ORDER BY fetched_at DESC LIMIT 1`,
-    [latBucket, lonBucket]
+    [latBucket, lonBucket, restrictShellingToDaylight]
   );
   const row = result.rows[0];
   if (!row) return null;
   return row.payload.map((entry) => ({ ...entry, conditions: { ...entry.conditions, meta: { ...entry.conditions.meta, cacheHit: true } } }));
 }
 
-async function writeCache(lat: number, lon: number, payload: MultiDayEntry[]): Promise<void> {
+async function writeCache(lat: number, lon: number, payload: MultiDayEntry[], restrictShellingToDaylight: boolean): Promise<void> {
   const { latBucket, lonBucket } = bucket(lat, lon);
   const expiresAt = new Date(Date.now() + env.conditionsCacheTtlMinutes * 60_000).toISOString();
   await pool.query(
-    `INSERT INTO multi_day_forecast_cache (lat_bucket, lon_bucket, payload, expires_at) VALUES ($1, $2, $3, $4)`,
-    [latBucket, lonBucket, JSON.stringify(payload), expiresAt]
+    `INSERT INTO multi_day_forecast_cache (lat_bucket, lon_bucket, payload, expires_at, restrict_shelling_to_daylight) VALUES ($1, $2, $3, $4, $5)`,
+    [latBucket, lonBucket, JSON.stringify(payload), expiresAt, restrictShellingToDaylight]
   );
 }
 
-export async function getMultiDayForecast(lat: number, lon: number): Promise<MultiDayEntry[]> {
-  const cached = await readCache(lat, lon);
+export async function getMultiDayForecast(lat: number, lon: number, restrictShellingToDaylight: boolean): Promise<MultiDayEntry[]> {
+  const cached = await readCache(lat, lon, restrictShellingToDaylight);
   if (cached) return cached;
 
-  const entries = await fetchMultiDayForecast(lat, lon);
-  await writeCache(lat, lon, entries);
+  const entries = await fetchMultiDayForecast(lat, lon, restrictShellingToDaylight);
+  await writeCache(lat, lon, entries, restrictShellingToDaylight);
   return entries;
 }
 
-async function fetchMultiDayForecast(lat: number, lon: number): Promise<MultiDayEntry[]> {
+async function fetchMultiDayForecast(lat: number, lon: number, restrictShellingToDaylight: boolean): Promise<MultiDayEntry[]> {
   await Promise.all([ensureTideStationsSynced(), ensureBuoyStationsSynced()]);
 
   const now = new Date();
@@ -101,8 +105,9 @@ async function fetchMultiDayForecast(lat: number, lon: number): Promise<MultiDay
     const sunset = new Date(baseSunset.getTime() + dayOffset * DAY_MS);
     const dayMidpoint = new Date((sunrise.getTime() + sunset.getTime()) / 2);
 
-    const daylightLow = (tideRange?.events ?? []).find((e) => {
+    const candidateLow = (tideRange?.events ?? []).find((e) => {
       if (e.type !== 'low') return false;
+      if (!restrictShellingToDaylight) return true;
       const t = new Date(e.time).getTime();
       return t > sunrise.getTime() && t < sunset.getTime();
     });
@@ -117,7 +122,7 @@ async function fetchMultiDayForecast(lat: number, lon: number): Promise<MultiDay
     // from findBestWindow entirely.
     const referenceTime = isToday
       ? now
-      : new Date(daylightLow ? new Date(daylightLow.time).getTime() - 60_000 : dayMidpoint.getTime());
+      : new Date(candidateLow ? new Date(candidateLow.time).getTime() - 60_000 : dayMidpoint.getTime());
 
     const tide = tideRange ? deriveTideConditions(tideRange.station, tideRange.events, referenceTime) : null;
 
@@ -158,7 +163,7 @@ async function fetchMultiDayForecast(lat: number, lon: number): Promise<MultiDay
       meta: { fetchedAt: now.toISOString(), expiresAt: now.toISOString(), cacheHit: false },
     };
 
-    const score = computeShellingScore(conditions, referenceTime);
+    const score = computeShellingScore(conditions, referenceTime, restrictShellingToDaylight);
     entries.push({ ...score, date: dayMidpoint.toISOString().slice(0, 10) });
   }
 
