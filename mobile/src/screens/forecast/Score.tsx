@@ -92,7 +92,11 @@ export function Score({ navigation, route }: Props) {
           color: t.sea,
           unavailable: false,
         },
-        { label: `WIND ${Math.round(result.conditions.wind.speedMph)}mph`, color: t.sea, unavailable: false },
+        {
+          label: `WIND ${Math.round(result.conditions.wind.speedMph)}mph ${result.conditions.wind.directionCompass}`,
+          color: t.sea,
+          unavailable: false,
+        },
         // No wave forecast exists for future days (only a live buoy reading
         // for today) -- gray those out instead of showing a fabricated N/A
         // that looks the same as every other chip.
