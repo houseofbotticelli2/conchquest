@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
@@ -68,9 +69,15 @@ export function Score({ navigation, route }: Props) {
     }
   }, [location.lat, location.lon]);
 
-  useEffect(() => {
-    fetchDays();
-  }, [fetchDays]);
+  // Refetch on every focus, not just mount/location-change -- otherwise a
+  // preference toggled elsewhere (e.g. "Daylight hours only" in Settings)
+  // never shows up here, since this screen stays mounted across tab
+  // switches and a plain useEffect wouldn't re-run on returning to it.
+  useFocusEffect(
+    useCallback(() => {
+      fetchDays();
+    }, [fetchDays])
+  );
 
   const result = days[selectedIndex] ?? null;
   const isToday = selectedIndex === 0;
@@ -194,16 +201,32 @@ export function Score({ navigation, route }: Props) {
 
         {!loading && !error && result && (
           <>
-            <TouchableOpacity
-              style={styles.ringWrap}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate('Detail', { result, beachLabel: titleLabel })}
-              accessibilityRole="button"
-              accessibilityLabel="See score breakdown"
-            >
-              <ScoreRing score={result.score} size={150} />
-              <Text style={[styles.confidence, { color: t.muted }]}>Confidence: {result.confidence}</Text>
-            </TouchableOpacity>
+            <View style={styles.scoreRow}>
+              <View style={styles.chipsCol}>
+                {chips.map((c) => (
+                  <Text
+                    key={c.label}
+                    style={[
+                      styles.chip,
+                      { backgroundColor: t.surface, borderColor: c.unavailable ? t.muted : t.border, color: c.color },
+                      c.unavailable && styles.chipUnavailable,
+                    ]}
+                  >
+                    {c.label}
+                  </Text>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={styles.ringWrap}
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('Detail', { result, beachLabel: titleLabel })}
+                accessibilityRole="button"
+                accessibilityLabel="See score breakdown"
+              >
+                <ScoreRing score={result.score} size={150} />
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               activeOpacity={0.8}
@@ -280,21 +303,6 @@ export function Score({ navigation, route }: Props) {
               </Card>
             </TouchableOpacity>
 
-            <View style={styles.chipsRow}>
-              {chips.map((c) => (
-                <Text
-                  key={c.label}
-                  style={[
-                    styles.chip,
-                    { backgroundColor: t.surface, borderColor: c.unavailable ? t.muted : t.border, color: c.color },
-                    c.unavailable && styles.chipUnavailable,
-                  ]}
-                >
-                  {c.label}
-                </Text>
-              ))}
-            </View>
-
             {SHOW_BREAKDOWN_BUTTON && (
               <View style={styles.footer}>
                 <Btn label="See score breakdown" onPress={() => navigation.navigate('Detail', { result, beachLabel: titleLabel })} />
@@ -355,14 +363,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   chipUnavailable: { borderStyle: 'dashed', opacity: 0.75 },
-  ringWrap: { paddingVertical: 12, alignItems: 'center' },
-  confidence: { fontFamily: fonts.data, fontSize: 11, marginTop: 8, letterSpacing: 0.4, textTransform: 'uppercase' },
+  // chipsCol is absolutely positioned so it doesn't compete with ringWrap
+  // for row space -- ringWrap centers on the *full* row width (matching the
+  // day strip above it) rather than just the space to the right of the pills.
+  scoreRow: { position: 'relative', alignItems: 'center', paddingVertical: 12 },
+  ringWrap: { alignItems: 'center' },
   windowCard: { marginHorizontal: 16, marginBottom: 12 },
   windowHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   windowEyebrow: { marginBottom: 0 },
   windowTime: { fontFamily: fonts.display, fontSize: 20, fontWeight: '600', marginBottom: 2 },
   windowNote: { fontFamily: fonts.data, fontSize: 12 },
-  chipsRow: { paddingHorizontal: 16, paddingBottom: 12, flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
+  chipsCol: { position: 'absolute', left: 16, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'flex-start', gap: 6 },
   chip: {
     fontFamily: fonts.data,
     fontSize: 10,
@@ -372,6 +383,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 10,
     overflow: 'hidden',
+    alignSelf: 'flex-start',
   },
   footer: { paddingHorizontal: 16, paddingBottom: 20 },
   emptyPicker: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 12 },
