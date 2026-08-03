@@ -9,7 +9,7 @@ import { fonts } from '../../theme/tokens';
 import { FindRow } from '../../components/FindRow';
 import { BadgeType } from '../../components/Badge';
 import { CollectionStackParamList } from '../../navigation/types';
-import { listMyFinds, Find, FindCondition } from '../../lib/api';
+import { listMyFinds, Find } from '../../lib/api';
 
 type Props = NativeStackScreenProps<CollectionStackParamList, 'MyShells'>;
 
@@ -21,14 +21,9 @@ function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
   return rarity === 'very_rare' ? 'rare' : rarity ?? 'common';
 }
 
-const FILTERS: { label: string; rarity?: 'rare'; condition?: FindCondition; recent?: boolean; private?: boolean }[] = [
+const FILTERS: { label: string; rarity?: 'rare'; recent?: boolean; private?: boolean }[] = [
   { label: 'All' },
   { label: 'Rare', rarity: 'rare' },
-  { label: 'Pristine', condition: 'pristine' },
-  { label: 'Good', condition: 'good' },
-  { label: 'Fair', condition: 'fair' },
-  { label: 'Poor', condition: 'poor' },
-  { label: 'Fragment', condition: 'fragment' },
   { label: 'This month', recent: true },
   { label: 'Private', private: true },
 ];
@@ -63,7 +58,6 @@ export function MyShells({ navigation }: Props) {
     return finds.filter((f) => {
       if (query && !(f.speciesName ?? 'unidentified shell').toLowerCase().includes(query)) return false;
       if (filter.rarity && f.speciesRarity !== 'rare' && f.speciesRarity !== 'very_rare') return false;
-      if (filter.condition && f.condition !== filter.condition) return false;
       if (filter.recent && !isThisMonth(f.foundAt)) return false;
       if (filter.private && !f.isPrivate) return false;
       return true;
@@ -142,7 +136,6 @@ export function MyShells({ navigation }: Props) {
               sub=""
               dateSuffix={formatFindDate(f.foundAt)}
               badge={toBadgeType(f.speciesRarity)}
-              condition={f.condition}
               notes={f.notes}
               isPrivate={f.isPrivate}
               photoUrl={f.photoUrl}
