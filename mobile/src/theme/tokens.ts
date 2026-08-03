@@ -107,7 +107,7 @@ export const fonts = {
 };
 
 export function scoreColor(score: number, t: ThemeTokens): string {
-  if (score >= 70) return t.accent;
+  if (score >= 70) return '#A9B9A0';
   if (score >= 40) return '#D9B36C';
-  return '#A9B9A0';
+  return t.accent;
 }
