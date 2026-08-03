@@ -9,7 +9,8 @@ const SCENARIOS: { value: PromptScenario; label: string }[] = [
   { value: 'strong', label: 'Strong day, clear tide window (Sanibel Lighthouse Beach, 3 days out)' },
   { value: 'thin', label: 'Low confidence, thin buoy data (Blind Pass, today)' },
   { value: 'rain', label: "Rainy afternoon + rare find nearby (Bowman's Beach, tomorrow)" },
-  { value: 'night', label: 'No usable window, low tide falls at night (Turner Beach, today)' },
+  { value: 'night', label: "No window, restricted to daylight -- low tide's real but at night (Turner Beach, today)" },
+  { value: 'nightWindow', label: 'Real window after dark, night windows allowed (Turner Beach, today)' },
 ];
 
 export function PromptTesting() {

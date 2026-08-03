@@ -143,7 +143,7 @@ export function updateConfig(key: string, value: unknown): Promise<ConfigEntry> 
   return apiFetch<ConfigEntry>(`/api/admin/config/${key}`, { method: 'PATCH', body: JSON.stringify({ value }) });
 }
 
-export type PromptScenario = 'strong' | 'thin' | 'rain' | 'night';
+export type PromptScenario = 'strong' | 'thin' | 'rain' | 'night' | 'nightWindow';
 
 export function testPrompt(systemPrompt: string, scenario: PromptScenario): Promise<{ strategy: string }> {
   return apiFetch<{ strategy: string }>('/api/admin/prompt-test', {

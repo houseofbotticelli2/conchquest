@@ -125,6 +125,12 @@ function buildUserPayload(
     bestWindowStart,
     bestWindowEnd,
     bestWindowOutsideDaylight: isBestWindowOutsideDaylight(result),
+    // Disambiguates a null bestWindowStart/End: with this true, null means
+    // "the low tide happens at night and this user restricts to daylight" --
+    // with this false, null means "no strong low tide today at all." Without
+    // it the model can't tell those apart and might say timing doesn't
+    // matter on a day that actually has a real (just nighttime) low.
+    restrictShellingToDaylight: result.restrictShellingToDaylight,
     factors: result.factors.map((f) => ({ label: f.label, explanation: f.explanation })),
     conditions: {
       windMph: result.conditions.wind.speedMph,
@@ -179,6 +185,7 @@ const TEST_SCENARIOS: Record<string, ReturnType<typeof buildUserPayload>> = {
     bestWindowStart: '2:10 PM',
     bestWindowEnd: '4:35 PM',
     bestWindowOutsideDaylight: false,
+    restrictShellingToDaylight: false,
     factors: [
       { label: 'Tide', explanation: 'Low tide falls midday with a strong outgoing pull' },
       { label: 'Wind', explanation: 'Light and steady, easy walking conditions' },
@@ -193,6 +200,7 @@ const TEST_SCENARIOS: Record<string, ReturnType<typeof buildUserPayload>> = {
     bestWindowStart: null,
     bestWindowEnd: null,
     bestWindowOutsideDaylight: false,
+    restrictShellingToDaylight: false,
     factors: [{ label: 'Wave data', explanation: 'Nearest buoy reading is stale' }],
     conditions: { windMph: 11, waveHeightFt: null, weatherSummary: 'partly cloudy', uvIndex: 9, precipChancePercent: 15 },
     recentRareFinds: [],
@@ -204,17 +212,36 @@ const TEST_SCENARIOS: Record<string, ReturnType<typeof buildUserPayload>> = {
     bestWindowStart: '10:15 AM',
     bestWindowEnd: '12:40 PM',
     bestWindowOutsideDaylight: false,
+    restrictShellingToDaylight: false,
     factors: [{ label: 'Precipitation', explanation: 'Rain showers likely through midday' }],
     conditions: { windMph: 9, waveHeightFt: 1.8, weatherSummary: 'rain showers', uvIndex: 4, precipChancePercent: 65 },
     recentRareFinds: ['Scotch Bonnet (spotted 2 days ago)'],
   },
+  // Tests the newly-disambiguated null-window case: a real low tide exists,
+  // it's just at night and this user restricts to daylight -- bestWindow is
+  // null for a different reason than "thin" above (no low tide at all).
   night: {
     beach: 'Turner Beach',
     dayLabel: 'today',
     confidence: 'high',
     bestWindowStart: null,
     bestWindowEnd: null,
+    bestWindowOutsideDaylight: false,
+    restrictShellingToDaylight: true,
+    factors: [{ label: 'Tide', explanation: "Today's low falls well after sunset" }],
+    conditions: { windMph: 7, waveHeightFt: 0.9, weatherSummary: 'clear', uvIndex: 8, precipChancePercent: 5 },
+    recentRareFinds: [],
+  },
+  // Tests the flashlight branch on an actual (non-null) window -- only
+  // reachable when the user allows night windows at all.
+  nightWindow: {
+    beach: 'Turner Beach',
+    dayLabel: 'today',
+    confidence: 'high',
+    bestWindowStart: '9:40 PM',
+    bestWindowEnd: '12:10 AM',
     bestWindowOutsideDaylight: true,
+    restrictShellingToDaylight: false,
     factors: [{ label: 'Tide', explanation: "Today's low falls well after sunset" }],
     conditions: { windMph: 7, waveHeightFt: 0.9, weatherSummary: 'clear', uvIndex: 8, precipChancePercent: 5 },
     recentRareFinds: [],
