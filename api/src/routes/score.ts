@@ -18,7 +18,7 @@ scoreRouter.get('/', async (req, res, next) => {
 
   try {
     const conditions = await getConditions(coords.lat, coords.lon);
-    const result = computeShellingScore(conditions, new Date(), req.user!.restrictShellingToDaylight);
+    const result = computeShellingScore(conditions, new Date(conditions.meta.referenceTime), req.user!.restrictShellingToDaylight);
     res.json(result);
   } catch (err) {
     next(err);

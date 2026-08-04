@@ -48,7 +48,11 @@ export async function checkBeachAlerts(): Promise<void> {
   for (const beach of candidates) {
     try {
       const conditions = await getConditions(beach.lat, beach.lon);
-      const { score, bestWindow } = computeShellingScore(conditions, new Date(), beach.restrict_shelling_to_daylight);
+      const { score, bestWindow } = computeShellingScore(
+        conditions,
+        new Date(conditions.meta.referenceTime),
+        beach.restrict_shelling_to_daylight
+      );
 
       // Only alert ahead of today's actual shelling window, so a sheller has
       // time to prepare -- not the instant the live score clears threshold.

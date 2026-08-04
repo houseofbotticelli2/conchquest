@@ -67,6 +67,10 @@ export interface NormalizedConditions {
     fetchedAt: string;
     expiresAt: string;
     cacheHit: boolean;
+    // The instant conditions/score are actually anchored to -- the next low
+    // tide, not necessarily "fetchedAt" -- so callers can pass this into
+    // computeShellingScore's `now` param instead of the real wall-clock time.
+    referenceTime: string;
   };
 }
 

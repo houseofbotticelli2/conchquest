@@ -139,3 +139,16 @@ export async function getForecast(lat: number, lon: number): Promise<ForecastBlo
     pop: typeof block.pop === 'number' ? block.pop : null,
   }));
 }
+
+// Shared by multiDayForecast.ts and conditionsAggregator.ts -- both need "the
+// forecast block that best represents conditions at an arbitrary instant,"
+// not just the current one.
+export function nearestForecastBlock(blocks: ForecastBlock[], at: Date): ForecastBlock | null {
+  if (blocks.length === 0) return null;
+  const atMs = at.getTime();
+  return blocks.reduce((closest, block) => {
+    const blockDiff = Math.abs(new Date(block.time).getTime() - atMs);
+    const closestDiff = Math.abs(new Date(closest.time).getTime() - atMs);
+    return blockDiff < closestDiff ? block : closest;
+  }, blocks[0]);
+}

@@ -155,3 +155,16 @@ export async function getTideConditions(lat: number, lon: number, now: Date): Pr
 
   return deriveTideConditions(result.station, result.events, now);
 }
+
+// The instant to score/derive conditions at: the next upcoming low tide,
+// regardless of any daylight restriction (that's a display-only concern for
+// findBestWindow, not a scoring one) -- evaluated a minute before it so it
+// still appears in deriveTideConditions' nextEvents (which excludes events
+// at-or-before the reference instant). Falls back to `at` itself if no low
+// tide exists in the given event list (e.g. a data gap).
+export function findScoringReferenceTime(events: TideEvent[], at: Date): Date {
+  const atMs = at.getTime();
+  const nextLow = events.find((e) => e.type === 'low' && new Date(e.time).getTime() > atMs);
+  if (!nextLow) return at;
+  return new Date(new Date(nextLow.time).getTime() - 60_000);
+}

@@ -3,7 +3,7 @@ import { env } from '../config/env';
 import { NormalizedConditions, ShellingScoreResult } from '../types';
 import { getTideEventsForRange, deriveTideConditions } from './noaaTides';
 import { getWaveConditions } from './noaaBuoys';
-import { getCurrentWeather, getForecast, getUvIndex, ForecastBlock } from './openWeather';
+import { getCurrentWeather, getForecast, getUvIndex, nearestForecastBlock } from './openWeather';
 import { getMoonPhase } from './moonPhase';
 import { computeShellingScore } from './scoringEngine';
 import { round, degToCompass } from '../utils/units';
@@ -18,16 +18,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface MultiDayEntry extends ShellingScoreResult {
   date: string; // YYYY-MM-DD
-}
-
-function nearestBlock(blocks: ForecastBlock[], at: Date): ForecastBlock | null {
-  if (blocks.length === 0) return null;
-  const atMs = at.getTime();
-  return blocks.reduce((closest, block) => {
-    const blockDiff = Math.abs(new Date(block.time).getTime() - atMs);
-    const closestDiff = Math.abs(new Date(closest.time).getTime() - atMs);
-    return blockDiff < closestDiff ? block : closest;
-  }, blocks[0]);
 }
 
 function bucket(lat: number, lon: number) {
@@ -104,47 +94,53 @@ async function fetchMultiDayForecast(lat: number, lon: number, restrictShellingT
     const sunrise = new Date(baseSunrise.getTime() + dayOffset * DAY_MS);
     const sunset = new Date(baseSunset.getTime() + dayOffset * DAY_MS);
     const dayMidpoint = new Date((sunrise.getTime() + sunset.getTime()) / 2);
+    // No real per-user timezone data exists anywhere in this app, so this
+    // approximates "this calendar day" as a 24h window centered on local
+    // solar noon, rather than a true midnight-to-midnight span.
+    const dayStart = new Date(dayMidpoint.getTime() - 12 * 60 * 60 * 1000);
+    const dayEnd = new Date(dayMidpoint.getTime() + 12 * 60 * 60 * 1000);
 
+    // Deliberately ignores restrictShellingToDaylight -- the score should
+    // always reflect the actual low tide, day or night. The restriction only
+    // controls what findBestWindow (scoringEngine.ts) is willing to *display*
+    // as a usable window, a separate concern from what instant conditions
+    // are scored at.
     const candidateLow = (tideRange?.events ?? []).find((e) => {
       if (e.type !== 'low') return false;
-      if (!restrictShellingToDaylight) return true;
       const t = new Date(e.time).getTime();
-      return t > sunrise.getTime() && t < sunset.getTime();
+      return t > dayStart.getTime() && t < dayEnd.getTime();
     });
 
-    // For today, score against the real current instant (matches the
-    // existing single-day /api/score behavior exactly). For future days,
-    // score against that day's best window -- or midday if it has none --
-    // since there's no meaningful "now" for a day that hasn't happened yet.
-    // Evaluated a minute *before* the low, not at it -- deriveTideConditions'
-    // nextEvents only includes events strictly after the reference time, so
-    // scoring exactly at the low would drop it out of nextEvents and hide it
-    // from findBestWindow entirely.
-    const referenceTime = isToday
-      ? now
-      : new Date(candidateLow ? new Date(candidateLow.time).getTime() - 60_000 : dayMidpoint.getTime());
+    // Score against this day's low tide -- or midday if it has none -- not
+    // the literal current instant, even for today. Evaluated a minute
+    // *before* the low, not at it -- deriveTideConditions' nextEvents only
+    // includes events strictly after the reference time, so scoring exactly
+    // at the low would drop it out of nextEvents and hide it from
+    // findBestWindow entirely.
+    const referenceTime = new Date(candidateLow ? new Date(candidateLow.time).getTime() - 60_000 : dayMidpoint.getTime());
 
     const tide = tideRange ? deriveTideConditions(tideRange.station, tideRange.events, referenceTime) : null;
 
-    let wind: NormalizedConditions['wind'];
-    let weather: NormalizedConditions['weather'];
-    if (isToday) {
-      wind = currentWeather.wind;
-      weather = { ...currentWeather.weather, uvIndex: todaysUvIndex };
-    } else {
-      const block = nearestBlock(forecastBlocks, referenceTime);
-      wind = block
-        ? { speedMph: block.windSpeedMph, gustMph: null, directionDeg: block.windDeg, directionCompass: degToCompass(block.windDeg) }
-        : currentWeather.wind;
-      weather = {
-        tempF: block?.tempF ?? null,
-        conditions: block?.conditions ?? null,
-        sunrise: sunrise.toISOString(),
-        sunset: sunset.toISOString(),
-        humidity: block?.humidity ?? null,
-        uvIndex: null, // UV isn't forecastable via this endpoint -- only ever available for today
-      };
-    }
+    // Always use the forecast block nearest the reference time (rather than
+    // today's live reading) -- today's low tide can be hours away from "now,"
+    // so the live snapshot wouldn't represent it any better than the 3-hour
+    // forecast does, and using the same path for every day keeps them
+    // consistent with each other.
+    const block = nearestForecastBlock(forecastBlocks, referenceTime);
+    const wind: NormalizedConditions['wind'] = block
+      ? { speedMph: block.windSpeedMph, gustMph: null, directionDeg: block.windDeg, directionCompass: degToCompass(block.windDeg) }
+      : currentWeather.wind;
+    const weather: NormalizedConditions['weather'] = {
+      tempF: block?.tempF ?? null,
+      conditions: block?.conditions ?? null,
+      sunrise: sunrise.toISOString(),
+      sunset: sunset.toISOString(),
+      humidity: block?.humidity ?? null,
+      // UV isn't forecastable via this endpoint -- only ever available for
+      // the real current instant, so only today (not "today's low tide,"
+      // which may be hours off) gets a real value.
+      uvIndex: isToday ? todaysUvIndex : null,
+    };
 
     // Wave forecasts don't exist -- only a live buoy reading -- so only
     // today gets a real value; future days are explicitly marked stale/null
@@ -160,7 +156,7 @@ async function fetchMultiDayForecast(lat: number, lon: number, restrictShellingT
       waves,
       weather,
       moon: getMoonPhase(dayMidpoint),
-      meta: { fetchedAt: now.toISOString(), expiresAt: now.toISOString(), cacheHit: false },
+      meta: { fetchedAt: now.toISOString(), expiresAt: now.toISOString(), cacheHit: false, referenceTime: referenceTime.toISOString() },
     };
 
     const score = computeShellingScore(conditions, referenceTime, restrictShellingToDaylight);

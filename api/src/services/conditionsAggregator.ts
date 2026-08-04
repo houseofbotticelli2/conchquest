@@ -2,11 +2,11 @@ import { pool } from '../config/db';
 import { env } from '../config/env';
 import { NormalizedConditions } from '../types';
 import { ensureTideStationsSynced, ensureBuoyStationsSynced } from './noaaStations';
-import { getTideConditions } from './noaaTides';
+import { getTideEventsForRange, deriveTideConditions, findScoringReferenceTime } from './noaaTides';
 import { getWaveConditions } from './noaaBuoys';
-import { getCurrentWeather, getUvIndex } from './openWeather';
+import { getCurrentWeather, getForecast, getUvIndex, nearestForecastBlock } from './openWeather';
 import { getMoonPhase } from './moonPhase';
-import { round } from '../utils/units';
+import { round, degToCompass } from '../utils/units';
 
 interface CacheRow {
   payload: Omit<NormalizedConditions, 'meta'> & { meta: NormalizedConditions['meta'] };
@@ -57,21 +57,43 @@ export async function getConditions(lat: number, lon: number): Promise<Normalize
   await Promise.all([ensureTideStationsSynced(), ensureBuoyStationsSynced()]);
 
   const now = new Date();
-  const [tide, waves, currentWeather, uvIndex] = await Promise.all([
-    getTideConditions(lat, lon, now),
+  const rangeBegin = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const rangeEnd = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+  const [tideRange, waves, currentWeather, uvIndex, forecastBlocks] = await Promise.all([
+    getTideEventsForRange(lat, lon, rangeBegin, rangeEnd),
     getWaveConditions(lat, lon),
     getCurrentWeather(lat, lon),
     getUvIndex(lat, lon),
+    getForecast(lat, lon),
   ]);
 
-  const moon = getMoonPhase(now);
+  // Score against the next low tide, not the literal instant this was
+  // fetched -- matches multiDayForecast.ts's per-day behavior (including for
+  // today), so the same beach doesn't show a different score/breakdown
+  // depending on which screen asked for it.
+  const referenceTime = tideRange ? findScoringReferenceTime(tideRange.events, now) : now;
+  const tide = tideRange ? deriveTideConditions(tideRange.station, tideRange.events, referenceTime) : null;
+
+  // Nearest forecast block to the reference time, not the live reading --
+  // the low tide can be hours away from "now," so the live snapshot isn't
+  // necessarily any more accurate than the 3-hour forecast for that moment.
+  // Falls back to the live reading only if no forecast block exists at all.
+  const block = nearestForecastBlock(forecastBlocks, referenceTime);
+  const wind: NormalizedConditions['wind'] = block
+    ? { speedMph: block.windSpeedMph, gustMph: null, directionDeg: block.windDeg, directionCompass: degToCompass(block.windDeg) }
+    : currentWeather.wind;
+
+  const moon = getMoonPhase(referenceTime);
   const fetchedAt = now.toISOString();
   const expiresAt = new Date(now.getTime() + env.conditionsCacheTtlMinutes * 60_000).toISOString();
 
   const conditions: NormalizedConditions = {
     location: { lat, lon },
     tide,
-    wind: currentWeather.wind,
+    wind,
+    // No wave forecast exists, ever -- only a live buoy reading -- so this
+    // stays the live value regardless of how far off the reference time is.
     waves: waves ?? {
       heightFt: null,
       periodSec: null,
@@ -81,11 +103,18 @@ export async function getConditions(lat: number, lon: number): Promise<Normalize
       observedAt: null,
       stale: true,
     },
-    weather: { ...currentWeather.weather, uvIndex },
+    weather: {
+      tempF: block?.tempF ?? currentWeather.weather.tempF,
+      conditions: block?.conditions ?? currentWeather.weather.conditions,
+      sunrise: currentWeather.weather.sunrise,
+      sunset: currentWeather.weather.sunset,
+      humidity: block?.humidity ?? currentWeather.weather.humidity,
+      uvIndex,
+    },
     moon,
-    meta: { fetchedAt, expiresAt, cacheHit: false },
+    meta: { fetchedAt, expiresAt, cacheHit: false, referenceTime: referenceTime.toISOString() },
   };
 
-  await writeCache(lat, lon, conditions, tide?.stationId ?? null, waves?.stationId ?? null);
+  await writeCache(lat, lon, conditions, tideRange?.station.stationId ?? null, waves?.stationId ?? null);
   return conditions;
 }

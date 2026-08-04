@@ -23,7 +23,7 @@ function formatTime(iso: string): string {
 
 async function toResponse(row: SavedLocationRow, restrictShellingToDaylight: boolean) {
   const conditions = await getConditions(row.lat, row.lon);
-  const result = computeShellingScore(conditions, new Date(), restrictShellingToDaylight);
+  const result = computeShellingScore(conditions, new Date(conditions.meta.referenceTime), restrictShellingToDaylight);
 
   const conditionSummary = result.bestWindow
     ? `Best window ${formatTime(result.bestWindow.start)}–${formatTime(result.bestWindow.end)}`
