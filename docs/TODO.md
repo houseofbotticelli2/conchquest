@@ -1,6 +1,6 @@
 # Conchquest TODO
 
-Shared task list, kept in sync with the task tracker used during development.
+The single shared task list for this project -- not mirrored anywhere else.
 Task numbers are stable references, not priority order.
 
 ## Pending

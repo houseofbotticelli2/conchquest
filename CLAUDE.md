@@ -6,6 +6,7 @@ Shelling intelligence & discovery app: React Native/Expo mobile client + Node.js
 
 - **Confirm before changes.** Explain what you're about to change and get an explicit go-ahead before editing code or config — don't just implement silently.
 - Don't scope-creep a fix into a refactor. If something else looks broken while you're in there, mention it, don't fix it unless asked.
+- **`docs/TODO.md` is the only task tracker.** Don't use an in-session/in-memory task list as a stand-in for it — that state isn't shared across sessions or contributors and will drift stale. Read and update `docs/TODO.md` directly for anything meant to persist.
 
 ## Conventions
 
