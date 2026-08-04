@@ -2,6 +2,7 @@ import { WaveConditions } from '../types';
 import { findNearestBuoyStation } from './noaaStations';
 import { metersToFeet } from '../utils/units';
 import { logNoaaFailure } from './noaaFailureLog';
+import { getOpenMeteoWaves } from './openMeteoMarine';
 
 // NDBC realtime2 fixed-column layout (most recent observation on the first
 // data row): YY MM DD hh mm WDIR WSPD GST WVHT DPD APD MWD PRES ATMP WTMP DEWP VIS PTDY TIDE
@@ -36,20 +37,37 @@ async function fetchLatestObservation(stationId: string): Promise<Record<string,
 // though it's the "nearest" one on record. (~150km / ~93mi)
 const MAX_USEFUL_BUOY_DISTANCE_FEET = 492_000;
 
+// Falls back to Open-Meteo's modeled marine data (see openMeteoMarine.ts)
+// when there's no real, working, close-enough buoy reading -- better than
+// showing "N/A" outright, since a modeled estimate for the exact location
+// beats no data at all. Swallows its own errors (e.g. Open-Meteo itself
+// being down) since this is already the fallback path.
+async function fallbackToOpenMeteo(lat: number, lon: number, stationId: string | null, distanceFeet: number | null): Promise<WaveConditions> {
+  try {
+    const modeled = await getOpenMeteoWaves(lat, lon);
+    if (modeled) {
+      return {
+        heightFt: modeled.heightFt,
+        periodSec: modeled.periodSec,
+        directionDeg: modeled.directionDeg,
+        stationId,
+        distanceFeet,
+        observedAt: new Date().toISOString(),
+        stale: false,
+      };
+    }
+  } catch (err) {
+    console.error('Open-Meteo marine fallback also failed:', err instanceof Error ? err.message : err);
+  }
+  return { heightFt: null, periodSec: null, directionDeg: null, stationId, distanceFeet, observedAt: null, stale: true };
+}
+
 export async function getWaveConditions(lat: number, lon: number): Promise<WaveConditions | null> {
   const station = await findNearestBuoyStation(lat, lon);
-  if (!station) return null;
+  if (!station) return fallbackToOpenMeteo(lat, lon, null, null);
 
   if (station.distanceFeet > MAX_USEFUL_BUOY_DISTANCE_FEET) {
-    return {
-      heightFt: null,
-      periodSec: null,
-      directionDeg: null,
-      stationId: station.stationId,
-      distanceFeet: station.distanceFeet,
-      observedAt: null,
-      stale: true,
-    };
+    return fallbackToOpenMeteo(lat, lon, station.stationId, station.distanceFeet);
   }
 
   let observation: Record<string, number | null>;
@@ -59,15 +77,7 @@ export async function getWaveConditions(lat: number, lon: number): Promise<WaveC
     // eslint-disable-next-line no-console
     console.error(`NDBC observation unavailable for station ${station.stationId}:`, err instanceof Error ? err.message : err);
     await logNoaaFailure('buoy', station.stationId, err);
-    return {
-      heightFt: null,
-      periodSec: null,
-      directionDeg: null,
-      stationId: station.stationId,
-      distanceFeet: station.distanceFeet,
-      observedAt: null,
-      stale: true,
-    };
+    return fallbackToOpenMeteo(lat, lon, station.stationId, station.distanceFeet);
   }
 
   const now = new Date();
@@ -79,14 +89,23 @@ export async function getWaveConditions(lat: number, lon: number): Promise<WaveC
     ? new Date(Date.UTC(year, (observation.MM as number) - 1, observation.DD as number, observation.hh as number, observation.mm as number))
     : null;
   const ageMinutes = observedAt ? (now.getTime() - observedAt.getTime()) / 60_000 : Infinity;
+  const heightFt = observation.WVHT !== null ? metersToFeet(observation.WVHT) : null;
+
+  // Also fall back when the station responded but didn't actually report
+  // wave height (some stations report wind only), or its latest reading is
+  // more than 2 hours old -- a fresh modeled estimate beats a stale or
+  // missing real one.
+  if (heightFt === null || ageMinutes > 120) {
+    return fallbackToOpenMeteo(lat, lon, station.stationId, station.distanceFeet);
+  }
 
   return {
-    heightFt: observation.WVHT !== null ? metersToFeet(observation.WVHT) : null,
+    heightFt,
     periodSec: observation.DPD,
     directionDeg: observation.MWD,
     stationId: station.stationId,
     distanceFeet: station.distanceFeet,
     observedAt: observedAt ? observedAt.toISOString() : null,
-    stale: ageMinutes > 120,
+    stale: false,
   };
 }
