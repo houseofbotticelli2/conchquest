@@ -8,7 +8,7 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { NavBar } from '../../components/NavBar';
 import { NowBadge } from '../../components/NowBadge';
 import { ForecastStackParamList } from '../../navigation/types';
-import { formatTime, relativeDaySuffix, isWithinWindow, daylightNote } from '../../lib/forecastFormat';
+import { formatTime, relativeDaySuffix, isWithinWindow, isPastWindow, daylightNote } from '../../lib/forecastFormat';
 import { getStrategy } from '../../lib/api';
 
 // Generous relative to the backend's own 5s OpenAI timeout -- this only
@@ -23,6 +23,7 @@ export function StrategyDetail({ navigation, route }: Props) {
   const { result, dayOffset, dayLabel, isToday, beachLabel } = route.params;
   const nextLowTide = result.conditions.tide?.nextEvents.find((e) => e.type === 'low') ?? null;
   const windowIsNow = result.bestWindow ? isWithinWindow(result.bestWindow.start, result.bestWindow.end) : false;
+  const windowIsPast = result.bestWindow ? isPastWindow(result.bestWindow.end) : false;
 
   const [strategyText, setStrategyText] = useState<string | null>(null);
   const [loadingStrategy, setLoadingStrategy] = useState(true);
@@ -63,6 +64,7 @@ export function StrategyDetail({ navigation, route }: Props) {
           <View style={styles.windowHeader}>
             <Eyebrow style={styles.windowEyebrow}>Best window {dayLabel}</Eyebrow>
             {windowIsNow && <NowBadge />}
+            {!windowIsNow && windowIsPast && <NowBadge variant="past" />}
           </View>
           {result.bestWindow ? (
             <>

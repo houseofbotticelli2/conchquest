@@ -19,6 +19,7 @@ import {
   formatTimeShort,
   relativeDaySuffix,
   isWithinWindow,
+  isPastWindow,
   daylightNote,
   dayChipLabel,
   daySentenceLabel,
@@ -86,9 +87,14 @@ export function Score({ navigation, route }: Props) {
   const chips = result
     ? [
         {
-          label: !result.conditions.tide
-            ? 'TIDE N/A'
-            : `TIDE ${result.conditions.tide.movement === 'falling' ? '↓' : result.conditions.tide.movement === 'rising' ? '↑' : '~'}`,
+          // Scoring is anchored to this day's low tide, so currentLevelFt
+          // here is effectively the predicted low's height, not an arbitrary
+          // instant's -- a movement arrow would show "~" (slack) on almost
+          // every day now, since every day is scored right at its own low.
+          label:
+            !result.conditions.tide || result.conditions.tide.currentLevelFt === null
+              ? 'TIDE N/A'
+              : `TIDE ${result.conditions.tide.currentLevelFt.toFixed(1)}ft`,
           color: t.sea,
           unavailable: false,
         },
@@ -113,6 +119,7 @@ export function Score({ navigation, route }: Props) {
   const nextLowTide = result?.conditions.tide?.nextEvents.find((e) => e.type === 'low') ?? null;
   const sentenceLabel = result ? daySentenceLabel(selectedIndex, result.date) : '';
   const windowIsNow = result?.bestWindow ? isWithinWindow(result.bestWindow.start, result.bestWindow.end) : false;
+  const windowIsPast = result?.bestWindow ? isPastWindow(result.bestWindow.end) : false;
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
@@ -212,7 +219,7 @@ export function Score({ navigation, route }: Props) {
               accessibilityRole="button"
               accessibilityLabel="See score breakdown"
             >
-              <ScoreRing score={result.score} size={150} />
+              <ScoreRing score={result.score} size={150} lowTideTime={nextLowTide ? formatTime(nextLowTide.time) : undefined} />
             </TouchableOpacity>
 
             <View style={styles.chipsRow}>
@@ -246,6 +253,7 @@ export function Score({ navigation, route }: Props) {
                 <View style={styles.windowHeader}>
                   <Eyebrow style={styles.windowEyebrow}>Best window {sentenceLabel}</Eyebrow>
                   {windowIsNow && <NowBadge />}
+                  {!windowIsNow && windowIsPast && <NowBadge variant="past" />}
                 </View>
                 {result.bestWindow ? (
                   <>

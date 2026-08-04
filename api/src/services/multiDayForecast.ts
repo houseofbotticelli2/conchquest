@@ -69,10 +69,9 @@ async function fetchMultiDayForecast(lat: number, lon: number, restrictShellingT
   const rangeBegin = new Date(now.getTime() - DAY_MS);
   const rangeEnd = new Date(now.getTime() + MULTI_DAY_COUNT * DAY_MS);
 
-  const [tideRange, currentWeather, todaysWaves, forecastBlocks, todaysUvIndex] = await Promise.all([
+  const [tideRange, currentWeather, forecastBlocks, todaysUvIndex] = await Promise.all([
     getTideEventsForRange(lat, lon, rangeBegin, rangeEnd),
     getCurrentWeather(lat, lon),
-    getWaveConditions(lat, lon),
     getForecast(lat, lon),
     getUvIndex(lat, lon),
   ]);
@@ -142,11 +141,21 @@ async function fetchMultiDayForecast(lat: number, lon: number, restrictShellingT
       uvIndex: isToday ? todaysUvIndex : null,
     };
 
-    // Wave forecasts don't exist -- only a live buoy reading -- so only
-    // today gets a real value; future days are explicitly marked stale/null
-    // rather than reusing today's reading as if it still applied.
+    // A real NDBC buoy only ever reports its live reading -- only the
+    // Open-Meteo fallback (noaaBuoys.ts) can actually anchor to referenceTime,
+    // via its hourly forecast. Only today gets a real value at all; future
+    // days are explicitly marked stale/null rather than reusing today's
+    // reading as if it still applied to a day that hasn't happened yet.
     const waves: NormalizedConditions['waves'] = isToday
-      ? todaysWaves ?? { heightFt: null, periodSec: null, directionDeg: null, stationId: null, distanceFeet: null, observedAt: null, stale: true }
+      ? (await getWaveConditions(lat, lon, referenceTime)) ?? {
+          heightFt: null,
+          periodSec: null,
+          directionDeg: null,
+          stationId: null,
+          distanceFeet: null,
+          observedAt: null,
+          stale: true,
+        }
       : { heightFt: null, periodSec: null, directionDeg: null, stationId: null, distanceFeet: null, observedAt: null, stale: true };
 
     const conditions: NormalizedConditions = {

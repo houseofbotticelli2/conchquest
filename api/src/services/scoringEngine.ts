@@ -19,20 +19,15 @@ const WEIGHTS = {
   timeOfDay: 5,
 };
 
-function closenessToLow(conditions: NormalizedConditions): number {
-  const { tide } = conditions;
-  if (!tide) return 50;
-  const next = tide.nextEvents[0];
-  if (!next || tide.percentToNextExtreme === null) return 50;
-
-  if (tide.movement === 'falling' && next.type === 'low') return tide.percentToNextExtreme;
-  if (tide.movement === 'rising' && next.type === 'high') return 100 - tide.percentToNextExtreme;
-  if (tide.movement === 'slack') return next.type === 'low' ? 95 : 5;
-  return 50;
-}
-
+// Scoring is always anchored to this day's low tide (see multiDayForecast.ts
+// / conditionsAggregator.ts's referenceTime), so tide.currentLevelFt here is
+// effectively the predicted height of *that* low -- not an arbitrary instant.
+// A lower (or negative, below-average/spring-tide) low exposes meaningfully
+// more beach and sandbar than a shallow neap-tide low, which is what
+// actually varies day to day now; closeness-to-low no longer does, since
+// every day is deliberately evaluated right at its own low.
 function scoreTideLevel(conditions: NormalizedConditions): ScoreFactor {
-  if (!conditions.tide) {
+  if (!conditions.tide || conditions.tide.currentLevelFt === null) {
     return {
       key: 'tideLevel',
       label: 'Tide Level',
@@ -41,19 +36,35 @@ function scoreTideLevel(conditions: NormalizedConditions): ScoreFactor {
       explanation: 'NOAA tide data is temporarily unavailable — assuming average conditions.',
     };
   }
-  const closeness = closenessToLow(conditions);
-  const points = Math.round((closeness / 100) * WEIGHTS.tideLevel);
-  const explanation =
-    closeness > 70
-      ? 'Tide is near a low, exposing more of the beach and sandbars.'
-      : closeness > 40
-      ? 'Tide is moderately exposed — some productive ground is visible.'
-      : 'Tide is closer to high, covering most productive shelling ground.';
+  const lowFt = conditions.tide.currentLevelFt;
+  let points: number;
+  let explanation: string;
+  if (lowFt <= 0) {
+    points = WEIGHTS.tideLevel;
+    explanation = `A strong low (${lowFt.toFixed(1)}ft) — well below average, exposing much more beach and sandbar.`;
+  } else if (lowFt <= 0.5) {
+    points = Math.round(WEIGHTS.tideLevel * 0.85);
+    explanation = `A solid low (${lowFt.toFixed(1)}ft), exposing good productive ground.`;
+  } else if (lowFt <= 1.0) {
+    points = Math.round(WEIGHTS.tideLevel * 0.6);
+    explanation = `A moderate low (${lowFt.toFixed(1)}ft) — some ground exposed, but not a deep exposure.`;
+  } else {
+    points = Math.round(WEIGHTS.tideLevel * 0.35);
+    explanation = `A shallow low (${lowFt.toFixed(1)}ft) — a neap-tide cycle, without much extra ground exposed.`;
+  }
   return { key: 'tideLevel', label: 'Tide Level', points, maxPoints: WEIGHTS.tideLevel, explanation };
 }
 
+// Movement/closeness-to-low no longer varies (scoring is always anchored a
+// minute before a low, so `movement` is always 'slack' and next.type is
+// always 'low' by construction) -- tidalRangeFt does vary, though: it's the
+// swing between the bracketing high and this low, independent of the low's
+// absolute height (Tide Level covers that). A bigger swing means more water
+// movement, more material washing in, and more newly-exposed ground -- a
+// genuinely different, still-relevant signal from a shallow-but-still-low
+// neap tide.
 function scoreTidalMovement(conditions: NormalizedConditions): ScoreFactor {
-  if (!conditions.tide) {
+  if (!conditions.tide || conditions.tide.tidalRangeFt === null) {
     return {
       key: 'tidalMovement',
       label: 'Tidal Movement',
@@ -62,23 +73,21 @@ function scoreTidalMovement(conditions: NormalizedConditions): ScoreFactor {
       explanation: 'NOAA tide data is temporarily unavailable — assuming average conditions.',
     };
   }
-  const closeness = closenessToLow(conditions);
-  const { movement } = conditions.tide;
+  const rangeFt = conditions.tide.tidalRangeFt;
   let points: number;
   let explanation: string;
-
-  if (movement === 'falling') {
+  if (rangeFt >= 2.0) {
     points = WEIGHTS.tidalMovement;
-    explanation = 'Tide is falling, continually exposing fresh ground.';
-  } else if (movement === 'slack') {
-    points = closeness > 50 ? Math.round(WEIGHTS.tidalMovement * 0.85) : Math.round(WEIGHTS.tidalMovement * 0.3);
-    explanation = closeness > 50 ? 'Tide is slack near a low — a great window before it turns.' : 'Tide is slack near a high — little exposed ground right now.';
-  } else if (movement === 'rising') {
-    points = Math.round(WEIGHTS.tidalMovement * (0.25 + (closeness / 100) * 0.5));
-    explanation = 'Tide is rising — ground exposed earlier is now being covered.';
-  } else {
+    explanation = `A wide swing (${rangeFt.toFixed(1)}ft) — a strong spring tide pushing in plenty of fresh material.`;
+  } else if (rangeFt >= 1.0) {
+    points = Math.round(WEIGHTS.tidalMovement * 0.8);
+    explanation = `A solid swing (${rangeFt.toFixed(1)}ft) — decent water movement working new ground.`;
+  } else if (rangeFt >= 0.5) {
     points = Math.round(WEIGHTS.tidalMovement * 0.5);
-    explanation = 'Tidal movement could not be determined from nearby station data.';
+    explanation = `A modest swing (${rangeFt.toFixed(1)}ft) — a middling tide, not much extra material moving.`;
+  } else {
+    points = Math.round(WEIGHTS.tidalMovement * 0.25);
+    explanation = `A small swing (${rangeFt.toFixed(1)}ft) — a neap tide, with little water movement to work fresh ground.`;
   }
   return { key: 'tidalMovement', label: 'Tidal Movement', points, maxPoints: WEIGHTS.tidalMovement, explanation };
 }

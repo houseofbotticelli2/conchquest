@@ -19,6 +19,12 @@ export interface TideConditions {
   currentLevelFt: number | null;
   percentToNextExtreme: number | null; // 0 = at previous extreme, 100 = at next
   movement: 'rising' | 'falling' | 'slack' | 'unknown';
+  // The height swing (in feet) between the extremes bracketing the
+  // reference instant -- a bigger swing means more water movement, more
+  // material washing in, and more newly-exposed ground (spring-tide-like),
+  // regardless of the absolute low tide height itself. Null when there's no
+  // bracketing pair of events to measure between.
+  tidalRangeFt: number | null;
   nextEvents: TideEvent[];
 }
 

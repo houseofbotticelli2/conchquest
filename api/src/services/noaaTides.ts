@@ -93,6 +93,7 @@ export function deriveTideConditions(station: TideStationInfo, events: TideEvent
   let currentLevelFt: number | null = null;
   let percentToNextExtreme: number | null = null;
   let movement: TideConditions['movement'] = 'unknown';
+  let tidalRangeFt: number | null = null;
 
   if (prev && next) {
     const prevMs = new Date(prev.time).getTime();
@@ -102,6 +103,7 @@ export function deriveTideConditions(station: TideStationInfo, events: TideEvent
     // high/low extremes far better than a linear interpolation.
     currentLevelFt = prev.heightFt + (next.heightFt - prev.heightFt) * (1 - Math.cos(Math.PI * fraction)) / 2;
     percentToNextExtreme = fraction * 100;
+    tidalRangeFt = Math.abs(next.heightFt - prev.heightFt);
 
     const minutesFromTurn = Math.min(atMs - prevMs, nextMs - atMs) / 60_000;
     if (minutesFromTurn < 15) {
@@ -120,6 +122,7 @@ export function deriveTideConditions(station: TideStationInfo, events: TideEvent
     currentLevelFt,
     percentToNextExtreme,
     movement,
+    tidalRangeFt,
     nextEvents: upcomingEvents,
   };
 }

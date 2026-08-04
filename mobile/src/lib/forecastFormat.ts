@@ -28,6 +28,13 @@ export function isWithinWindow(startIso: string, endIso: string): boolean {
   return now >= new Date(startIso).getTime() && now <= new Date(endIso).getTime();
 }
 
+// Whether the real current instant has already passed this window's end --
+// only meaningful for a window that's actually elapsed (a future day's window
+// end is always ahead of "now", so this only ever fires for today's window).
+export function isPastWindow(endIso: string): boolean {
+  return Date.now() > new Date(endIso).getTime();
+}
+
 function timeOfDayMinutes(iso: string): number {
   const d = new Date(iso);
   return d.getHours() * 60 + d.getMinutes();

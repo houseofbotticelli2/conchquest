@@ -7,9 +7,13 @@ import { fonts, scoreColor } from '../theme/tokens';
 interface ScoreRingProps {
   score: number;
   size?: number;
+  // Already formatted for display (e.g. "5:55 PM") -- the score is anchored
+  // to this day's low tide, so surfacing it right on the ring makes clear
+  // what moment the number actually describes.
+  lowTideTime?: string;
 }
 
-export function ScoreRing({ score, size = 140 }: ScoreRingProps) {
+export function ScoreRing({ score, size = 140, lowTideTime }: ScoreRingProps) {
   const { theme: t } = useTheme();
   const r = 54;
   const circ = 2 * Math.PI * r;
@@ -36,6 +40,7 @@ export function ScoreRing({ score, size = 140 }: ScoreRingProps) {
       <View style={styles.overlay}>
         <Text style={[styles.score, { color: t.text, fontSize: size === 140 ? 36 : 28 }]}>{score}</Text>
         <Text style={[styles.label, { color: t.muted }]}>{label}</Text>
+        {lowTideTime && <Text style={[styles.lowTide, { color: t.muted }]}>{lowTideTime}</Text>}
       </View>
     </View>
   );
@@ -60,5 +65,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
+  },
+  lowTide: {
+    fontFamily: fonts.data,
+    fontSize: 9,
+    marginTop: 2,
   },
 });

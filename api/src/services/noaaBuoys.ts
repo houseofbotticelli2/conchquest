@@ -42,9 +42,15 @@ const MAX_USEFUL_BUOY_DISTANCE_FEET = 492_000;
 // showing "N/A" outright, since a modeled estimate for the exact location
 // beats no data at all. Swallows its own errors (e.g. Open-Meteo itself
 // being down) since this is already the fallback path.
-async function fallbackToOpenMeteo(lat: number, lon: number, stationId: string | null, distanceFeet: number | null): Promise<WaveConditions> {
+async function fallbackToOpenMeteo(
+  lat: number,
+  lon: number,
+  referenceTime: Date,
+  stationId: string | null,
+  distanceFeet: number | null
+): Promise<WaveConditions> {
   try {
-    const modeled = await getOpenMeteoWaves(lat, lon);
+    const modeled = await getOpenMeteoWaves(lat, lon, referenceTime);
     if (modeled) {
       return {
         heightFt: modeled.heightFt,
@@ -52,7 +58,7 @@ async function fallbackToOpenMeteo(lat: number, lon: number, stationId: string |
         directionDeg: modeled.directionDeg,
         stationId,
         distanceFeet,
-        observedAt: new Date().toISOString(),
+        observedAt: referenceTime.toISOString(),
         stale: false,
       };
     }
@@ -62,12 +68,16 @@ async function fallbackToOpenMeteo(lat: number, lon: number, stationId: string |
   return { heightFt: null, periodSec: null, directionDeg: null, stationId, distanceFeet, observedAt: null, stale: true };
 }
 
-export async function getWaveConditions(lat: number, lon: number): Promise<WaveConditions | null> {
+// referenceTime is the instant conditions are being scored at (a day's low
+// tide, not necessarily "now" -- see conditionsAggregator.ts/
+// multiDayForecast.ts) -- only the Open-Meteo fallback can actually honor
+// it, since a real NDBC buoy only ever reports its live, current reading.
+export async function getWaveConditions(lat: number, lon: number, referenceTime: Date): Promise<WaveConditions | null> {
   const station = await findNearestBuoyStation(lat, lon);
-  if (!station) return fallbackToOpenMeteo(lat, lon, null, null);
+  if (!station) return fallbackToOpenMeteo(lat, lon, referenceTime, null, null);
 
   if (station.distanceFeet > MAX_USEFUL_BUOY_DISTANCE_FEET) {
-    return fallbackToOpenMeteo(lat, lon, station.stationId, station.distanceFeet);
+    return fallbackToOpenMeteo(lat, lon, referenceTime, station.stationId, station.distanceFeet);
   }
 
   let observation: Record<string, number | null>;
@@ -77,7 +87,7 @@ export async function getWaveConditions(lat: number, lon: number): Promise<WaveC
     // eslint-disable-next-line no-console
     console.error(`NDBC observation unavailable for station ${station.stationId}:`, err instanceof Error ? err.message : err);
     await logNoaaFailure('buoy', station.stationId, err);
-    return fallbackToOpenMeteo(lat, lon, station.stationId, station.distanceFeet);
+    return fallbackToOpenMeteo(lat, lon, referenceTime, station.stationId, station.distanceFeet);
   }
 
   const now = new Date();
@@ -96,7 +106,7 @@ export async function getWaveConditions(lat: number, lon: number): Promise<WaveC
   // more than 2 hours old -- a fresh modeled estimate beats a stale or
   // missing real one.
   if (heightFt === null || ageMinutes > 120) {
-    return fallbackToOpenMeteo(lat, lon, station.stationId, station.distanceFeet);
+    return fallbackToOpenMeteo(lat, lon, referenceTime, station.stationId, station.distanceFeet);
   }
 
   return {

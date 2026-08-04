@@ -60,9 +60,8 @@ export async function getConditions(lat: number, lon: number): Promise<Normalize
   const rangeBegin = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const rangeEnd = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
-  const [tideRange, waves, currentWeather, uvIndex, forecastBlocks] = await Promise.all([
+  const [tideRange, currentWeather, uvIndex, forecastBlocks] = await Promise.all([
     getTideEventsForRange(lat, lon, rangeBegin, rangeEnd),
-    getWaveConditions(lat, lon),
     getCurrentWeather(lat, lon),
     getUvIndex(lat, lon),
     getForecast(lat, lon),
@@ -74,6 +73,11 @@ export async function getConditions(lat: number, lon: number): Promise<Normalize
   // depending on which screen asked for it.
   const referenceTime = tideRange ? findScoringReferenceTime(tideRange.events, now) : now;
   const tide = tideRange ? deriveTideConditions(tideRange.station, tideRange.events, referenceTime) : null;
+
+  // Fetched after referenceTime is known -- the Open-Meteo fallback (a real
+  // NDBC buoy can't do this, it only ever reports live) anchors to that
+  // instant rather than always answering for right now.
+  const waves = await getWaveConditions(lat, lon, referenceTime);
 
   // Nearest forecast block to the reference time, not the live reading --
   // the low tide can be hours away from "now," so the live snapshot isn't
