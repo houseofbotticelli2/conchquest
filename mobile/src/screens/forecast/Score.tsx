@@ -205,31 +205,29 @@ export function Score({ navigation, route }: Props) {
 
         {!loading && !error && result && (
           <>
-            <View style={styles.scoreRow}>
-              <View style={styles.chipsCol}>
-                {chips.map((c) => (
-                  <Text
-                    key={c.label}
-                    style={[
-                      styles.chip,
-                      { backgroundColor: t.surface, borderColor: c.unavailable ? t.muted : t.border, color: c.color },
-                      c.unavailable && styles.chipUnavailable,
-                    ]}
-                  >
-                    {c.label}
-                  </Text>
-                ))}
-              </View>
+            <TouchableOpacity
+              style={styles.ringWrap}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('Detail', { result, beachLabel: titleLabel })}
+              accessibilityRole="button"
+              accessibilityLabel="See score breakdown"
+            >
+              <ScoreRing score={result.score} size={150} />
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.ringWrap}
-                activeOpacity={0.8}
-                onPress={() => navigation.navigate('Detail', { result, beachLabel: titleLabel })}
-                accessibilityRole="button"
-                accessibilityLabel="See score breakdown"
-              >
-                <ScoreRing score={result.score} size={150} />
-              </TouchableOpacity>
+            <View style={styles.chipsRow}>
+              {chips.map((c) => (
+                <Text
+                  key={c.label}
+                  style={[
+                    styles.chip,
+                    { backgroundColor: t.surface, borderColor: c.unavailable ? t.muted : t.border, color: c.color },
+                    c.unavailable && styles.chipUnavailable,
+                  ]}
+                >
+                  {c.label}
+                </Text>
+              ))}
             </View>
 
             <TouchableOpacity
@@ -367,17 +365,20 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   chipUnavailable: { borderStyle: 'dashed', opacity: 0.75 },
-  // chipsCol is absolutely positioned so it doesn't compete with ringWrap
-  // for row space -- ringWrap centers on the *full* row width (matching the
-  // day strip above it) rather than just the space to the right of the pills.
-  scoreRow: { position: 'relative', alignItems: 'center', paddingVertical: 12 },
-  ringWrap: { alignItems: 'center' },
+  ringWrap: { paddingVertical: 12, alignItems: 'center' },
   windowCard: { marginHorizontal: 16, marginBottom: 12 },
   windowHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   windowEyebrow: { marginBottom: 0 },
   windowTime: { fontFamily: fonts.display, fontSize: 20, fontWeight: '600', marginBottom: 2 },
   windowNote: { fontFamily: fonts.data, fontSize: 12 },
-  chipsCol: { position: 'absolute', left: 16, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'flex-start', gap: 6 },
+  chipsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 6,
+  },
   chip: {
     fontFamily: fonts.data,
     fontSize: 10,
