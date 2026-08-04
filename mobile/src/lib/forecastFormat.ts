@@ -7,8 +7,17 @@ export function formatTimeShort(iso: string): string {
   return formatTime(iso).replace(' ', '').replace('AM', 'a').replace('PM', 'p');
 }
 
-export function isTomorrow(iso: string): boolean {
-  return new Date(iso).toDateString() !== new Date().toDateString();
+// The "next low tide" shown alongside a given day's card can roll into the
+// following calendar day (e.g. a late-night low). Compares against the day
+// actually being *viewed* (not the real device "today"), so tapping ahead to
+// Wednesday and seeing a low that rolls into Thursday correctly says "(Thu)"
+// instead of "(tomorrow)" -- which would be wrong relative to Wednesday, and
+// would also fire on every future day tab regardless of which one you're on.
+export function relativeDaySuffix(targetIso: string, viewedDate: string): string {
+  const target = new Date(targetIso);
+  const viewed = new Date(`${viewedDate}T12:00:00Z`);
+  if (target.toDateString() === viewed.toDateString()) return '';
+  return ` (${target.toLocaleDateString('en-US', { weekday: 'short' })})`;
 }
 
 // Both timestamps carry the actual date, not just a time-of-day -- comparing

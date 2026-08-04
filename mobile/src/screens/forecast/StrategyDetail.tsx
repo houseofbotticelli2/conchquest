@@ -8,7 +8,7 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { NavBar } from '../../components/NavBar';
 import { NowBadge } from '../../components/NowBadge';
 import { ForecastStackParamList } from '../../navigation/types';
-import { formatTime, isTomorrow, isWithinWindow, daylightNote } from '../../lib/forecastFormat';
+import { formatTime, relativeDaySuffix, isWithinWindow, daylightNote } from '../../lib/forecastFormat';
 import { getStrategy } from '../../lib/api';
 
 // Generous relative to the backend's own 5s OpenAI timeout -- this only
@@ -86,8 +86,8 @@ export function StrategyDetail({ navigation, route }: Props) {
           )}
           {nextLowTide && (
             <Text style={[styles.windowNote, { color: t.muted, marginTop: 6 }]}>
-              Next low tide: {formatTime(nextLowTide.time)}
-              {isTomorrow(nextLowTide.time) ? ' (tomorrow)' : ''}
+              Low tide: {formatTime(nextLowTide.time)}
+              {relativeDaySuffix(nextLowTide.time, result.date)}
               {result.restrictShellingToDaylight &&
                 (() => {
                   const note = daylightNote(nextLowTide.time, result.conditions.weather.sunrise, result.conditions.weather.sunset);

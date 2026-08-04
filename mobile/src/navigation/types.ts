@@ -1,5 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { ShellingScoreResult, Find } from '../lib/api';
+import type { ShellingScoreResult, MultiDayScoreEntry, Find } from '../lib/api';
 
 export type OnboardingStackParamList = {
   Welcome: undefined;
@@ -12,7 +12,7 @@ export type ForecastStackParamList = {
   Score: { beachId?: string } | undefined;
   Detail: { result: ShellingScoreResult; beachLabel: string };
   ConditionsDetail: { result: ShellingScoreResult; dayOffset: number; dayLabel: string; beachLabel: string };
-  StrategyDetail: { result: ShellingScoreResult; dayOffset: number; dayLabel: string; isToday: boolean; beachLabel: string };
+  StrategyDetail: { result: MultiDayScoreEntry; dayOffset: number; dayLabel: string; isToday: boolean; beachLabel: string };
 };
 
 export type MapStackParamList = {

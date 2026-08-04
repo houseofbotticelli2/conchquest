@@ -17,7 +17,7 @@ import { useBeachContext } from '../../hooks/useBeachContext';
 import {
   formatTime,
   formatTimeShort,
-  isTomorrow,
+  relativeDaySuffix,
   isWithinWindow,
   daylightNote,
   dayChipLabel,
@@ -269,8 +269,8 @@ export function Score({ navigation, route }: Props) {
                 )}
                 {nextLowTide && (
                   <Text style={[styles.windowNote, { color: t.muted, marginTop: 6 }]}>
-                    Next low tide: {formatTime(nextLowTide.time)}
-                    {isTomorrow(nextLowTide.time) ? ' (tomorrow)' : ''}
+                    Low tide: {formatTime(nextLowTide.time)}
+                    {relativeDaySuffix(nextLowTide.time, result.date)}
                     {result &&
                       result.restrictShellingToDaylight &&
                       (() => {
