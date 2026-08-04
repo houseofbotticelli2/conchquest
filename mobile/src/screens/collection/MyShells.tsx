@@ -8,6 +8,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { FindRow } from '../../components/FindRow';
 import { BadgeType } from '../../components/Badge';
+import { DateRangeSheet } from '../../components/DateRangeSheet';
 import { CollectionStackParamList } from '../../navigation/types';
 import { listMyFinds, Find } from '../../lib/api';
 
@@ -24,14 +25,31 @@ function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
 const FILTERS: { label: string; rarity?: 'rare'; recent?: boolean; private?: boolean }[] = [
   { label: 'All' },
   { label: 'Rare', rarity: 'rare' },
-  { label: 'This month', recent: true },
   { label: 'Private', private: true },
+  { label: 'This month', recent: true },
 ];
+
+// A sentinel index one past the end of FILTERS -- lets the date-range chip
+// slot into the same mutually-exclusive activeFilter selection as the
+// fixed pills above, instead of needing a separate "is date filter active"
+// flag threaded through every filter check.
+const DATE_FILTER_INDEX = FILTERS.length;
 
 function isThisMonth(iso: string): boolean {
   const d = new Date(iso);
   const now = new Date();
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+}
+
+function formatRangeLabel(from: Date, to: Date): string {
+  const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `${fmt(from)} – ${fmt(to)}`;
+}
+
+function endOfDay(d: Date): Date {
+  const copy = new Date(d);
+  copy.setHours(23, 59, 59, 999);
+  return copy;
 }
 
 export function MyShells({ navigation }: Props) {
@@ -41,6 +59,8 @@ export function MyShells({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState(0);
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(null);
+  const [dateSheetOpen, setDateSheetOpen] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -53,8 +73,17 @@ export function MyShells({ navigation }: Props) {
   );
 
   const visibleFinds = useMemo(() => {
-    const filter = FILTERS[activeFilter];
     const query = search.trim().toLowerCase();
+    if (activeFilter === DATE_FILTER_INDEX && dateRange) {
+      const fromMs = dateRange.from.getTime();
+      const toMs = endOfDay(dateRange.to).getTime();
+      return finds.filter((f) => {
+        if (query && !(f.speciesName ?? 'unidentified shell').toLowerCase().includes(query)) return false;
+        const t = new Date(f.foundAt).getTime();
+        return t >= fromMs && t <= toMs;
+      });
+    }
+    const filter = FILTERS[activeFilter];
     return finds.filter((f) => {
       if (query && !(f.speciesName ?? 'unidentified shell').toLowerCase().includes(query)) return false;
       if (filter.rarity && f.speciesRarity !== 'rare' && f.speciesRarity !== 'very_rare') return false;
@@ -62,7 +91,7 @@ export function MyShells({ navigation }: Props) {
       if (filter.private && !f.isPrivate) return false;
       return true;
     });
-  }, [finds, search, activeFilter]);
+  }, [finds, search, activeFilter, dateRange]);
 
   function handleAdd() {
     navigation.getParent()?.getParent()?.dispatch(CommonActions.navigate({ name: 'LogModal' }));
@@ -108,7 +137,10 @@ export function MyShells({ navigation }: Props) {
           {FILTERS.map((f, i) => (
             <Text
               key={f.label}
-              onPress={() => setActiveFilter(i)}
+              onPress={() => {
+                setActiveFilter(i);
+                setDateRange(null);
+              }}
               style={[
                 styles.filterChip,
                 { borderColor: t.border, backgroundColor: i === activeFilter ? t.navBg : t.surface, color: i === activeFilter ? t.navText : t.muted },
@@ -117,6 +149,24 @@ export function MyShells({ navigation }: Props) {
               {f.label}
             </Text>
           ))}
+          <TouchableOpacity
+            onPress={() => setDateSheetOpen(true)}
+            style={[
+              styles.filterChip,
+              styles.dateChip,
+              {
+                borderColor: t.border,
+                backgroundColor: activeFilter === DATE_FILTER_INDEX ? t.navBg : t.surface,
+              },
+            ]}
+          >
+            <Ionicons name="calendar-outline" size={12} color={activeFilter === DATE_FILTER_INDEX ? t.navText : t.muted} />
+            {dateRange && (
+              <Text style={[styles.dateChipLabel, { color: activeFilter === DATE_FILTER_INDEX ? t.navText : t.muted }]}>
+                {formatRangeLabel(dateRange.from, dateRange.to)}
+              </Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         {loading && <ActivityIndicator color={t.accent} style={{ marginVertical: 20 }} />}
@@ -143,6 +193,22 @@ export function MyShells({ navigation }: Props) {
             />
           ))}
       </ScrollView>
+
+      <DateRangeSheet
+        visible={dateSheetOpen}
+        onClose={() => setDateSheetOpen(false)}
+        from={dateRange?.from ?? null}
+        to={dateRange?.to ?? null}
+        onApply={(from, to) => {
+          setDateRange({ from, to });
+          setActiveFilter(DATE_FILTER_INDEX);
+          setDateSheetOpen(false);
+        }}
+        onClear={() => {
+          setDateRange(null);
+          setActiveFilter(0);
+        }}
+      />
     </View>
   );
 }
@@ -158,4 +224,6 @@ const styles = StyleSheet.create({
   searchText: { flex: 1, fontFamily: fonts.body, fontSize: 13 },
   filtersRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
   filterChip: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4, borderWidth: 1, borderRadius: 20, paddingVertical: 4, paddingHorizontal: 10, overflow: 'hidden' },
+  dateChip: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  dateChipLabel: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4 },
 });

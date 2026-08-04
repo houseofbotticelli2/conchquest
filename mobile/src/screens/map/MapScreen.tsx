@@ -12,6 +12,7 @@ import { FindRow } from '../../components/FindRow';
 import { BadgeType } from '../../components/Badge';
 import { ShellingMap } from '../../components/ShellingMap';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
+import { DateRangeSheet } from '../../components/DateRangeSheet';
 import { MapStackParamList } from '../../navigation/types';
 import { useAuth } from '../../auth/AuthProvider';
 import { listNearbyFinds, NearbyFind } from '../../lib/api';
@@ -22,9 +23,26 @@ type Props = NativeStackScreenProps<MapStackParamList, 'Map'>;
 const FILTERS: { label: string; rare?: boolean; today?: boolean; mine?: boolean }[] = [
   { label: 'All finds' },
   { label: 'Rare', rare: true },
-  { label: 'Today', today: true },
   { label: 'Mine', mine: true },
+  { label: 'Today', today: true },
 ];
+
+// A sentinel index one past the end of FILTERS -- lets the date-range chip
+// slot into the same mutually-exclusive activeFilter selection as the
+// fixed pills above, instead of needing a separate "is date filter active"
+// flag threaded through every filter check.
+const DATE_FILTER_INDEX = FILTERS.length;
+
+function formatRangeLabel(from: Date, to: Date): string {
+  const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `${fmt(from)} – ${fmt(to)}`;
+}
+
+function endOfDay(d: Date): Date {
+  const copy = new Date(d);
+  copy.setHours(23, 59, 59, 999);
+  return copy;
+}
 
 // Falls back to Sanibel Island if location permission is denied and no
 // beach is nearby/selected.
@@ -61,6 +79,8 @@ export function MapScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState(0);
   const [mapExpanded, setMapExpanded] = useState(false);
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(null);
+  const [dateSheetOpen, setDateSheetOpen] = useState(false);
 
   const { beaches, selectedBeach, location, titleLabel, subLabel, pickerOpen, setPickerOpen, selectBeach } =
     useBeachContext(DEFAULT_LOCATION);
@@ -100,6 +120,14 @@ export function MapScreen({ navigation }: Props) {
   const myLabel = (user?.user_metadata?.display_name as string | undefined) ?? user?.email?.split('@')[0] ?? null;
 
   const visibleFinds = useMemo(() => {
+    if (activeFilter === DATE_FILTER_INDEX && dateRange) {
+      const fromMs = dateRange.from.getTime();
+      const toMs = endOfDay(dateRange.to).getTime();
+      return finds.filter((f) => {
+        const t = new Date(f.foundAt).getTime();
+        return t >= fromMs && t <= toMs;
+      });
+    }
     const filter = FILTERS[activeFilter];
     return finds.filter((f) => {
       if (filter.rare && f.speciesRarity !== 'rare' && f.speciesRarity !== 'very_rare') return false;
@@ -107,7 +135,7 @@ export function MapScreen({ navigation }: Props) {
       if (filter.mine && (!myLabel || f.loggedBy !== myLabel)) return false;
       return true;
     });
-  }, [finds, activeFilter, myLabel]);
+  }, [finds, activeFilter, myLabel, dateRange]);
 
   // Measured rather than guessed, since the header's real height depends on
   // the device's safe-area inset and whether subLabel is present -- the
@@ -137,7 +165,10 @@ export function MapScreen({ navigation }: Props) {
             {FILTERS.map((f, i) => (
               <Text
                 key={f.label}
-                onPress={() => setActiveFilter(i)}
+                onPress={() => {
+                  setActiveFilter(i);
+                  setDateRange(null);
+                }}
                 style={[
                   styles.filterChip,
                   { borderColor: t.border, backgroundColor: i === activeFilter ? t.navBg : t.surface, color: i === activeFilter ? t.navText : t.muted },
@@ -146,6 +177,28 @@ export function MapScreen({ navigation }: Props) {
                 {f.label}
               </Text>
             ))}
+            <TouchableOpacity
+              onPress={() => setDateSheetOpen(true)}
+              style={[
+                styles.filterChip,
+                styles.dateChip,
+                {
+                  borderColor: t.border,
+                  backgroundColor: activeFilter === DATE_FILTER_INDEX ? t.navBg : t.surface,
+                },
+              ]}
+            >
+              <Ionicons
+                name="calendar-outline"
+                size={12}
+                color={activeFilter === DATE_FILTER_INDEX ? t.navText : t.muted}
+              />
+              {dateRange && (
+                <Text style={[styles.dateChipLabel, { color: activeFilter === DATE_FILTER_INDEX ? t.navText : t.muted }]}>
+                  {formatRangeLabel(dateRange.from, dateRange.to)}
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
 
           <View style={styles.sectionHeader}>
@@ -196,6 +249,22 @@ export function MapScreen({ navigation }: Props) {
           </TouchableOpacity>
         ))}
       </SlideUpSheet>
+
+      <DateRangeSheet
+        visible={dateSheetOpen}
+        onClose={() => setDateSheetOpen(false)}
+        from={dateRange?.from ?? null}
+        to={dateRange?.to ?? null}
+        onApply={(from, to) => {
+          setDateRange({ from, to });
+          setActiveFilter(DATE_FILTER_INDEX);
+          setDateSheetOpen(false);
+        }}
+        onClear={() => {
+          setDateRange(null);
+          setActiveFilter(0);
+        }}
+      />
 
       <View
         style={[
@@ -313,6 +382,8 @@ const styles = StyleSheet.create({
   collapseBtnLabel: { fontFamily: fonts.bodySemiBold, fontSize: 13, color: '#1a2e35' },
   filtersRow: { paddingHorizontal: 14, paddingBottom: 10, flexDirection: 'row', gap: 6 },
   filterChip: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4, borderWidth: 1, borderRadius: 20, paddingVertical: 4, paddingHorizontal: 10, overflow: 'hidden' },
+  dateChip: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  dateChipLabel: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4 },
   sectionHeader: { paddingHorizontal: 14, paddingBottom: 4 },
   list: { paddingHorizontal: 14, paddingBottom: 16 },
   emptyText: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 12 },
