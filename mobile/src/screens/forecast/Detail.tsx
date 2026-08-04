@@ -9,16 +9,6 @@ import { ForecastStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<ForecastStackParamList, 'Detail'>;
 
-const FACTOR_ICONS: Record<string, string> = {
-  tideLevel: '🌊',
-  tidalMovement: '↕️',
-  windSpeed: '💨',
-  windDirection: '🧭',
-  waveHeight: '🏄',
-  moonPhase: '🌙',
-  timeOfDay: '🕐',
-};
-
 export function Detail({ navigation, route }: Props) {
   const { theme: t } = useTheme();
   const { result, beachLabel } = route.params;
@@ -34,9 +24,7 @@ export function Detail({ navigation, route }: Props) {
             return (
               <View key={f.key}>
                 <View style={styles.factorHeader}>
-                  <Text style={[styles.factorLabel, { color: t.text }]}>
-                    {FACTOR_ICONS[f.key] ?? '•'} {f.label}
-                  </Text>
+                  <Text style={[styles.factorLabel, { color: t.text }]}>{f.label}</Text>
                   <Text style={[styles.factorPts, { color }]}>{f.points} pts</Text>
                 </View>
                 <View style={[styles.barTrack, { backgroundColor: t.surfaceAlt }]}>
