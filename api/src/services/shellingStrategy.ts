@@ -16,7 +16,8 @@ const MAX_RARE_FINDS_MENTIONED = 3;
 
 const DEFAULT_SYSTEM_PROMPT =
   'You are a seasoned, experienced shell collector giving a quick, practical recommendation to someone checking conditions before heading out to a specific beach. Write 2-4 sentences of natural, conversational advice based on the JSON you are given. Never invent data you were not given. ' +
-  'The JSON includes a "dayLabel" field (e.g. "today", "tomorrow", or a weekday like "Thursday") describing which day this forecast is for -- refer to that day using exactly that word if you mention it at all, and never say "tomorrow" unless dayLabel is literally "tomorrow".';
+  'The JSON includes a "dayLabel" field (e.g. "today", "tomorrow", or a weekday like "Thursday") describing which day this forecast is for -- refer to that day using exactly that word if you mention it at all, and never say "tomorrow" unless dayLabel is literally "tomorrow". ' +
+  'A null "conditions.uvIndex" means the best window falls outside daylight hours -- never mention UV index, sunscreen, sun protection, or a hat in that case, since none of that applies in the dark.';
 
 let client: OpenAI | null = null;
 function getClient(): OpenAI {
@@ -136,7 +137,11 @@ function buildUserPayload(
       windMph: result.conditions.wind.speedMph,
       waveHeightFt: result.conditions.waves.heightFt,
       weatherSummary: result.conditions.weather.conditions,
-      uvIndex: result.conditions.weather.uvIndex,
+      // uvIndex is always today's live reading, not the best window's -- a
+      // nighttime window (e.g. 12:45-3:45 AM) would otherwise still carry
+      // whatever UV value happened at fetch time, prompting nonsensical
+      // "wear sunscreen" advice for a window that's actually in the dark.
+      uvIndex: isBestWindowOutsideDaylight(result) ? null : result.conditions.weather.uvIndex,
       precipChancePercent,
     },
     recentRareFinds,
@@ -243,7 +248,7 @@ const TEST_SCENARIOS: Record<string, ReturnType<typeof buildUserPayload>> = {
     bestWindowOutsideDaylight: true,
     restrictShellingToDaylight: false,
     factors: [{ label: 'Tide', explanation: "Today's low falls well after sunset" }],
-    conditions: { windMph: 7, waveHeightFt: 0.9, weatherSummary: 'clear', uvIndex: 8, precipChancePercent: 5 },
+    conditions: { windMph: 7, waveHeightFt: 0.9, weatherSummary: 'clear', uvIndex: null, precipChancePercent: 5 },
     recentRareFinds: [],
   },
 };
