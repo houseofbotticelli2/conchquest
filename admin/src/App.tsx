@@ -16,7 +16,7 @@ function AppShell() {
   const { state, signOut } = useAuth();
   const [section, setSection] = useState<Section>('dashboard');
 
-  if (state.status === 'loading' || state.status === 'checkingAdmin') {
+  if (state.status === 'loading') {
     return (
       <div className="login-wrap">
         <div className="desc">Loading...</div>

@@ -42,13 +42,16 @@ async function upsertUserRecord(
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // The mobile app always sends a Bearer header; the admin console instead
+  // relies on an httpOnly cookie (adminSession.ts) so its JS never holds a
+  // raw JWT -- checking the header first keeps the mobile app's flow
+  // completely unchanged.
   const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
+  const token = header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : req.cookies?.sb_access_token;
+  if (!token) {
     res.status(401).json({ error: 'Missing bearer token' });
     return;
   }
-
-  const token = header.slice('Bearer '.length);
 
   try {
     const { payload } = await jwtVerify(token, jwks, { issuer });
@@ -81,7 +84,10 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 // "a real logged-in Conchquest account," not "allowed to see admin data."
 export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   if (req.user?.role !== 'admin') {
-    res.status(403).json({ error: 'Admin access required' });
+    // Echoes the signed-in (but non-admin) user's email so the admin
+    // console's "not admin" screen can say whose account this is -- the
+    // client no longer has its own copy of the session to read it from.
+    res.status(403).json({ error: 'Admin access required', email: req.user?.email ?? '' });
     return;
   }
   next();

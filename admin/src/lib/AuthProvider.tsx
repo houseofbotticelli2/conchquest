@@ -1,17 +1,18 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import type { Session } from '@supabase/supabase-js';
-import { supabase } from './supabase';
-import { getMe, ApiError, type AdminMe } from './api';
+import { getMe, logout, ApiError, type AdminMe } from './api';
 
 type AuthState =
   | { status: 'loading' }
   | { status: 'signedOut' }
-  | { status: 'checkingAdmin' }
   | { status: 'notAdmin'; email: string }
   | { status: 'ready'; me: AdminMe };
 
 interface AuthContextValue {
   state: AuthState;
+  // Re-checks the session against the API -- call after a successful login
+  // (there's no client-side auth event to listen for anymore, the session
+  // lives entirely in an httpOnly cookie this code can't read).
+  refresh: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -20,45 +21,30 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: 'loading' });
 
-  const checkAdmin = useCallback(async (session: Session) => {
-    setState({ status: 'checkingAdmin' });
+  const refresh = useCallback(async () => {
     try {
       const me = await getMe();
       setState({ status: 'ready', me });
     } catch (err) {
       if (err instanceof ApiError && err.status === 403) {
-        setState({ status: 'notAdmin', email: session.user.email ?? '' });
+        const email = (err.body as { email?: string } | undefined)?.email ?? '';
+        setState({ status: 'notAdmin', email });
       } else {
-        // Treat any other failure (network, 401 from an expired token, etc.)
-        // as signed out -- Supabase's own onAuthStateChange will fire again
-        // once a valid session exists.
         setState({ status: 'signedOut' });
       }
     }
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) checkAdmin(session);
-      else setState({ status: 'signedOut' });
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) checkAdmin(session);
-      else setState({ status: 'signedOut' });
-    });
-
-    return () => subscription.unsubscribe();
-  }, [checkAdmin]);
+    refresh();
+  }, [refresh]);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    await logout();
     setState({ status: 'signedOut' });
   }, []);
 
-  return <AuthContext.Provider value={{ state, signOut }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ state, refresh, signOut }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextValue {

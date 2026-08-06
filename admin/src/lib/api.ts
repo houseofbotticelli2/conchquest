@@ -1,5 +1,3 @@
-import { supabase } from './supabase';
-
 // VITE_API_BASE_URL lets this point at a local `npm run dev` API instead of
 // the deployed one -- set it in admin/.env.local (gitignored), no code edit
 // needed like the mobile app's hardcoded constant.
@@ -7,41 +5,66 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://conchquest-ap
 
 export class ApiError extends Error {
   status: number;
+  // Raw parsed error body -- e.g. requireAdmin's 403 echoes the signed-in
+  // user's email, which AuthProvider needs for the "not admin" screen since
+  // it no longer has its own copy of the session to read it from.
+  body: unknown;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, body?: unknown) {
     super(message);
     this.status = status;
+    this.body = body;
   }
 }
 
-async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    throw new ApiError('Not signed in', 401);
-  }
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+// Auth is an httpOnly cookie set by the API (adminSession.ts) -- there's no
+// token for this code to read or attach, `credentials: 'include'` is what
+// makes the browser send it. Never add an Authorization header here.
+async function rawFetch(path: string, options: RequestInit = {}): Promise<Response> {
+  return fetch(`${API_BASE_URL}${path}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${session.access_token}`,
       ...options.headers,
     },
   });
+}
 
+async function parseResponse<T>(response: Response): Promise<T> {
   if (response.status === 204) return undefined as T;
 
   const text = await response.text();
   const body = text ? JSON.parse(text) : null;
 
   if (!response.ok) {
-    throw new ApiError(body?.error ?? `Request failed with status ${response.status}`, response.status);
+    throw new ApiError(body?.error ?? `Request failed with status ${response.status}`, response.status, body);
   }
 
   return body as T;
+}
+
+export async function login(email: string, password: string): Promise<void> {
+  const response = await rawFetch('/api/admin/session/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+  await parseResponse(response);
+}
+
+export async function logout(): Promise<void> {
+  await rawFetch('/api/admin/session/logout', { method: 'POST' });
+}
+
+// One retry after a fresh access-token cookie via the refresh cookie -- a
+// 401 here almost always just means the (short-lived) access token expired
+// mid-session, not that the user was ever signed out.
+async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await rawFetch(path, options);
+  if (response.status !== 401) return parseResponse<T>(response);
+
+  const refreshResponse = await rawFetch('/api/admin/session/refresh', { method: 'POST' });
+  if (!refreshResponse.ok) return parseResponse<T>(response);
+
+  const retryResponse = await rawFetch(path, options);
+  return parseResponse<T>(retryResponse);
 }
 
 export interface AdminMe {

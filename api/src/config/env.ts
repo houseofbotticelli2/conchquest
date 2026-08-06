@@ -20,11 +20,27 @@ export const env = {
   port: optionalNumber('PORT', 3000),
   databaseUrl: required('DATABASE_URL'),
   supabaseUrl: required('SUPABASE_URL'),
+  // The publishable/anon key -- safe to be public (it's already hardcoded
+  // client-side in admin/src/lib/supabase.ts and the mobile app) -- needed
+  // here only so the admin session routes (adminSession.ts) can call
+  // Supabase's password/refresh grant endpoints server-side on the admin
+  // console's behalf, instead of the browser calling Supabase directly.
+  supabaseAnonKey: required('SUPABASE_ANON_KEY'),
   // Only needed for admin-console user deletion (calling Supabase's Admin API
   // to remove the actual auth account, not just our mirrored `users` row) --
   // optional, not required(), so the main API still boots fine without it.
   // Never send this to any client; it must only ever be used server-side.
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  // Browser origins allowed to make credentialed (cookie-carrying) requests --
+  // the admin console's cookie-session auth needs an explicit origin
+  // allowlist (browsers reject credentialed requests against a wildcard
+  // CORS origin). Defaults cover local dev (Vite's admin dev server + the
+  // mobile app's `expo start --web` preview); add the deployed admin
+  // console's real origin here once it has one.
+  corsAllowedOrigins: (process.env.CORS_ALLOWED_ORIGINS ?? 'http://localhost:5173,http://localhost:8082')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
   openWeatherApiKey: required('OPENWEATHER_API_KEY'),
   openaiApiKey: required('OPENAI_API_KEY'),
   conditionsCacheTtlMinutes: optionalNumber('CONDITIONS_CACHE_TTL_MINUTES', 20),
@@ -37,3 +53,11 @@ export const env = {
 };
 
 export const isProduction = env.nodeEnv === 'production';
+
+// Whether this process is actually being served over a real HTTPS domain
+// (any Railway deployment, regardless of what its environment is named --
+// this project's is literally called "dev") vs. plain local http dev.
+// Distinct from isProduction on purpose: NODE_ENV isn't set at all on
+// Railway today, so isProduction alone would be false there too, which is
+// wrong for anything that needs to know "am I reachable over HTTPS."
+export const isHttpsDeployment = Boolean(process.env.RAILWAY_ENVIRONMENT);

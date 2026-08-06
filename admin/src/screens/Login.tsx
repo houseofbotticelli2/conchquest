@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { login } from '../lib/api';
+import { useAuth } from '../lib/AuthProvider';
 
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { refresh } = useAuth();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    if (signInError) setError(signInError.message);
+    try {
+      await login(email, password);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid email or password');
+    }
     setSubmitting(false);
   }
 
