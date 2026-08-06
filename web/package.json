@@ -9,7 +9,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "start": "serve dist -s -l $PORT",
+    "start": "serve dist -l $PORT",
     "typecheck": "astro check",
     "astro": "astro"
   },
