@@ -1,24 +1,15 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
 ---
 
 <Layout title="Terms of Service">
-  <nav class="nav">
-    <div class="nav-inner nav-inner-narrow">
-      <a class="brand" href="/"><span class="brand-mark">🐚</span> Conchquest</a>
-      <a class="back" href="/">← Back to home</a>
-    </div>
-  </nav>
+  <Nav />
 
   <div class="wrap page-wrap">
-    <div class="draft-flag">
-      <strong>Draft — not yet reviewed by an attorney.</strong> This is a starter template written to match Conchquest's
-      actual features (location data, crowdsourced photos, subscriptions). Have a lawyer review before this goes live,
-      especially the sections on user-generated content, location data, and rare/protected species.
-    </div>
-
     <h1>Terms of Service</h1>
-    <div class="updated">Draft prepared August 2026 · Not yet in effect</div>
+    <div class="updated">Effective August 2026</div>
 
     <h2>1. Acceptance of these terms</h2>
     <p>By creating an account or using the Conchquest mobile application ("Conchquest," "the app," "we," "us"), you agree to these Terms of Service. If you do not agree, do not use the app. You must be at least 13 years old to create an account.</p>
@@ -62,29 +53,16 @@ import Layout from '../layouts/Layout.astro';
     <p>We may update these terms as the app evolves. We'll notify you of material changes in-app before they take effect.</p>
 
     <h2>13. Contact</h2>
-    <p>Questions about these terms? Reach us at <a href="mailto:hello@conchquest.app">hello@conchquest.app</a>.</p>
+    <p>Questions about these terms? Reach us at <a href="mailto:terms@conchquest.app">terms@conchquest.app</a>.</p>
   </div>
 
-  <footer class="site-footer-simple">© 2026 Conchquest</footer>
+  <Footer />
 </Layout>
 
 <style>
-  .nav-inner-narrow {
-    max-width: 820px;
-  }
   .page-wrap {
     max-width: 720px;
     padding: 56px 32px 100px;
-  }
-  .draft-flag {
-    background: #fdf1ec;
-    border: 1px solid #f3c9b8;
-    color: #8a3819;
-    font-size: 13px;
-    padding: 14px 18px;
-    border-radius: 12px;
-    margin-bottom: 40px;
-    line-height: 1.6;
   }
   h1 {
     font-family: 'Fraunces', serif;

@@ -1,27 +1,21 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
 ---
 
 <Layout title="Community Guidelines">
-  <nav class="nav">
-    <div class="nav-inner nav-inner-narrow">
-      <a class="brand" href="/"><span class="brand-mark">🐚</span> Conchquest</a>
-      <a class="back" href="/">← Back to home</a>
-    </div>
-  </nav>
+  <Nav />
 
   <div class="wrap page-wrap">
     <h1>Community Guidelines</h1>
     <p>Placeholder -- see docs/TODO.md #75. Content pending legal review.</p>
   </div>
 
-  <footer class="site-footer-simple">© 2026 Conchquest</footer>
+  <Footer />
 </Layout>
 
 <style>
-  .nav-inner-narrow {
-    max-width: 820px;
-  }
   .page-wrap {
     max-width: 720px;
     padding: 56px 32px 100px;

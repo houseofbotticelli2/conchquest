@@ -1,0 +1,43 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Shell Shop" description="The Conchquest Shell Shop is coming soon.">
+  <Nav />
+
+  <div class="wrap page-wrap">
+    <div class="eyebrow">Shell Shop</div>
+    <h1>Coming soon</h1>
+    <p>We're putting together a shop for shelling gear and Conchquest gear. Check back soon.</p>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .page-wrap {
+    max-width: 720px;
+    padding: 96px 32px 140px;
+    text-align: center;
+  }
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 40px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  p {
+    font-size: 16px;
+    color: var(--muted);
+  }
+</style>

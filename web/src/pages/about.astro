@@ -1,0 +1,110 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="About" description="What Conchquest does: the Shelling Score, community find map, shell library, and more.">
+  <Nav />
+
+  <div class="wrap page-wrap">
+    <div class="eyebrow">About Conchquest</div>
+    <h1>Built for the walk to the beach, not just the app store page.</h1>
+    <p class="lede">
+      Conchquest started from a simple frustration: you drive to the beach, the tide's wrong, and you spend an hour
+      finding nothing but broken fragments. We built the app we wanted — one that tells you when to go, what to
+      expect, and what you're holding once you find it.
+    </p>
+
+    <h2>The Shelling Score</h2>
+    <p>
+      Every beach gets a single 0–100 score, rebuilt from live tide height, wind speed and direction, wave height,
+      and moon phase. It's not a guess — it's the same handful of conditions experienced shellers already watch for,
+      combined into one number so you don't have to check four different sites before you leave the house. The score
+      also points to the best window in the day to be on the sand, not just whether today is good in the abstract.
+    </p>
+
+    <h2>Shelling Strategy</h2>
+    <p>
+      Alongside the score, Conchquest generates a short, plain-language strategy for your beach and conditions —
+      where to look, what the tide is doing, and what to expect given the day's wind and wave setup. It reads like
+      advice from someone who was just there, because it's built from the same forecast data as your score.
+    </p>
+
+    <h2>Multi-day forecast</h2>
+    <p>
+      Shelling conditions shift day to day, so Conchquest doesn't stop at today's snapshot. A multi-day forecast
+      strip lets you plan a trip a few days out and pick the best day in a stretch, not just check the app the
+      morning of.
+    </p>
+
+    <h2>Community find map</h2>
+    <p>
+      See what other shellers have been finding nearby — from common sand dollars to a rare Junonia — shared as they
+      log their own finds. You choose how visible your own finds are: keep exact locations private by default, share
+      an approximate area with the community, or let Conchquest add extra fuzzing automatically for rare or sensitive
+      finds, so popular spots don't get stripped bare.
+    </p>
+
+    <h2>Shell library</h2>
+    <p>
+      A curated field guide for identifying what's in your hand, with rarity, habitat, and ethical shelling guidance
+      for every species — including what's legal to collect and what's better left on the beach.
+    </p>
+
+    <h2>Your shelling history</h2>
+    <p>
+      Every find you log builds a personal shelling history on your profile — species, condition, and where and when
+      you found it. Save your regular beaches, set an alert threshold for each one, and Conchquest will notify you
+      when conditions there cross into "go now" territory.
+    </p>
+
+    <h2>Where we're launching</h2>
+    <p>
+      Conchquest is launching first on Sanibel, Captiva, Bowman's Beach, and Marco Island — with more of the Gulf
+      Coast to follow.
+    </p>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .page-wrap {
+    max-width: 720px;
+    padding: 56px 32px 100px;
+  }
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    line-height: 1.2;
+  }
+  .lede {
+    font-size: 17px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 36px 0 12px;
+    color: var(--ink);
+  }
+  p {
+    font-size: 15px;
+    color: #3c3c39;
+    line-height: 1.7;
+  }
+</style>
