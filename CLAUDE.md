@@ -20,6 +20,7 @@ Shelling intelligence & discovery app: React Native/Expo mobile client + Node.js
 - **`Alert.alert` is a no-op on `react-native-web`.** Any confirmation dialog must use `mobile/src/components/ConfirmDialog.tsx` instead, or it'll silently do nothing when running as web.
 - **`expo-dev-client`'s version must match the Expo SDK number exactly** (e.g. SDK 57 → `expo-dev-client@~57.0.7`), not whatever `npm install expo-dev-client` picks by default — a mismatched version compiles but fails at the native build step with cryptic Kotlin/Gradle errors.
 - The web preview (`expo start --web`, typically port 8082) is a convenience for fast iteration — it does not reflect real device behavior for anything safe-area/notch-related, native modules, or platform-specific APIs. Verify those on a real device build.
+- **Supabase's Auth Admin API (`/auth/v1/admin/*`, not the separate Management API at api.supabase.com) — its `GET /auth/v1/admin/users?email=...` silently ignores the `email` param** — it just returns page 1 of every user, not a filtered result. Any script/endpoint that needs to find a user by email must fetch (paginated) and filter client-side, or it'll silently operate on the wrong account.
 
 ## Deploy
 
