@@ -158,7 +158,6 @@ export function ResetPasswordForm() {
             Send reset link
           </button>
         </form>
-        <a className="back-link" href="/">← Back to Conchquest</a>
       </div>
     );
   }
@@ -175,7 +174,6 @@ export function ResetPasswordForm() {
         <button className="btn-secondary" type="button" onClick={handleResend} disabled={resendCooldown}>
           {resendCooldown ? 'Link resent' : 'Resend link'}
         </button>
-        <a className="back-link" href="/">← Back to Conchquest</a>
       </div>
     );
   }
@@ -186,7 +184,6 @@ export function ResetPasswordForm() {
         <div className="success-check">✓</div>
         <h1>Password updated</h1>
         <p className="sub">Your password has been changed. Head back to the Conchquest app and log in with your new password.</p>
-        <a className="back-link" href="/">← Back to Conchquest</a>
       </div>
     );
   }
