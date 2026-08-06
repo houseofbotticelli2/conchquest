@@ -1,7 +1,7 @@
 // VITE_API_BASE_URL lets this point at a local `npm run dev` API instead of
 // the deployed one -- set it in admin/.env.local (gitignored), no code edit
 // needed like the mobile app's hardcoded constant.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://conchquest-api-dev.up.railway.app';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.conchquest.app';
 
 export class ApiError extends Error {
   status: number;
