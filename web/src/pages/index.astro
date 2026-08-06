@@ -2,8 +2,345 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Home">
-  <h1>Conchquest</h1>
-  <p>Shelling intelligence & discovery -- know when and where to go shelling, before you leave the house.</p>
-  <p><a href="/download">Download the app &rarr;</a></p>
+<Layout title="Know When to Go" description="Conchquest turns tide, wind, and wave data into one shelling forecast for the Gulf Coast. Join the waitlist.">
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#top">
+        <span class="brand-mark">🐚</span> Conchquest
+      </a>
+      <a class="nav-cta" href="#waitlist">Get notified</a>
+    </div>
+  </nav>
+
+  <div id="top" class="hero">
+    <div class="wrap hero-inner">
+      <div class="eyebrow">Coming soon · Gulf Coast, FL</div>
+      <h1>Know when<br />to <em>go.</em></h1>
+      <p class="hero-sub">
+        Conchquest turns tide, wind, and wave data into one shelling forecast — so the next low tide you chase is
+        actually worth the drive.
+      </p>
+
+      <form class="waitlist" id="waitlistForm" action="mailto:hello@conchquest.com" method="post" enctype="text/plain">
+        <label for="email" class="sr-only" style="position:absolute;left:-9999px;">Email address</label>
+        <input id="email" name="email" type="email" placeholder="you@email.com" required />
+        <button type="submit">Join the waitlist</button>
+      </form>
+      <div class="waitlist-note">No spam. One email when we launch on Sanibel, Captiva, and Marco Island.</div>
+
+      <div class="badges">
+        <div class="badge">
+          <span class="badge-icon">🍎</span>
+          <div class="badge-text"><div class="top">Coming soon on</div><div class="bottom">App Store</div></div>
+        </div>
+        <div class="badge">
+          <span class="badge-icon">▶</span>
+          <div class="badge-text"><div class="top">Coming soon on</div><div class="bottom">Google Play</div></div>
+        </div>
+      </div>
+    </div>
+
+    <svg class="ripple" viewBox="0 0 1080 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M0,90 Q90,70 180,90 T360,90 T540,90 T720,90 T900,90 T1080,90"
+        fill="none"
+        stroke="#9FE1CB"
+        stroke-width="2"
+        opacity="0.9"></path>
+      <path
+        d="M0,102 Q90,86 180,102 T360,102 T540,102 T720,102 T900,102 T1080,102"
+        fill="none"
+        stroke="#C7EBDC"
+        stroke-width="2"
+        opacity="0.7"></path>
+      <path
+        d="M0,113 Q90,101 180,113 T360,113 T540,113 T720,113 T900,113 T1080,113"
+        fill="none"
+        stroke="#E1F5EE"
+        stroke-width="2"
+        opacity="0.6"></path>
+    </svg>
+  </div>
+
+  <div class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-eyebrow">What you get</div>
+        <div class="section-title">One app, three reasons to open it</div>
+        <p class="section-desc">
+          Built around how Gulf Coast shellers actually plan a morning: check the score, see what's turning up
+          nearby, and know what you're holding.
+        </p>
+      </div>
+
+      <div class="pillars">
+        <div class="pillar">
+          <div class="pillar-icon">★</div>
+          <h3>The Shelling Score</h3>
+          <p>A single 0–100 number built from tide, wind, wave height, and moon phase — plus the best window to be on the sand.</p>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🗺</div>
+          <h3>Community find map</h3>
+          <p>See what's been turning up nearby, from common sand dollars to rare Junonia — shared by shellers who were just there.</p>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">📖</div>
+          <h3>Shell library</h3>
+          <p>A curated field guide for identifying what's in your hand, with rarity, habitat, and ethical shelling guidance for every species.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="beaches">
+    <div class="wrap">
+      <div class="beaches-label">Launching first on</div>
+      <div class="beaches-list">Sanibel<span class="sep">·</span>Captiva<span class="sep">·</span>Bowman's Beach<span class="sep">·</span>Marco Island</div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div class="footer-tag">© 2026 Conchquest. Know when to go.</div>
+      <div class="footer-links">
+        <a href="/terms">Terms of Service</a>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="mailto:hello@conchquest.com">Contact</a>
+      </div>
+    </div>
+  </footer>
 </Layout>
+
+<style>
+  .hero {
+    padding: 88px 0 0;
+  }
+  .hero-inner {
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-optical-sizing: auto;
+    font-size: clamp(40px, 6vw, 64px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin-bottom: 22px;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--teal);
+  }
+  .hero-sub {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 480px;
+    margin: 0 auto 36px;
+    line-height: 1.65;
+  }
+  .waitlist {
+    display: flex;
+    gap: 8px;
+    max-width: 420px;
+    margin: 0 auto 12px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 6px;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.04);
+  }
+  .waitlist input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    min-width: 0;
+  }
+  .waitlist input:focus {
+    outline: none;
+  }
+  .waitlist input::placeholder {
+    color: #a9a79e;
+  }
+  .waitlist button {
+    border: none;
+    background: var(--coral);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 0 22px;
+    border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .waitlist button:hover {
+    background: #b84a26;
+  }
+  .waitlist-note {
+    font-size: 12px;
+    color: #9b9a92;
+    margin-bottom: 56px;
+  }
+  .badges {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #efede7;
+    color: #8c8a81;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+  .badge-icon {
+    font-size: 18px;
+  }
+  .badge-text {
+    text-align: left;
+    line-height: 1.3;
+  }
+  .badge-text .top {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .badge-text .bottom {
+    font-size: 13px;
+    font-weight: 600;
+    color: #5f5e5a;
+  }
+  .ripple {
+    width: 100%;
+    height: 120px;
+    display: block;
+    margin-top: 64px;
+  }
+  .section {
+    padding: 0 0 100px;
+  }
+  .section-head {
+    max-width: 560px;
+    margin: 0 auto 56px;
+    text-align: center;
+  }
+  .section-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+    margin-bottom: 14px;
+  }
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 34px;
+    color: var(--ink);
+    margin-bottom: 14px;
+  }
+  .section-desc {
+    font-size: 16px;
+    color: var(--muted);
+  }
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+  .pillar {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 32px 26px;
+  }
+  .pillar-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--teal-tint);
+    border: 1px solid #9fe1cb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+  .pillar h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--ink);
+  }
+  .pillar p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+  .beaches {
+    background: var(--teal-deep);
+    color: #fff;
+    padding: 48px 0;
+    text-align: center;
+  }
+  .beaches-label {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #9fe1cb;
+    margin-bottom: 14px;
+  }
+  .beaches-list {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: #fff;
+  }
+  .beaches-list .sep {
+    color: #4c9d89;
+    margin: 0 14px;
+    font-family: 'Inter', sans-serif;
+  }
+
+  @media (max-width: 720px) {
+    .pillars {
+      grid-template-columns: 1fr;
+    }
+    .beaches-list {
+      font-size: 15px;
+    }
+    .beaches-list .sep {
+      margin: 0 8px;
+    }
+    .waitlist {
+      flex-direction: column;
+      border-radius: 14px;
+    }
+    .waitlist button {
+      padding: 12px;
+      border-radius: 10px;
+    }
+  }
+</style>

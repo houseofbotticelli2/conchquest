@@ -4,89 +4,175 @@ interface Props {
   description?: string;
 }
 
-const { title, description = 'Conchquest -- shelling intelligence & discovery.' } = Astro.props;
+const { title, description = "Conchquest turns tide, wind, and wave data into one shelling forecast for the Gulf Coast." } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="description" content={description} />
-    <title>{title} · Conchquest</title>
+    <title>{title} — Conchquest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <header class="site-header">
-      <a class="brand" href="/">Conchquest</a>
-      <nav>
-        <a href="/download">Download</a>
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms</a>
-      </nav>
-    </header>
-    <main>
-      <slot />
-    </main>
-    <footer class="site-footer">
-      <p>&copy; {new Date().getFullYear()} Conchquest</p>
-    </footer>
+    <slot />
   </body>
 </html>
 
 <style is:global>
   :root {
-    color-scheme: light dark;
-    --bg: #faf3ea;
-    --text: #1a2e35;
-    --muted: #6b6255;
-    --accent: #c4536f;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --cream: #f8f7f4;
+    --ink: #1a1a18;
+    --muted: #5f5e5a;
+    --teal: #1d9e75;
+    --teal-deep: #085041;
+    --teal-tint: #e1f5ee;
+    --sand: #faeeda;
+    --coral: #d85a30;
+    --line: #e8e6e0;
   }
-  * {
+  *,
+  *::before,
+  *::after {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  html {
+    scroll-behavior: smooth;
   }
   body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
-  }
-  main {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 32px 20px 64px;
-    min-height: 60vh;
+    font-family: 'Inter', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
   }
   a {
-    color: var(--accent);
+    color: inherit;
   }
-  .site-header {
+  :focus-visible {
+    outline: 2px solid var(--teal-deep);
+    outline-offset: 2px;
+  }
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* Shared nav, used by every page */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(248, 247, 244, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 16px 32px;
+    max-width: 1080px;
+    margin: 0 auto;
   }
-  .site-header .brand {
-    font-weight: 700;
-    font-size: 18px;
-    text-decoration: none;
-    color: var(--text);
-  }
-  .site-header nav {
+  .brand {
     display: flex;
-    gap: 16px;
-    font-size: 14px;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 20px;
+    color: var(--ink);
+    text-decoration: none;
   }
-  .site-header nav a {
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--teal-tint);
+    border: 1px solid #9fe1cb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+  }
+  .nav-cta {
+    background: var(--teal-deep);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 24px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .nav-cta:hover {
+    background: var(--ink);
+  }
+  .back {
+    font-size: 14px;
+    font-weight: 600;
     text-decoration: none;
     color: var(--muted);
   }
-  .site-footer {
-    text-align: center;
-    font-size: 12px;
+  .back:hover {
+    color: var(--ink);
+  }
+
+  /* Shared footer */
+  footer.site-footer {
+    border-top: 1px solid var(--line);
+    padding: 40px 0;
+  }
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-tag {
+    font-size: 13px;
+    color: #9b9a92;
+  }
+  .footer-links {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .footer-links a {
+    font-size: 13px;
     color: var(--muted);
-    padding: 20px;
+    text-decoration: none;
+  }
+  .footer-links a:hover {
+    color: var(--ink);
+  }
+  footer.site-footer-simple {
+    border-top: 1px solid var(--line);
+    padding: 32px;
+    text-align: center;
+    font-size: 13px;
+    color: #9b9a92;
+  }
+
+  @media (max-width: 720px) {
+    .nav-inner {
+      padding: 14px 20px;
+    }
+    .footer-inner {
+      flex-direction: column;
+      text-align: center;
+    }
   }
 </style>

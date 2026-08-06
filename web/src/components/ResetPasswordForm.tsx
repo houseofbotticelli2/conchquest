@@ -1,51 +1,76 @@
 import React, { useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 
-type Status =
-  | { step: 'checkingLink' }
-  | { step: 'invalidLink'; message: string }
-  | { step: 'ready' }
-  | { step: 'submitting' }
-  | { step: 'done' };
+type Stage =
+  | { name: 'checkingLink' }
+  | { name: 'request'; notice?: string }
+  | { name: 'sent'; email: string }
+  | { name: 'new' }
+  | { name: 'submittingNew' }
+  | { name: 'done' };
 
 const MIN_PASSWORD_LENGTH = 8;
 
-// Supabase's recovery email links to this page with the session tokens in
-// the URL hash (or, for a link that's already expired/consumed, an
-// #error=... fragment instead) -- supabase-js's detectSessionInUrl (on by
-// default) parses that on load and fires PASSWORD_RECOVERY once the
-// recovery session is actually established, which is what this waits for
-// rather than assuming the link was valid just because the page loaded.
+function passwordStrength(value: string): number {
+  let score = 0;
+  if (value.length >= 8) score++;
+  if (/[0-9]/.test(value)) score++;
+  if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score++;
+  if (/[^a-zA-Z0-9]/.test(value)) score++;
+  return score;
+}
+
+const STRENGTH_COLORS = ['#E8E6E0', '#D85A30', '#E8A93A', '#1D9E75'];
+
+// Supabase's recovery email links here with the session tokens in the URL
+// hash (or, for a link that's already expired/consumed, an #error=...
+// fragment instead) -- supabase-js's detectSessionInUrl (on by default)
+// parses that on load and fires PASSWORD_RECOVERY once the recovery
+// session is actually established, which is what this waits for rather
+// than assuming the link was valid just because the page loaded.
 export function ResetPasswordForm() {
-  const [status, setStatus] = useState<Status>({ step: 'checkingLink' });
+  const [stage, setStage] = useState<Stage>({ name: 'checkingLink' });
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [recoveryEmail, setRecoveryEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(false);
 
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
     const urlError = hashParams.get('error_description');
     if (urlError) {
-      setStatus({ step: 'invalidLink', message: decodeURIComponent(urlError.replace(/\+/g, ' ')) });
+      setStage({ name: 'request', notice: decodeURIComponent(urlError.replace(/\+/g, ' ')) });
+      return;
+    }
+    if (!window.location.hash) {
+      setStage({ name: 'request' });
       return;
     }
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setStatus({ step: 'ready' });
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecoveryEmail(session?.user.email ?? null);
+        setStage({ name: 'new' });
+      }
     });
 
     // Covers the case where the PASSWORD_RECOVERY event already fired
     // before this listener was attached (a real race on fast page loads).
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setStatus((s) => (s.step === 'checkingLink' ? { step: 'ready' } : s));
+      if (session) {
+        setRecoveryEmail(session.user.email ?? null);
+        setStage((s) => (s.name === 'checkingLink' ? { name: 'new' } : s));
+      }
     });
 
     const timeout = setTimeout(() => {
-      setStatus((s) =>
-        s.step === 'checkingLink'
-          ? { step: 'invalidLink', message: 'This link is invalid or has expired. Request a new one and try again.' }
+      setStage((s) =>
+        s.name === 'checkingLink'
+          ? { name: 'request', notice: 'That link is invalid or has expired. Request a new one below.' }
           : s
       );
     }, 4000);
@@ -56,7 +81,29 @@ export function ResetPasswordForm() {
     };
   }, []);
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleRequestSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    const { error: requestError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (requestError) {
+      setError(requestError.message);
+      return;
+    }
+    setStage({ name: 'sent', email });
+  }
+
+  async function handleResend() {
+    if (stage.name !== 'sent' || resendCooldown) return;
+    setResendCooldown(true);
+    await supabase.auth.resetPasswordForEmail(stage.email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setTimeout(() => setResendCooldown(false), 2000);
+  }
+
+  async function handleNewPasswordSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
@@ -69,64 +116,134 @@ export function ResetPasswordForm() {
       return;
     }
 
-    setStatus({ step: 'submitting' });
+    setStage({ name: 'submittingNew' });
     const { error: updateError } = await supabase.auth.updateUser({ password });
     if (updateError) {
       setError(updateError.message);
-      setStatus({ step: 'ready' });
+      setStage({ name: 'new' });
       return;
     }
-    setStatus({ step: 'done' });
+    setStage({ name: 'done' });
   }
 
-  if (status.step === 'checkingLink') {
-    return <p>Checking your reset link...</p>;
-  }
-
-  if (status.step === 'invalidLink') {
+  if (stage.name === 'checkingLink') {
     return (
-      <div>
-        <p>{status.message}</p>
-        <p>
-          Request a new reset link from the Conchquest app's sign-in screen, then open the email on the device you'd like to
-          finish this on.
-        </p>
+      <div className="card">
+        <p className="sub">Checking your reset link...</p>
       </div>
     );
   }
 
-  if (status.step === 'done') {
-    return <p>Your password has been updated. You can now sign in with your new password in the Conchquest app.</p>;
+  if (stage.name === 'request') {
+    return (
+      <div className="card">
+        <div className="card-icon">🔑</div>
+        <h1>Reset your password</h1>
+        <p className="sub">Enter the email on your account and we'll send a link to set a new password.</p>
+        {stage.notice && <p className="notice">{stage.notice}</p>}
+        <form onSubmit={handleRequestSubmit}>
+          <div className="field">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="you@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          {error && <p className="notice">{error}</p>}
+          <button className="btn" type="submit">
+            Send reset link
+          </button>
+        </form>
+        <a className="back-link" href="/">← Back to Conchquest</a>
+      </div>
+    );
   }
 
+  if (stage.name === 'sent') {
+    return (
+      <div className="card">
+        <div className="success-check">✓</div>
+        <h1>Check your email</h1>
+        <p className="sub">
+          If an account exists for <strong>{stage.email}</strong>, a password reset link is on its way. It expires
+          in 60 minutes.
+        </p>
+        <button className="btn-secondary" type="button" onClick={handleResend} disabled={resendCooldown}>
+          {resendCooldown ? 'Link resent' : 'Resend link'}
+        </button>
+        <a className="back-link" href="/">← Back to Conchquest</a>
+      </div>
+    );
+  }
+
+  if (stage.name === 'done') {
+    return (
+      <div className="card">
+        <div className="success-check">✓</div>
+        <h1>Password updated</h1>
+        <p className="sub">Your password has been changed. Head back to the Conchquest app and log in with your new password.</p>
+        <a className="back-link" href="/">← Back to Conchquest</a>
+      </div>
+    );
+  }
+
+  const strength = passwordStrength(password);
+
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="field">
-        <label htmlFor="password">New password</label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
-      <div className="field">
-        <label htmlFor="confirmPassword">Confirm password</label>
-        <input
-          id="confirmPassword"
-          type="password"
-          autoComplete="new-password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-        />
-      </div>
-      {error && <p className="form-error">{error}</p>}
-      <button type="submit" disabled={status.step === 'submitting'}>
-        {status.step === 'submitting' ? 'Updating...' : 'Set new password'}
-      </button>
-    </form>
+    <div className="card">
+      <div className="card-icon">🔑</div>
+      <h1>Set a new password</h1>
+      <p className="sub">
+        Choose a new password{recoveryEmail ? (
+          <>
+            {' '}
+            for <strong>{recoveryEmail}</strong>
+          </>
+        ) : null}
+        .
+      </p>
+      <form onSubmit={handleNewPasswordSubmit}>
+        <div className="field">
+          <label htmlFor="password">New password</label>
+          <input
+            id="password"
+            type="password"
+            placeholder="At least 8 characters"
+            minLength={MIN_PASSWORD_LENGTH}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <div className="strength" aria-hidden="true">
+            {[0, 1, 2, 3].map((i) => (
+              <span key={i} style={{ background: i < strength ? STRENGTH_COLORS[Math.min(strength - 1, 3)] : '#E8E6E0' }} />
+            ))}
+          </div>
+          <div className="hint">Use 8+ characters with a mix of letters and numbers.</div>
+        </div>
+        <div className="field">
+          <label htmlFor="confirm">Confirm new password</label>
+          <input
+            id="confirm"
+            type="password"
+            placeholder="Re-enter your password"
+            minLength={MIN_PASSWORD_LENGTH}
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+        </div>
+        {error && <p className="notice">{error}</p>}
+        <button className="btn" type="submit" disabled={stage.name === 'submittingNew'}>
+          {stage.name === 'submittingNew' ? 'Updating...' : 'Update password'}
+        </button>
+      </form>
+    </div>
   );
 }
