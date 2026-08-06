@@ -17,7 +17,7 @@ type Mode = 'signup' | 'login';
 export function Signup({ navigation, route }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
-  const { signUp, signIn } = useAuth();
+  const { signUp, signIn, resetPassword } = useAuth();
   const [mode, setMode] = useState<Mode>(route.params?.mode ?? 'signup');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -25,12 +25,32 @@ export function Signup({ navigation, route }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmationNotice, setConfirmationNotice] = useState(false);
+  const [resetNotice, setResetNotice] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   const isSignup = mode === 'signup';
+
+  async function handleForgotPassword() {
+    setError(null);
+    setResetNotice(false);
+    if (!email.trim()) {
+      setError('Enter your email above first, then tap "Forgot password?" again.');
+      return;
+    }
+    setResettingPassword(true);
+    const result = await resetPassword(email.trim());
+    setResettingPassword(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setResetNotice(true);
+  }
 
   async function handleSubmit() {
     setError(null);
     setConfirmationNotice(false);
+    setResetNotice(false);
     setSubmitting(true);
 
     const result = isSignup ? await signUp(email, password, displayName) : await signIn(email, password);
@@ -78,6 +98,11 @@ export function Signup({ navigation, route }: Props) {
             Check your email to confirm your account, then log in below.
           </Text>
         )}
+        {resetNotice && (
+          <Text style={[styles.notice, { color: t.sea, borderColor: t.border, backgroundColor: t.surfaceAlt }]}>
+            Check your email for a link to reset your password.
+          </Text>
+        )}
         {error && (
           <Text style={[styles.notice, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceAlt }]}>
             {error}
@@ -121,6 +146,14 @@ export function Signup({ navigation, route }: Props) {
           />
         </View>
 
+        {!isSignup && (
+          <TouchableOpacity onPress={handleForgotPassword} disabled={resettingPassword} style={styles.forgotPassword}>
+            <Text style={[styles.forgotPasswordText, { color: t.muted }]}>
+              {resettingPassword ? 'Sending...' : 'Forgot password?'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {submitting ? (
           <View style={styles.createBtn}>
             <ActivityIndicator color={t.accent} />
@@ -134,6 +167,7 @@ export function Signup({ navigation, route }: Props) {
             setMode(isSignup ? 'login' : 'signup');
             setError(null);
             setConfirmationNotice(false);
+            setResetNotice(false);
           }}
         >
           <Text style={[styles.toggleText, { color: t.accent }]}>
@@ -175,6 +209,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 6,
   },
+  forgotPassword: { alignSelf: 'flex-end', marginBottom: 14 },
+  forgotPasswordText: { fontFamily: fonts.body, fontSize: 12 },
   createBtn: { marginTop: 6, marginBottom: 14 },
   toggleText: { fontFamily: fonts.bodySemiBold, fontSize: 13, textAlign: 'center', marginBottom: 20 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },

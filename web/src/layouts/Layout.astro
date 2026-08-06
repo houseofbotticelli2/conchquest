@@ -1,0 +1,92 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Conchquest -- shelling intelligence & discovery.' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content={description} />
+    <title>{title} · Conchquest</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/">Conchquest</a>
+      <nav>
+        <a href="/download">Download</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>&copy; {new Date().getFullYear()} Conchquest</p>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    color-scheme: light dark;
+    --bg: #faf3ea;
+    --text: #1a2e35;
+    --muted: #6b6255;
+    --accent: #c4536f;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 64px;
+    min-height: 60vh;
+  }
+  a {
+    color: var(--accent);
+  }
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+  .site-header .brand {
+    font-weight: 700;
+    font-size: 18px;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .site-header nav {
+    display: flex;
+    gap: 16px;
+    font-size: 14px;
+  }
+  .site-header nav a {
+    text-decoration: none;
+    color: var(--muted);
+  }
+  .site-footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 20px;
+  }
+</style>
