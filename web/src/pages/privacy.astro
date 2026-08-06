@@ -13,9 +13,9 @@ import Layout from '../layouts/Layout.astro';
   <div class="wrap page-wrap">
     <div class="draft-flag">
       <strong>Draft — not yet reviewed by an attorney.</strong> This template is written to reflect Conchquest's actual
-      data flows (Supabase Auth, location logging, Railway Bucket photo storage, OpenAI-generated shelling strategy
-      text). Have a lawyer confirm it satisfies GDPR/CCPA and Apple/Google App Store requirements before publishing,
-      and update it once subscriptions, analytics, or ad providers are finalized.
+      data flows (account authentication, location logging, cloud photo storage, AI-generated shelling strategy text).
+      Have a lawyer confirm it satisfies GDPR/CCPA and Apple/Google App Store requirements before publishing, and
+      update it once subscriptions, analytics, or ad providers are finalized.
     </div>
 
     <h1>Privacy Policy</h1>
@@ -27,9 +27,9 @@ import Layout from '../layouts/Layout.astro';
     <h2>2. Data we collect</h2>
     <table>
       <tr><th>Data</th><th>Why we collect it</th></tr>
-      <tr><td><strong>Account info</strong> (email, display name)</td><td>To create and secure your account, via Supabase Auth. Social login (Google/Apple) shares only what those providers permit.</td></tr>
+      <tr><td><strong>Account info</strong> (email, display name)</td><td>To create and secure your account, via our authentication provider. Social login (Google/Apple) shares only what those providers permit.</td></tr>
       <tr><td><strong>Precise location</strong> (GPS)</td><td>To fetch tide, weather, and wave conditions for your current beach, and to let you log a find with coordinates.</td></tr>
-      <tr><td><strong>Photos</strong></td><td>To attach images to shell finds you choose to log, stored in our Railway-hosted bucket.</td></tr>
+      <tr><td><strong>Photos</strong></td><td>To attach images to shell finds you choose to log, stored with our cloud storage provider.</td></tr>
       <tr><td><strong>Find data</strong> (species, condition, notes, timestamp)</td><td>To build your personal shelling history and, if you choose to share it, contribute to the community find map.</td></tr>
       <tr><td><strong>Device and usage data</strong></td><td>To keep the app secure, diagnose crashes, and understand feature usage.</td></tr>
       <tr><td><strong>Subscription status</strong> (once premium features launch)</td><td>Will be handled by Apple, Google, and RevenueCat to manage premium entitlements. We will not receive or store your payment card details.</td></tr>
@@ -46,24 +46,24 @@ import Layout from '../layouts/Layout.astro';
     <h2>4. How we use your data</h2>
     <ul>
       <li>To generate your personal Shelling Score and forecasts</li>
-      <li>To generate the natural-language "Shelling Strategy" summary for your forecast, via OpenAI</li>
+      <li>To generate the natural-language "Shelling Strategy" summary for your forecast, via a third-party AI text-generation provider</li>
       <li>To operate the community find map and social features you opt into</li>
       <li>To send you notifications you've enabled (e.g., score-threshold alerts)</li>
       <li>To improve the accuracy of the Shelling Score using aggregated, anonymized community data</li>
       <li>To process subscription billing through Apple/Google and RevenueCat, once premium features launch</li>
     </ul>
 
-    <h2>5. Third parties we work with</h2>
+    <h2>5. Categories of third parties we work with</h2>
     <table>
-      <tr><th>Provider</th><th>Purpose</th></tr>
-      <tr><td>Supabase</td><td>Authentication and database</td></tr>
-      <tr><td>Railway</td><td>Backend hosting, database, and photo storage (S3-compatible bucket)</td></tr>
-      <tr><td>NOAA (Tides &amp; Currents, National Data Buoy Center)</td><td>Tide and wave forecast data (we send them a location, not your identity)</td></tr>
-      <tr><td>OpenWeather, Open-Meteo</td><td>Wind, weather, and wave forecast data (same, location only)</td></tr>
-      <tr><td>OpenAI</td><td>Generates the "Shelling Strategy" natural-language summary from your forecast conditions</td></tr>
-      <tr><td>Expo</td><td>Push notification delivery</td></tr>
+      <tr><th>Category</th><th>Purpose</th></tr>
+      <tr><td>Authentication provider</td><td>Creates and secures your account</td></tr>
+      <tr><td>Cloud hosting &amp; storage provider</td><td>Runs our backend, database, and stores your uploaded photos</td></tr>
+      <tr><td>Environmental data providers</td><td>Tide, weather, and wave forecast data (we send them a location, not your identity)</td></tr>
+      <tr><td>AI text-generation provider</td><td>Generates the "Shelling Strategy" natural-language summary from your forecast conditions</td></tr>
+      <tr><td>Push notification provider</td><td>Delivers the notifications you've enabled</td></tr>
       <tr><td>RevenueCat, Apple App Store, Google Play</td><td>Subscription billing (once premium features launch — not yet active)</td></tr>
     </table>
+    <p class="hint-note">We name Apple, Google, and RevenueCat specifically above since you'll interact with them directly for billing; other categories are handled through providers we may change from time to time.</p>
     <p>We do not sell your personal data.</p>
 
     <h2>6. Your choices</h2>
@@ -140,6 +140,10 @@ import Layout from '../layouts/Layout.astro';
   }
   strong {
     color: var(--ink);
+  }
+  .hint-note {
+    font-size: 13px;
+    color: #9b9a92;
   }
   a {
     color: var(--teal-deep);
