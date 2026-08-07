@@ -16,7 +16,7 @@ import Footer from '../components/Footer.astro';
         actually worth the drive.
       </p>
 
-      <form class="waitlist" id="waitlistForm" action="mailto:waitlist@conchquest.app" method="post" enctype="text/plain">
+      <form class="waitlist" id="waitlistForm">
         <label for="email" class="sr-only" style="position:absolute;left:-9999px;">Email address</label>
         <input id="email" name="email" type="email" placeholder="you@email.com" required />
         <button type="submit">Join the waitlist</button>
@@ -97,6 +97,17 @@ import Footer from '../components/Footer.astro';
 
   <Footer />
 </Layout>
+
+<script>
+  const form = document.getElementById('waitlistForm') as HTMLFormElement | null;
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = (document.getElementById('email') as HTMLInputElement | null)?.value ?? '';
+    const subject = encodeURIComponent('Conchquest waitlist signup');
+    const body = encodeURIComponent(`Please add me to the waitlist: ${email}`);
+    window.location.href = `mailto:waitlist@conchquest.app?subject=${subject}&body=${body}`;
+  });
+</script>
 
 <style>
   .hero {
