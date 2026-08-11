@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Platform, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { ProfileStackParamList } from '../../navigation/types';
 import { useAuth } from '../../auth/AuthProvider';
+import { WEB_APP_URL } from '../../lib/supabase';
 import {
   listMyFinds,
   listSavedLocations,
@@ -308,6 +309,18 @@ export function Profile({ navigation }: Props) {
             <Text style={[styles.sheetRowSub, { color: t.muted }]}>Off shows shelling windows at any hour, day or night.</Text>
           </View>
           <Ionicons name={profile?.restrictShellingToDaylight ? 'checkbox' : 'square-outline'} size={20} color={t.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
+          onPress={() => Linking.openURL(`${WEB_APP_URL}/privacy`)}
+        >
+          <Text style={[styles.sheetRowText, { color: t.text }]}>Privacy Policy</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
+          onPress={() => Linking.openURL(`${WEB_APP_URL}/terms`)}
+        >
+          <Text style={[styles.sheetRowText, { color: t.text }]}>Terms of Service</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -9,6 +9,7 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { Dots } from '../../components/Dots';
 import { OnboardingStackParamList } from '../../navigation/types';
 import { useAuth } from '../../auth/AuthProvider';
+import { WEB_APP_URL } from '../../lib/supabase';
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, 'Signup'>;
 
@@ -162,6 +163,20 @@ export function Signup({ navigation, route }: Props) {
           <Btn label={isSignup ? 'Create account' : 'Log in'} onPress={handleSubmit} style={styles.createBtn} />
         )}
 
+        {isSignup && (
+          <Text style={[styles.legalNote, { color: t.muted }]}>
+            By creating an account, you agree to our{' '}
+            <Text style={{ color: t.accent }} onPress={() => Linking.openURL(`${WEB_APP_URL}/terms`)}>
+              Terms of Service
+            </Text>{' '}
+            and{' '}
+            <Text style={{ color: t.accent }} onPress={() => Linking.openURL(`${WEB_APP_URL}/privacy`)}>
+              Privacy Policy
+            </Text>
+            .
+          </Text>
+        )}
+
         <TouchableOpacity
           onPress={() => {
             setMode(isSignup ? 'login' : 'signup');
@@ -212,6 +227,7 @@ const styles = StyleSheet.create({
   forgotPassword: { alignSelf: 'flex-end', marginBottom: 14 },
   forgotPasswordText: { fontFamily: fonts.body, fontSize: 12 },
   createBtn: { marginTop: 6, marginBottom: 14 },
+  legalNote: { fontFamily: fonts.body, fontSize: 11, textAlign: 'center', lineHeight: 16, marginBottom: 20 },
   toggleText: { fontFamily: fonts.bodySemiBold, fontSize: 13, textAlign: 'center', marginBottom: 20 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
   divider: { flex: 1, height: 1 },
