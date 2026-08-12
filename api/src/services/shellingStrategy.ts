@@ -17,7 +17,8 @@ const MAX_RARE_FINDS_MENTIONED = 3;
 const DEFAULT_SYSTEM_PROMPT =
   'You are a seasoned, experienced shell collector giving a quick, practical recommendation to someone checking conditions before heading out to a specific beach. Write 2-4 sentences of natural, conversational advice based on the JSON you are given. Never invent data you were not given. ' +
   'The JSON includes a "dayLabel" field (e.g. "today", "tomorrow", or a weekday like "Thursday") describing which day this forecast is for -- refer to that day using exactly that word if you mention it at all, and never say "tomorrow" unless dayLabel is literally "tomorrow". ' +
-  'A null "conditions.uvIndex" means the best window falls outside daylight hours -- never mention UV index, sunscreen, sun protection, or a hat in that case, since none of that applies in the dark.';
+  'A null "conditions.uvIndex" means the best window falls outside daylight hours -- never mention UV index, sunscreen, sun protection, or a hat in that case, since none of that applies in the dark. ' +
+  'If "bestWindowAlreadyPassed" is true, describe the best window in the past tense as something that already happened today -- never recommend heading out during a window that has already ended.';
 
 let client: OpenAI | null = null;
 function getClient(): OpenAI {
@@ -35,24 +36,35 @@ function bucket(lat: number, lon: number) {
 // forecast, which never writes there, so a strategy cache piggybacked on it
 // could never find a row to attach to). Keyed by day offset in addition to
 // location, since each day on the multi-day strip needs its own cached text.
-async function readStrategyCache(lat: number, lon: number, dayOffset: number): Promise<string | null> {
+// windowAlreadyPassed is part of the cache key, not just the prompt payload
+// -- otherwise a strategy generated in the morning (window still upcoming)
+// would keep being served unchanged for the rest of its TTL even after the
+// window actually passed, describing an already-gone window as if it were
+// still ahead.
+async function readStrategyCache(lat: number, lon: number, dayOffset: number, windowAlreadyPassed: boolean): Promise<string | null> {
   const { latBucket, lonBucket } = bucket(lat, lon);
   const result = await pool.query<{ strategy_text: string }>(
     `SELECT strategy_text FROM shelling_strategy_cache
-     WHERE lat_bucket = $1 AND lon_bucket = $2 AND day_offset = $3 AND expires_at > now()
+     WHERE lat_bucket = $1 AND lon_bucket = $2 AND day_offset = $3 AND window_already_passed = $4 AND expires_at > now()
      ORDER BY generated_at DESC LIMIT 1`,
-    [latBucket, lonBucket, dayOffset]
+    [latBucket, lonBucket, dayOffset, windowAlreadyPassed]
   );
   return result.rows[0]?.strategy_text ?? null;
 }
 
-async function writeStrategyCache(lat: number, lon: number, dayOffset: number, text: string): Promise<void> {
+async function writeStrategyCache(
+  lat: number,
+  lon: number,
+  dayOffset: number,
+  windowAlreadyPassed: boolean,
+  text: string
+): Promise<void> {
   const { latBucket, lonBucket } = bucket(lat, lon);
   const expiresAt = new Date(Date.now() + env.strategyCacheTtlMinutes * 60_000).toISOString();
   await pool.query(
-    `INSERT INTO shelling_strategy_cache (lat_bucket, lon_bucket, day_offset, strategy_text, expires_at)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [latBucket, lonBucket, dayOffset, text, expiresAt]
+    `INSERT INTO shelling_strategy_cache (lat_bucket, lon_bucket, day_offset, window_already_passed, strategy_text, expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [latBucket, lonBucket, dayOffset, windowAlreadyPassed, text, expiresAt]
   );
 }
 
@@ -116,6 +128,7 @@ function buildUserPayload(
   dayLabel: string,
   bestWindowStart: string | null,
   bestWindowEnd: string | null,
+  bestWindowAlreadyPassed: boolean,
   precipChancePercent: number | null,
   recentRareFinds: string[]
 ) {
@@ -125,6 +138,10 @@ function buildUserPayload(
     confidence: result.confidence,
     bestWindowStart,
     bestWindowEnd,
+    // Only ever true for today (a future day's window can't have passed
+    // yet) -- tells the model to describe the window in past tense ("was
+    // earlier") instead of recommending it as upcoming advice.
+    bestWindowAlreadyPassed,
     bestWindowOutsideDaylight: isBestWindowOutsideDaylight(result),
     // Disambiguates a null bestWindowStart/End: with this true, null means
     // "the low tide happens at night and this user restricts to daylight" --
@@ -189,6 +206,7 @@ const TEST_SCENARIOS: Record<string, ReturnType<typeof buildUserPayload>> = {
     confidence: 'high',
     bestWindowStart: '2:10 PM',
     bestWindowEnd: '4:35 PM',
+    bestWindowAlreadyPassed: false,
     bestWindowOutsideDaylight: false,
     restrictShellingToDaylight: false,
     factors: [
@@ -204,6 +222,7 @@ const TEST_SCENARIOS: Record<string, ReturnType<typeof buildUserPayload>> = {
     confidence: 'low',
     bestWindowStart: null,
     bestWindowEnd: null,
+    bestWindowAlreadyPassed: false,
     bestWindowOutsideDaylight: false,
     restrictShellingToDaylight: false,
     factors: [{ label: 'Wave data', explanation: 'Nearest buoy reading is stale' }],
@@ -216,6 +235,7 @@ const TEST_SCENARIOS: Record<string, ReturnType<typeof buildUserPayload>> = {
     confidence: 'medium',
     bestWindowStart: '10:15 AM',
     bestWindowEnd: '12:40 PM',
+    bestWindowAlreadyPassed: false,
     bestWindowOutsideDaylight: false,
     restrictShellingToDaylight: false,
     factors: [{ label: 'Precipitation', explanation: 'Rain showers likely through midday' }],
@@ -231,6 +251,7 @@ const TEST_SCENARIOS: Record<string, ReturnType<typeof buildUserPayload>> = {
     confidence: 'high',
     bestWindowStart: null,
     bestWindowEnd: null,
+    bestWindowAlreadyPassed: false,
     bestWindowOutsideDaylight: false,
     restrictShellingToDaylight: true,
     factors: [{ label: 'Tide', explanation: "Today's low falls well after sunset" }],
@@ -245,6 +266,7 @@ const TEST_SCENARIOS: Record<string, ReturnType<typeof buildUserPayload>> = {
     confidence: 'high',
     bestWindowStart: '9:40 PM',
     bestWindowEnd: '12:10 AM',
+    bestWindowAlreadyPassed: false,
     bestWindowOutsideDaylight: true,
     restrictShellingToDaylight: false,
     factors: [{ label: 'Tide', explanation: "Today's low falls well after sunset" }],
@@ -272,11 +294,12 @@ export async function getShellingStrategy(
   dayLabel: string,
   bestWindowStart: string | null,
   bestWindowEnd: string | null,
-  dayOffset: number
+  dayOffset: number,
+  bestWindowAlreadyPassed: boolean
 ): Promise<StrategyResult> {
   const { lat, lon } = result.conditions.location;
 
-  const cached = await readStrategyCache(lat, lon, dayOffset);
+  const cached = await readStrategyCache(lat, lon, dayOffset, bestWindowAlreadyPassed);
   if (cached) {
     return { strategy: cached, source: 'ai' };
   }
@@ -294,12 +317,13 @@ export async function getShellingStrategy(
       dayLabel,
       bestWindowStart,
       bestWindowEnd,
+      bestWindowAlreadyPassed,
       precipChancePercent,
       recentRareFinds
     );
     const strategy = await callOpenAI(systemPrompt, userPayload);
 
-    await writeStrategyCache(lat, lon, dayOffset, strategy);
+    await writeStrategyCache(lat, lon, dayOffset, bestWindowAlreadyPassed, strategy);
 
     return { strategy, source: 'ai' };
   } catch (err) {

@@ -8,7 +8,7 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { NavBar } from '../../components/NavBar';
 import { NowBadge } from '../../components/NowBadge';
 import { ForecastStackParamList } from '../../navigation/types';
-import { formatTime, relativeDaySuffix, isWithinWindow, isPastWindow, daylightNote } from '../../lib/forecastFormat';
+import { formatTime, relativeDaySuffix, isWithinWindow, isPastWindow, daylightNote, bestWindowLightWarning } from '../../lib/forecastFormat';
 import { getStrategy } from '../../lib/api';
 
 // Generous relative to the backend's own 5s OpenAI timeout -- this only
@@ -38,7 +38,10 @@ export function StrategyDetail({ navigation, route }: Props) {
     const bestWindowEnd = result.bestWindow ? formatTime(result.bestWindow.end) : null;
 
     const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), STRATEGY_TIMEOUT_MS));
-    Promise.race([getStrategy(result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd, dayOffset), timeout])
+    Promise.race([
+      getStrategy(result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd, dayOffset, windowIsPast),
+      timeout,
+    ])
       .then((res) => {
         if (cancelled) return;
         setStrategyText(res ? res.strategy : result.explanation);
@@ -73,7 +76,14 @@ export function StrategyDetail({ navigation, route }: Props) {
               </Text>
               <Text style={[styles.windowNote, { color: t.sea }]}>
                 {result.bestWindow.reason}
-                {!result.bestWindow.isDaylight ? ' 🔦 After dark — bring a light.' : ''}
+                {!result.bestWindow.isDaylight
+                  ? ` ${bestWindowLightWarning(
+                      result.bestWindow.start,
+                      result.bestWindow.end,
+                      result.conditions.weather.sunrise,
+                      result.conditions.weather.sunset
+                    )}`
+                  : ''}
               </Text>
             </>
           ) : (

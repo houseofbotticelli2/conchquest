@@ -61,13 +61,14 @@ scoreRouter.get('/hourly', async (req, res, next) => {
 });
 
 scoreRouter.post('/strategy', async (req, res, next) => {
-  const { result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd, dayOffset } = (req.body ?? {}) as {
+  const { result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd, dayOffset, bestWindowAlreadyPassed } = (req.body ?? {}) as {
     result?: ShellingScoreResult;
     beachLabel?: string;
     dayLabel?: string;
     bestWindowStart?: string | null;
     bestWindowEnd?: string | null;
     dayOffset?: number;
+    bestWindowAlreadyPassed?: boolean;
   };
 
   if (!result || typeof result !== 'object' || !Array.isArray(result.factors) || !result.conditions?.location) {
@@ -90,7 +91,8 @@ scoreRouter.post('/strategy', async (req, res, next) => {
       dayLabel,
       bestWindowStart ?? null,
       bestWindowEnd ?? null,
-      dayOffset
+      dayOffset,
+      bestWindowAlreadyPassed ?? false
     );
     res.json(strategy);
   } catch (err) {

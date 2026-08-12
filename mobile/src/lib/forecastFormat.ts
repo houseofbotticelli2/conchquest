@@ -35,6 +35,20 @@ export function isPastWindow(endIso: string): boolean {
   return Date.now() > new Date(endIso).getTime();
 }
 
+// The best-window flashlight callout used to always say "After dark," which
+// reads wrong for an early-morning window that starts before sunrise (that's
+// "still dark," not "after dark," which implies evening). Distinguishes the
+// two based on which side of the window actually falls outside daylight.
+export function bestWindowLightWarning(startIso: string, endIso: string, sunriseIso: string, sunsetIso: string): string | null {
+  const start = new Date(startIso).getTime();
+  const end = new Date(endIso).getTime();
+  const sunrise = new Date(sunriseIso).getTime();
+  const sunset = new Date(sunsetIso).getTime();
+  if (start < sunrise) return '🔦 Before sunrise — bring a light.';
+  if (end > sunset) return '🔦 After sunset — bring a light.';
+  return null;
+}
+
 function timeOfDayMinutes(iso: string): number {
   const d = new Date(iso);
   return d.getHours() * 60 + d.getMinutes();

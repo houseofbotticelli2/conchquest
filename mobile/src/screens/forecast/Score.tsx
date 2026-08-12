@@ -21,6 +21,7 @@ import {
   isWithinWindow,
   isPastWindow,
   daylightNote,
+  bestWindowLightWarning,
   dayChipLabel,
   daySentenceLabel,
 } from '../../lib/forecastFormat';
@@ -262,7 +263,14 @@ export function Score({ navigation, route }: Props) {
                     </Text>
                     <Text style={[styles.windowNote, { color: t.sea }]}>
                       {result.bestWindow.reason}
-                      {!result.bestWindow.isDaylight ? ' 🔦 After dark — bring a light.' : ''}
+                      {!result.bestWindow.isDaylight
+                        ? ` ${bestWindowLightWarning(
+                            result.bestWindow.start,
+                            result.bestWindow.end,
+                            result.conditions.weather.sunrise,
+                            result.conditions.weather.sunset
+                          )}`
+                        : ''}
                     </Text>
                   </>
                 ) : (

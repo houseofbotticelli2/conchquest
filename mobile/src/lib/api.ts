@@ -125,11 +125,12 @@ export function getStrategy(
   dayLabel: string,
   bestWindowStart: string | null,
   bestWindowEnd: string | null,
-  dayOffset: number
+  dayOffset: number,
+  bestWindowAlreadyPassed: boolean
 ): Promise<StrategyResult> {
   return apiFetch<StrategyResult>('/api/score/strategy', {
     method: 'POST',
-    body: JSON.stringify({ result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd, dayOffset }),
+    body: JSON.stringify({ result, beachLabel, dayLabel, bestWindowStart, bestWindowEnd, dayOffset, bestWindowAlreadyPassed }),
   });
 }
 
