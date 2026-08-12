@@ -17,6 +17,8 @@ function bucket(lat: number, lon: number) {
   return { latBucket: round(lat, 2), lonBucket: round(lon, 2) };
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 async function readCache(lat: number, lon: number): Promise<NormalizedConditions | null> {
   const { latBucket, lonBucket } = bucket(lat, lon);
   const result = await pool.query<CacheRow>(
@@ -67,11 +69,17 @@ export async function getConditions(lat: number, lon: number): Promise<Normalize
     getForecast(lat, lon),
   ]);
 
-  // Score against the next low tide, not the literal instant this was
-  // fetched -- matches multiDayForecast.ts's per-day behavior (including for
-  // today), so the same beach doesn't show a different score/breakdown
-  // depending on which screen asked for it.
-  const referenceTime = tideRange ? findScoringReferenceTime(tideRange.events, now) : now;
+  // Score against the day's best (lowest) low tide, not the literal instant
+  // this was fetched -- uses the exact same solar-noon-centered day window
+  // as multiDayForecast.ts's day-0 entry, so the same beach doesn't show a
+  // different score/breakdown depending on which screen asked for it.
+  const baseSunrise = new Date(currentWeather.weather.sunrise);
+  let baseSunset = new Date(currentWeather.weather.sunset);
+  if (baseSunset.getTime() < baseSunrise.getTime()) baseSunset = new Date(baseSunset.getTime() + DAY_MS);
+  const dayMidpoint = new Date((baseSunrise.getTime() + baseSunset.getTime()) / 2);
+  const dayStart = new Date(dayMidpoint.getTime() - 12 * 60 * 60 * 1000);
+  const dayEnd = new Date(dayMidpoint.getTime() + 12 * 60 * 60 * 1000);
+  const referenceTime = tideRange ? findScoringReferenceTime(tideRange.events, dayStart, dayEnd) : now;
   const tide = tideRange ? deriveTideConditions(tideRange.station, tideRange.events, referenceTime) : null;
 
   // Fetched after referenceTime is known -- the Open-Meteo fallback (a real

@@ -159,15 +159,33 @@ export async function getTideConditions(lat: number, lon: number, now: Date): Pr
   return deriveTideConditions(result.station, result.events, now);
 }
 
-// The instant to score/derive conditions at: the next upcoming low tide,
-// regardless of any daylight restriction (that's a display-only concern for
-// findBestWindow, not a scoring one) -- evaluated a minute before it so it
-// still appears in deriveTideConditions' nextEvents (which excludes events
-// at-or-before the reference instant). Falls back to `at` itself if no low
-// tide exists in the given event list (e.g. a data gap).
-export function findScoringReferenceTime(events: TideEvent[], at: Date): Date {
-  const atMs = at.getTime();
-  const nextLow = events.find((e) => e.type === 'low' && new Date(e.time).getTime() > atMs);
-  if (!nextLow) return at;
-  return new Date(new Date(nextLow.time).getTime() - 60_000);
+// Gulf Coast beaches are often semidiurnal (two low tides a day), and the
+// better one for shelling isn't necessarily whichever comes first or is
+// chronologically "next" -- it's whichever is actually lowest. Picks the
+// lowest-height low tide falling within [windowStart, windowEnd), regardless
+// of daylight or whether it's already passed (those are separate concerns
+// for findBestWindow/the strategy text, not for which low tide is "the" one).
+export function selectDayLowTide(events: TideEvent[], windowStart: Date, windowEnd: Date): TideEvent | null {
+  const startMs = windowStart.getTime();
+  const endMs = windowEnd.getTime();
+  const candidates = events.filter((e) => {
+    if (e.type !== 'low') return false;
+    const t = new Date(e.time).getTime();
+    return t > startMs && t < endMs;
+  });
+  if (candidates.length === 0) return null;
+  return candidates.reduce((best, e) => (e.heightFt < best.heightFt ? e : best));
+}
+
+// The instant to score/derive conditions at: the day's best (lowest) low
+// tide, regardless of any daylight restriction (that's a display-only
+// concern for findBestWindow, not a scoring one) -- evaluated a minute
+// before it so it still appears in deriveTideConditions' nextEvents (which
+// excludes events at-or-before the reference instant). Falls back to the
+// window's midpoint if no low tide exists in the given event list (e.g. a
+// data gap).
+export function findScoringReferenceTime(events: TideEvent[], windowStart: Date, windowEnd: Date): Date {
+  const low = selectDayLowTide(events, windowStart, windowEnd);
+  if (!low) return new Date((windowStart.getTime() + windowEnd.getTime()) / 2);
+  return new Date(new Date(low.time).getTime() - 60_000);
 }

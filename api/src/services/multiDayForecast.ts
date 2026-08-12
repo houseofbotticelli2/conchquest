@@ -1,7 +1,7 @@
 import { pool } from '../config/db';
 import { env } from '../config/env';
 import { NormalizedConditions, ShellingScoreResult } from '../types';
-import { getTideEventsForRange, deriveTideConditions } from './noaaTides';
+import { getTideEventsForRange, deriveTideConditions, selectDayLowTide } from './noaaTides';
 import { getWaveConditions } from './noaaBuoys';
 import { getCurrentWeather, getForecast, getUvIndex, nearestForecastBlock } from './openWeather';
 import { getMoonPhase } from './moonPhase';
@@ -103,12 +103,9 @@ async function fetchMultiDayForecast(lat: number, lon: number, restrictShellingT
     // always reflect the actual low tide, day or night. The restriction only
     // controls what findBestWindow (scoringEngine.ts) is willing to *display*
     // as a usable window, a separate concern from what instant conditions
-    // are scored at.
-    const candidateLow = (tideRange?.events ?? []).find((e) => {
-      if (e.type !== 'low') return false;
-      const t = new Date(e.time).getTime();
-      return t > dayStart.getTime() && t < dayEnd.getTime();
-    });
+    // are scored at. Picks the day's lowest (best) low tide, not just
+    // whichever comes first chronologically -- see selectDayLowTide.
+    const candidateLow = tideRange ? selectDayLowTide(tideRange.events, dayStart, dayEnd) : null;
 
     // Score against this day's low tide -- or midday if it has none -- not
     // the literal current instant, even for today. Evaluated a minute
