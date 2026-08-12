@@ -84,22 +84,32 @@ export function ResetPasswordForm() {
   async function handleRequestSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    const { error: requestError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (requestError) {
-      setError(requestError.message);
-      return;
+    try {
+      const { error: requestError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (requestError) {
+        setError(requestError.message);
+        return;
+      }
+      setStage({ name: 'sent', email });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     }
-    setStage({ name: 'sent', email });
   }
 
   async function handleResend() {
     if (stage.name !== 'sent' || resendCooldown) return;
     setResendCooldown(true);
-    await supabase.auth.resetPasswordForEmail(stage.email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    try {
+      await supabase.auth.resetPasswordForEmail(stage.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+    } catch {
+      // Best-effort resend -- the "sent" screen's copy already covers the
+      // case where nothing arrives, so a thrown error here isn't worth
+      // surfacing as its own message.
+    }
     setTimeout(() => setResendCooldown(false), 2000);
   }
 
@@ -117,13 +127,21 @@ export function ResetPasswordForm() {
     }
 
     setStage({ name: 'submittingNew' });
-    const { error: updateError } = await supabase.auth.updateUser({ password });
-    if (updateError) {
-      setError(updateError.message);
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) {
+        setError(updateError.message);
+        setStage({ name: 'new' });
+        return;
+      }
+      setStage({ name: 'done' });
+    } catch (err) {
+      // A thrown (not just resolved-with-error) exception here would
+      // otherwise leave the button stuck on "Updating..." forever with no
+      // visible feedback at all -- surface it and let the user retry.
+      setError(err instanceof Error ? err.message : 'Something went wrong updating your password. Please try again.');
       setStage({ name: 'new' });
-      return;
     }
-    setStage({ name: 'done' });
   }
 
   if (stage.name === 'checkingLink') {
