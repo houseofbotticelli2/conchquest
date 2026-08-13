@@ -9,7 +9,34 @@ import Footer from '../components/Footer.astro';
 
   <div class="wrap page-wrap">
     <h1>Community Guidelines</h1>
-    <p>Placeholder -- see docs/TODO.md #75. Content pending legal review.</p>
+    <div class="updated">Effective August 2026</div>
+
+    <p>Conchquest's map is built on finds that other shellers log and choose to share. These guidelines explain what's welcome, what isn't, and how we handle reports — so the community stays useful and safe for everyone looking for their next find.</p>
+
+    <h2>1. Be respectful</h2>
+    <p>Disagree about a species ID or a spot's conditions if you like, but keep it civil. Harassment, hate speech, threats, or targeted abuse of another user — in a find's notes, photo, or anywhere else in the app — isn't allowed.</p>
+
+    <h2>2. Post real finds</h2>
+    <p>Share shells you actually found, with accurate species, condition, and location information to the best of your knowledge. Don't post content unrelated to shelling, or use finds to advertise, solicit, or spam other users.</p>
+
+    <h2>3. Keep photos appropriate</h2>
+    <p>Photos should be of the shell (and, if you like, the beach it came from). No explicit, violent, or otherwise inappropriate imagery.</p>
+
+    <h2>4. Respect others' privacy and locations</h2>
+    <p>Conchquest fuzzes exact find coordinates before showing them to the community by default — don't try to work around that or use notes/photos to reveal another user's precise location without their consent.</p>
+
+    <h2>5. Follow local collection laws</h2>
+    <p>Rules on which shells can legally be collected — including live shells and protected species — vary by location and change over time. It's your responsibility to know and follow local, state, and federal regulations; see our <a href="/terms">Terms of Service</a> for more.</p>
+
+    <h2>6. Reporting and blocking</h2>
+    <p>Every community find has a "Report" and "Block" option. Reporting flags a find for our team to review — you can choose a reason (inappropriate content, harassment, spam, or other) and add a note. Blocking a user immediately hides all of their finds from your map and feed; you can undo a block any time from Profile → Settings → Blocked users.</p>
+    <p>When we review a report, we'll either dismiss it or remove the find (and its photo) permanently. We look at every report; a report doesn't guarantee the find comes down, and a dismissed report doesn't mean we ignored it.</p>
+
+    <h2>7. Consequences</h2>
+    <p>We may remove content that violates these guidelines at our discretion, without notice. We're evaluating stronger enforcement (like account-level warnings or suspension) as the community grows — this page will be updated if that changes.</p>
+
+    <h2>8. Contact</h2>
+    <p>Questions about these guidelines, or something urgent we should know about? Reach us at <a href="mailto:safety@conchquest.app">safety@conchquest.app</a>.</p>
   </div>
 
   <Footer />
@@ -24,10 +51,26 @@ import Footer from '../components/Footer.astro';
     font-family: 'Fraunces', serif;
     font-size: 36px;
     font-weight: 600;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
   }
-  p {
+  .updated {
+    font-size: 13px;
+    color: #9b9a92;
+    margin-bottom: 40px;
+  }
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 36px 0 12px;
+    color: var(--ink);
+  }
+  p,
+  li {
     font-size: 15px;
-    color: var(--muted);
+    color: #3c3c39;
+  }
+  a {
+    color: var(--teal-deep);
   }
 </style>
