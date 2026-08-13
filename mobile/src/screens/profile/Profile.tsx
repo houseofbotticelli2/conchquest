@@ -404,6 +404,12 @@ export function Profile({ navigation }: Props) {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
+          onPress={() => Linking.openURL(`${WEB_APP_URL}/community-guidelines`)}
+        >
+          <Text style={[styles.sheetRowText, { color: t.text }]}>Community Guidelines</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
           onPress={() => {
             setSettingsOpen(false);
             confirmSignOut();
