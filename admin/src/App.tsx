@@ -4,6 +4,7 @@ import { Login } from './screens/Login';
 import { NotAdmin } from './screens/NotAdmin';
 import { Dashboard } from './screens/Dashboard';
 import { Members } from './screens/Members';
+import { ContentModeration } from './screens/ContentModeration';
 import { SpeciesLibrary } from './screens/SpeciesLibrary';
 import { PromptTesting } from './screens/PromptTesting';
 import { SystemConfig } from './screens/SystemConfig';
@@ -31,6 +32,7 @@ function AppShell() {
     <Layout active={section} onNavigate={setSection} me={state.me} onSignOut={signOut}>
       {section === 'dashboard' && <Dashboard />}
       {section === 'members' && <Members />}
+      {section === 'moderation' && <ContentModeration />}
       {section === 'species' && <SpeciesLibrary />}
       {section === 'prompt' && <PromptTesting />}
       {section === 'config' && <SystemConfig onGoToPrompt={() => setSection('prompt')} />}

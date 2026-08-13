@@ -281,3 +281,33 @@ export interface MemberDetail {
 export function getMemberDetail(id: string): Promise<MemberDetail> {
   return apiFetch<MemberDetail>(`/api/admin/users/${id}`);
 }
+
+export type ReportStatus = 'pending' | 'dismissed' | 'find_removed';
+export type ReportReason = 'inappropriate_content' | 'harassment' | 'spam' | 'other';
+
+export interface ContentReport {
+  id: string;
+  reason: ReportReason;
+  notes: string | null;
+  status: ReportStatus;
+  createdAt: string;
+  reviewedAt: string | null;
+  reporterEmail: string;
+  reportedUserId: string;
+  reportedEmail: string;
+  reportedDisplayName: string | null;
+  find: {
+    id: string;
+    speciesName: string | null;
+    notes: string | null;
+    photoUrl: string | null;
+  } | null;
+}
+
+export function listReports(status: ReportStatus = 'pending'): Promise<ContentReport[]> {
+  return apiFetch<ContentReport[]>(`/api/admin/reports?status=${status}`);
+}
+
+export function reviewReport(id: string, action: 'dismiss' | 'remove_find'): Promise<void> {
+  return apiFetch(`/api/admin/reports/${id}`, { method: 'PATCH', body: JSON.stringify({ action }) });
+}

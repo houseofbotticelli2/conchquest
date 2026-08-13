@@ -1,7 +1,7 @@
 import React from 'react';
 import type { AdminMe } from '../lib/api';
 
-export type Section = 'dashboard' | 'members' | 'species' | 'prompt' | 'config' | 'health' | 'audit' | 'leaderboard';
+export type Section = 'dashboard' | 'members' | 'moderation' | 'species' | 'prompt' | 'config' | 'health' | 'audit' | 'leaderboard';
 
 const NAV_ITEMS: { section: Section; label: string; icon: React.ReactNode }[] = [
   {
@@ -25,6 +25,15 @@ const NAV_ITEMS: { section: Section; label: string; icon: React.ReactNode }[] = 
         <path d="M2.7 20c.8-3.6 3.3-5.6 6.3-5.6s5.5 2 6.3 5.6" />
         <circle cx="17.5" cy="7.5" r="2.6" />
         <path d="M15.5 14.3c2.7.2 4.6 2 5.2 4.7" />
+      </svg>
+    ),
+  },
+  {
+    section: 'moderation',
+    label: 'Content Moderation',
+    icon: (
+      <svg className="navicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+        <path d="M5 3.5v17M5 3.5h11l-2.2 3.5L16 10.5H5" />
       </svg>
     ),
   },
