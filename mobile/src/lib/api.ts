@@ -155,6 +155,7 @@ export interface Find {
 export interface CommunityFind {
   isOwner: false;
   id: string;
+  loggedByUserId: string;
   speciesId: string | null;
   speciesName: string | null;
   speciesRarity: BadgeRarity | null;
@@ -239,6 +240,7 @@ export type BadgeRarity = 'common' | 'uncommon' | 'rare' | 'very_rare';
 
 export interface NearbyFind {
   id: string;
+  loggedByUserId: string;
   speciesId: string | null;
   speciesName: string | null;
   speciesRarity: BadgeRarity | null;
@@ -371,4 +373,27 @@ export async function registerPushToken(token: string): Promise<void> {
 
 export async function unregisterPushToken(): Promise<void> {
   await apiFetch<void>('/api/push-token', { method: 'DELETE' });
+}
+
+export type ReportReason = 'inappropriate_content' | 'harassment' | 'spam' | 'other';
+
+export async function reportFind(findId: string, reason: ReportReason, notes?: string): Promise<void> {
+  await apiFetch<void>('/api/reports', { method: 'POST', body: JSON.stringify({ findId, reason, notes }) });
+}
+
+export interface BlockedUser {
+  userId: string;
+  displayName: string;
+}
+
+export function listBlockedUsers(): Promise<BlockedUser[]> {
+  return apiFetch<BlockedUser[]>('/api/blocks');
+}
+
+export async function blockUser(userId: string): Promise<void> {
+  await apiFetch<void>('/api/blocks', { method: 'POST', body: JSON.stringify({ userId }) });
+}
+
+export async function unblockUser(userId: string): Promise<void> {
+  await apiFetch<void>(`/api/blocks/${userId}`, { method: 'DELETE' });
 }

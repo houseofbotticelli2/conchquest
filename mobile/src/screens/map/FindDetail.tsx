@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, LayoutChangeEvent } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, LayoutChangeEvent } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Rect, Circle } from 'react-native-svg';
@@ -10,8 +10,10 @@ import { Badge, BadgeType } from '../../components/Badge';
 import { ShellingMap } from '../../components/ShellingMap';
 import { PhotoViewer } from '../../components/PhotoViewer';
 import { NavBar } from '../../components/NavBar';
+import { SlideUpSheet } from '../../components/SlideUpSheet';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { MapStackParamList } from '../../navigation/types';
-import { getFind, FindDetail as FindDetailData, FindCondition } from '../../lib/api';
+import { getFind, FindDetail as FindDetailData, FindCondition, ReportReason, reportFind, blockUser } from '../../lib/api';
 
 type Props = NativeStackScreenProps<MapStackParamList, 'FindDetail'>;
 
@@ -21,6 +23,13 @@ const CONDITIONS: { value: FindCondition; label: string }[] = [
   { value: 'fair', label: 'Fair' },
   { value: 'poor', label: 'Poor' },
   { value: 'fragment', label: 'Fragment' },
+];
+
+const REPORT_REASONS: { value: ReportReason; label: string }[] = [
+  { value: 'inappropriate_content', label: 'Inappropriate photo or content' },
+  { value: 'harassment', label: 'Harassment or abusive language' },
+  { value: 'spam', label: 'Spam' },
+  { value: 'other', label: 'Other' },
 ];
 
 function toBadgeType(rarity: FindDetailData['speciesRarity']): BadgeType {
@@ -42,8 +51,56 @@ export function FindDetail({ navigation, route }: Props) {
   const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
   const [speciesBoxHeight, setSpeciesBoxHeight] = useState(70);
 
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<ReportReason | null>(null);
+  const [reportNotes, setReportNotes] = useState('');
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [reportSentVisible, setReportSentVisible] = useState(false);
+  const [blockConfirmVisible, setBlockConfirmVisible] = useState(false);
+  const [blockingUser, setBlockingUser] = useState(false);
+  const [actionErrorMsg, setActionErrorMsg] = useState<string | null>(null);
+  // On iOS, presenting a new Modal while the "Find options" sheet's own
+  // dismiss animation is still mid-flight stacks two presentations and
+  // silently fails to show (same issue Profile.tsx's avatar picker hits) --
+  // these defer opening the next one until actionsOpen's onDismiss fires.
+  const [pendingAction, setPendingAction] = useState<'report' | 'block' | null>(null);
+
   function handleSpeciesBoxLayout(e: LayoutChangeEvent) {
     setSpeciesBoxHeight(e.nativeEvent.layout.height);
+  }
+
+  function startReport() {
+    setReportReason(null);
+    setReportNotes('');
+    setReportOpen(true);
+  }
+
+  async function submitReport() {
+    if (!find || find.isOwner || !reportReason) return;
+    setSubmittingReport(true);
+    try {
+      await reportFind(find.id, reportReason, reportNotes.trim() || undefined);
+      setReportOpen(false);
+      setReportSentVisible(true);
+    } catch (e) {
+      setActionErrorMsg(e instanceof Error ? e.message : 'Could not submit report. Please try again.');
+    } finally {
+      setSubmittingReport(false);
+    }
+  }
+
+  async function confirmBlock() {
+    if (!find || find.isOwner) return;
+    setBlockingUser(true);
+    try {
+      await blockUser(find.loggedByUserId);
+      navigation.goBack();
+    } catch (e) {
+      setActionErrorMsg(e instanceof Error ? e.message : 'Could not block this user. Please try again.');
+    } finally {
+      setBlockingUser(false);
+    }
   }
 
   useFocusEffect(
@@ -67,7 +124,13 @@ export function FindDetail({ navigation, route }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <NavBar title="" left="← Map" onLeft={() => navigation.goBack()} />
+      <NavBar
+        title=""
+        left="← Map"
+        onLeft={() => navigation.goBack()}
+        rightIcon={find && !find.isOwner ? 'ellipsis-horizontal' : undefined}
+        onRight={find && !find.isOwner ? () => setActionsOpen(true) : undefined}
+      />
 
       {loading && <ActivityIndicator color={t.accent} style={{ marginTop: 40 }} />}
 
@@ -180,6 +243,112 @@ export function FindDetail({ navigation, route }: Props) {
       )}
 
       <PhotoViewer uri={find?.photoUrl ?? null} visible={photoViewerOpen} onRequestClose={() => setPhotoViewerOpen(false)} />
+
+      <SlideUpSheet
+        visible={actionsOpen}
+        onClose={() => setActionsOpen(false)}
+        onDismiss={() => {
+          if (pendingAction === 'report') startReport();
+          if (pendingAction === 'block') setBlockConfirmVisible(true);
+          setPendingAction(null);
+        }}
+        title="Find options"
+      >
+        <TouchableOpacity
+          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
+          onPress={() => {
+            setPendingAction('report');
+            setActionsOpen(false);
+          }}
+        >
+          <Text style={[styles.sheetRowText, { color: t.text }]}>Report this find</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
+          onPress={() => {
+            setPendingAction('block');
+            setActionsOpen(false);
+          }}
+        >
+          <Text style={[styles.sheetRowText, { color: t.accentDeep }]}>Block this user</Text>
+        </TouchableOpacity>
+      </SlideUpSheet>
+
+      <SlideUpSheet visible={reportOpen} onClose={() => setReportOpen(false)} title="Report this find">
+        {REPORT_REASONS.map((r) => {
+          const active = reportReason === r.value;
+          return (
+            <TouchableOpacity
+              key={r.value}
+              style={[styles.sheetRow, styles.sheetRowBetween, { borderTopColor: t.borderSoft }]}
+              onPress={() => setReportReason(r.value)}
+            >
+              <Text style={[styles.sheetRowText, { color: t.text }]}>{r.label}</Text>
+              <View
+                style={[
+                  styles.radioOuter,
+                  { borderColor: active ? t.accent : t.border },
+                ]}
+              >
+                {active && <View style={[styles.radioInner, { backgroundColor: t.accent }]} />}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+        <View style={styles.reportNotesSection}>
+          <Eyebrow>Additional details (optional)</Eyebrow>
+          <TextInput
+            value={reportNotes}
+            onChangeText={setReportNotes}
+            multiline
+            style={[styles.reportNotesInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+          />
+        </View>
+        {submittingReport ? (
+          <ActivityIndicator color={t.accent} style={{ marginTop: 10 }} />
+        ) : (
+          <TouchableOpacity
+            disabled={!reportReason}
+            onPress={submitReport}
+            style={[styles.libraryBtn, { backgroundColor: reportReason ? t.accent : t.border, marginTop: 10 }]}
+          >
+            <Text style={styles.libraryBtnText}>Submit report</Text>
+          </TouchableOpacity>
+        )}
+      </SlideUpSheet>
+
+      <ConfirmDialog
+        visible={reportSentVisible}
+        title="Report submitted"
+        message="Thanks for letting us know. We'll review this find."
+        buttons={[{ text: 'OK' }]}
+        onClose={() => setReportSentVisible(false)}
+      />
+
+      <ConfirmDialog
+        visible={blockConfirmVisible}
+        title={find && !find.isOwner ? `Block ${find.loggedBy}?` : 'Block this user?'}
+        message="You won't see finds from this user anymore. This can be undone later from Settings."
+        buttons={[
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Block', style: 'destructive', onPress: confirmBlock },
+        ]}
+        onClose={() => setBlockConfirmVisible(false)}
+      />
+
+      <ConfirmDialog
+        visible={!!actionErrorMsg}
+        title="Something went wrong"
+        message={actionErrorMsg ?? undefined}
+        buttons={[{ text: 'OK' }]}
+        onClose={() => setActionErrorMsg(null)}
+      />
+
+      {blockingUser && (
+        <View style={styles.blockingOverlay}>
+          <ActivityIndicator color={t.accent} />
+        </View>
+      )}
     </View>
   );
 }
@@ -203,4 +372,17 @@ const styles = StyleSheet.create({
   notesBox: { borderWidth: 1, borderRadius: 6, padding: 11, minHeight: 60 },
   libraryBtn: { borderRadius: 6, paddingVertical: 12, alignItems: 'center' },
   libraryBtnText: { fontFamily: fonts.bodySemiBold, fontSize: 14, color: '#fff' },
+  sheetRow: { paddingVertical: 16, borderTopWidth: 1 },
+  sheetRowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sheetRowText: { fontFamily: fonts.body, fontSize: 15 },
+  radioOuter: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  radioInner: { width: 10, height: 10, borderRadius: 5 },
+  reportNotesSection: { marginTop: 16, marginBottom: 4 },
+  reportNotesInput: { fontFamily: fonts.body, fontSize: 14, borderWidth: 1, borderRadius: 6, padding: 11, minHeight: 70, marginTop: 6, textAlignVertical: 'top' },
+  blockingOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

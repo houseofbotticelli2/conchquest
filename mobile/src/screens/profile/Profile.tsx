@@ -28,11 +28,14 @@ import {
   requestPhotoUploadUrl,
   uploadPhoto,
   isPhotoContentType,
+  listBlockedUsers,
+  unblockUser,
   Find,
   SavedLocation,
   FindStats,
   Profile as ProfileData,
   PhotoContentType,
+  BlockedUser,
 } from '../../lib/api';
 
 function initialsFrom(name: string): string {
@@ -184,6 +187,11 @@ export function Profile({ navigation }: Props) {
   const [changingPassword, setChangingPassword] = useState(false);
   const [changePasswordError, setChangePasswordError] = useState<string | null>(null);
 
+  const [blockedUsersOpen, setBlockedUsersOpen] = useState(false);
+  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
+  const [loadingBlockedUsers, setLoadingBlockedUsers] = useState(false);
+  const [unblockingId, setUnblockingId] = useState<string | null>(null);
+
   function openChangePhoto() {
     if (Platform.OS === 'ios') {
       setAvatarPickerRequested(true);
@@ -226,6 +234,24 @@ export function Profile({ navigation }: Props) {
       return;
     }
     setChangePasswordOpen(false);
+  }
+
+  function openBlockedUsers() {
+    setBlockedUsersOpen(true);
+    setLoadingBlockedUsers(true);
+    listBlockedUsers()
+      .then(setBlockedUsers)
+      .finally(() => setLoadingBlockedUsers(false));
+  }
+
+  async function handleUnblock(userId: string) {
+    setUnblockingId(userId);
+    try {
+      await unblockUser(userId);
+      setBlockedUsers((prev) => prev.filter((u) => u.userId !== userId));
+    } finally {
+      setUnblockingId(null);
+    }
   }
 
   function applyAvatarAsset(asset: ImagePicker.ImagePickerAsset) {
@@ -336,6 +362,15 @@ export function Profile({ navigation }: Props) {
           }}
         >
           <Text style={[styles.sheetRowText, { color: t.text }]}>Change password</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
+          onPress={() => {
+            setSettingsOpen(false);
+            openBlockedUsers();
+          }}
+        >
+          <Text style={[styles.sheetRowText, { color: t.text }]}>Blocked users</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.sheetRow, styles.sheetRowBetween, { borderTopColor: t.borderSoft }]}
@@ -568,6 +603,27 @@ export function Profile({ navigation }: Props) {
           <ActivityIndicator color={t.accent} style={{ marginTop: 6 }} />
         ) : (
           <Btn label="Update password" onPress={handleChangePassword} style={{ marginTop: 6 }} />
+        )}
+      </SlideUpSheet>
+
+      <SlideUpSheet visible={blockedUsersOpen} onClose={() => setBlockedUsersOpen(false)} title="Blocked users">
+        {loadingBlockedUsers ? (
+          <ActivityIndicator color={t.accent} style={{ marginTop: 6 }} />
+        ) : blockedUsers.length === 0 ? (
+          <Text style={[styles.sheetRowText, { color: t.muted }]}>You haven't blocked anyone.</Text>
+        ) : (
+          blockedUsers.map((u) => (
+            <View key={u.userId} style={[styles.sheetRow, styles.sheetRowBetween, { borderTopColor: t.borderSoft }]}>
+              <Text style={[styles.sheetRowText, { color: t.text }]}>{u.displayName}</Text>
+              {unblockingId === u.userId ? (
+                <ActivityIndicator color={t.accent} />
+              ) : (
+                <TouchableOpacity onPress={() => handleUnblock(u.userId)}>
+                  <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 13, color: t.accent }}>Unblock</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ))
         )}
       </SlideUpSheet>
 
