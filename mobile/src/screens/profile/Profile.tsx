@@ -77,7 +77,7 @@ const HELP_ITEMS = [
 export function Profile({ navigation }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
-  const { signOut } = useAuth();
+  const { signOut, changePassword } = useAuth();
   const statColor = { text: t.text, accentDeep: t.accentDeep };
   const [finds, setFinds] = useState<Find[]>([]);
   const [beaches, setBeaches] = useState<SavedLocation[]>([]);
@@ -177,6 +177,13 @@ export function Profile({ navigation }: Props) {
   const [avatarPickerRequested, setAvatarPickerRequested] = useState(false);
   const [pendingPickerSource, setPendingPickerSource] = useState<'camera' | 'library' | null>(null);
 
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [changePasswordError, setChangePasswordError] = useState<string | null>(null);
+
   function openChangePhoto() {
     if (Platform.OS === 'ios') {
       setAvatarPickerRequested(true);
@@ -191,6 +198,34 @@ export function Profile({ navigation }: Props) {
     setEditYear(profile ? String(profile.shellingSinceYear) : '');
     setEditPhoto(null);
     setEditProfileOpen(true);
+  }
+
+  function startChangingPassword() {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setChangePasswordError(null);
+    setChangePasswordOpen(true);
+  }
+
+  async function handleChangePassword() {
+    setChangePasswordError(null);
+    if (newPassword.length < 8) {
+      setChangePasswordError('New password must be at least 8 characters.');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setChangePasswordError('New passwords do not match.');
+      return;
+    }
+    setChangingPassword(true);
+    const result = await changePassword(currentPassword, newPassword);
+    setChangingPassword(false);
+    if (result.error) {
+      setChangePasswordError(result.error);
+      return;
+    }
+    setChangePasswordOpen(false);
   }
 
   function applyAvatarAsset(asset: ImagePicker.ImagePickerAsset) {
@@ -292,6 +327,15 @@ export function Profile({ navigation }: Props) {
           }}
         >
           <Text style={[styles.sheetRowText, { color: t.text }]}>Edit profile</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
+          onPress={() => {
+            setSettingsOpen(false);
+            startChangingPassword();
+          }}
+        >
+          <Text style={[styles.sheetRowText, { color: t.text }]}>Change password</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.sheetRow, styles.sheetRowBetween, { borderTopColor: t.borderSoft }]}
@@ -487,12 +531,60 @@ export function Profile({ navigation }: Props) {
         )}
       </SlideUpSheet>
 
+      <SlideUpSheet visible={changePasswordOpen} onClose={() => setChangePasswordOpen(false)} title="Change password">
+        <View style={styles.editSection}>
+          <Text style={[styles.editLabel, { color: t.muted }]}>CURRENT PASSWORD</Text>
+          <TextInput
+            value={currentPassword}
+            onChangeText={setCurrentPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            style={[styles.editInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+          />
+        </View>
+        <View style={styles.editSection}>
+          <Text style={[styles.editLabel, { color: t.muted }]}>NEW PASSWORD</Text>
+          <TextInput
+            value={newPassword}
+            onChangeText={setNewPassword}
+            placeholder="At least 8 characters"
+            placeholderTextColor={t.muted}
+            secureTextEntry
+            autoCapitalize="none"
+            style={[styles.editInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+          />
+        </View>
+        <View style={styles.editSection}>
+          <Text style={[styles.editLabel, { color: t.muted }]}>CONFIRM NEW PASSWORD</Text>
+          <TextInput
+            value={confirmNewPassword}
+            onChangeText={setConfirmNewPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            style={[styles.editInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+          />
+        </View>
+        {changingPassword ? (
+          <ActivityIndicator color={t.accent} style={{ marginTop: 6 }} />
+        ) : (
+          <Btn label="Update password" onPress={handleChangePassword} style={{ marginTop: 6 }} />
+        )}
+      </SlideUpSheet>
+
       <ConfirmDialog
         visible={!!profileErrorMsg}
         title="Could not save profile"
         message={profileErrorMsg ?? undefined}
         buttons={[{ text: 'OK' }]}
         onClose={() => setProfileErrorMsg(null)}
+      />
+
+      <ConfirmDialog
+        visible={!!changePasswordError}
+        title="Could not change password"
+        message={changePasswordError ?? undefined}
+        buttons={[{ text: 'OK' }]}
+        onClose={() => setChangePasswordError(null)}
       />
 
       <ConfirmDialog

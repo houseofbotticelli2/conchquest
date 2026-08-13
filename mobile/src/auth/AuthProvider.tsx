@@ -15,6 +15,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<AuthResult>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<AuthResult>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -62,6 +63,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           redirectTo: `${WEB_APP_URL}/reset-password`,
         });
         return { error: error?.message ?? null };
+      },
+      // Re-authenticates with the current password first -- supabase-js's
+      // updateUser() would happily change the password off the existing
+      // session alone with no proof the caller actually knows the old one,
+      // which is the standard "Change password" expectation (as opposed to
+      // the email-based "Forgot password?" flow, which doesn't need this
+      // since a fresh recovery link already proves inbox access instead).
+      async changePassword(currentPassword, newPassword) {
+        const email = session?.user.email;
+        if (!email) return { error: 'You must be logged in to change your password.' };
+
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: currentPassword });
+        if (signInError) return { error: 'Current password is incorrect.' };
+
+        const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+        return { error: updateError?.message ?? null };
       },
     }),
     [session, loading]
