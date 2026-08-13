@@ -12,6 +12,14 @@ interface NearestStation {
   distanceFeet: number;
 }
 
+// Stations NDBC's own activestations.xml still lists as active/met-capable,
+// but which never actually have a live realtime2.txt data file -- confirmed
+// via ~2000 repeated 404s in noaa_fetch_failures over several weeks, not a
+// transient blip. Excluded from candidate selection entirely so a nearby
+// beach gets the next-real-nearest buoy (or the Open-Meteo fallback)
+// instead of a guaranteed failed fetch every time.
+const KNOWN_DEAD_BUOY_STATIONS = ['rkxf1'];
+
 async function isStale(table: 'noaa_tide_stations' | 'ndbc_buoy_stations'): Promise<boolean> {
   const result = await pool.query<{ oldest: Date | null; count: string }>(
     `SELECT min(synced_at) AS oldest, count(*) AS count FROM ${table}`
@@ -120,10 +128,10 @@ export async function findNearestBuoyStation(lat: number, lon: number): Promise<
   const result = await pool.query<{ station_id: string; name: string; distance_m: number }>(
     `SELECT station_id, name, ST_Distance(geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) AS distance_m
      FROM ndbc_buoy_stations
-     WHERE has_meteorological = true
+     WHERE has_meteorological = true AND NOT (station_id = ANY($3))
      ORDER BY geog <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
      LIMIT 1`,
-    [lon, lat]
+    [lon, lat, KNOWN_DEAD_BUOY_STATIONS]
   );
   const row = result.rows[0];
   if (!row) return null;
