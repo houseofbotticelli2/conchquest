@@ -62,6 +62,7 @@ async function toCommunityResponse(row: FindRow) {
   return {
     isOwner: false as const,
     id: row.id,
+    loggedByUserId: row.user_id,
     speciesId: row.species_id,
     speciesName: row.species_name,
     speciesRarity: row.species_rarity,
@@ -162,6 +163,7 @@ findsRouter.get('/stats', async (req, res, next) => {
 
 interface NearbyFindRow {
   id: string;
+  user_id: string;
   species_id: string | null;
   species_name: string | null;
   species_rarity: string | null;
@@ -195,7 +197,7 @@ findsRouter.get('/nearby', async (req, res, next) => {
 
     const result = await pool.query<NearbyFindRow>(
       `SELECT
-         sf.id, sf.species_id, ss.common_name AS species_name, ss.rarity AS species_rarity,
+         sf.id, sf.user_id, sf.species_id, ss.common_name AS species_name, ss.rarity AS species_rarity,
          ST_Y(sf.geog::geometry) AS lat, ST_X(sf.geog::geometry) AS lon,
          sf.found_at, sf.condition, sf.notes, sf.photo_key, sf.is_private,
          COALESCE(u.display_name, split_part(u.email, '@', 1)) AS logged_by,
@@ -204,9 +206,12 @@ findsRouter.get('/nearby', async (req, res, next) => {
        JOIN users u ON u.id = sf.user_id
        LEFT JOIN shell_species ss ON ss.id = sf.species_id
        WHERE ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
+         AND NOT EXISTS (
+           SELECT 1 FROM user_blocks ub WHERE ub.blocker_user_id = $5 AND ub.blocked_user_id = sf.user_id
+         )
        ORDER BY sf.found_at DESC
        LIMIT $4`,
-      [lon, lat, feetToMeters(radiusFeet), limit]
+      [lon, lat, feetToMeters(radiusFeet), limit, req.user!.id]
     );
 
     const finds = await Promise.all(
@@ -220,6 +225,7 @@ findsRouter.get('/nearby', async (req, res, next) => {
 
         return {
           id: row.id,
+          loggedByUserId: row.user_id,
           speciesId: row.species_id,
           speciesName: row.species_name,
           speciesRarity: row.species_rarity,

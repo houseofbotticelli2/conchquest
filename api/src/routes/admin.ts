@@ -3,7 +3,7 @@ import { pool } from '../config/db';
 import { env } from '../config/env';
 import { testStrategyPrompt, TEST_SCENARIO_KEYS, type TestScenario } from '../services/shellingStrategy';
 import { logAdminAction } from '../services/auditLog';
-import { getDownloadUrl, deleteUserPhotos } from '../services/storage';
+import { getDownloadUrl, deleteUserPhotos, deleteObject } from '../services/storage';
 
 export const adminRouter = Router();
 
@@ -608,6 +608,122 @@ adminRouter.get('/failing-stations', async (req, res, next) => {
         lon: row.lon,
       }))
     );
+  } catch (err) {
+    next(err);
+  }
+});
+
+interface ReportRow {
+  id: string;
+  reason: string;
+  notes: string | null;
+  status: string;
+  created_at: Date;
+  reviewed_at: Date | null;
+  reporter_email: string;
+  reported_user_id: string;
+  reported_email: string;
+  reported_display_name: string | null;
+  find_id: string | null;
+  find_notes: string | null;
+  find_photo_key: string | null;
+  species_name: string | null;
+}
+
+adminRouter.get('/reports', async (req, res, next) => {
+  try {
+    const status = typeof req.query.status === 'string' ? req.query.status : 'pending';
+    const result = await pool.query<ReportRow>(
+      `SELECT cr.id, cr.reason, cr.notes, cr.status, cr.created_at, cr.reviewed_at,
+              reporter.email AS reporter_email,
+              cr.reported_user_id, reported.email AS reported_email, reported.display_name AS reported_display_name,
+              cr.find_id, sf.notes AS find_notes, sf.photo_key AS find_photo_key, ss.common_name AS species_name
+       FROM content_reports cr
+       JOIN users reporter ON reporter.id = cr.reporter_user_id
+       JOIN users reported ON reported.id = cr.reported_user_id
+       LEFT JOIN shell_finds sf ON sf.id = cr.find_id
+       LEFT JOIN shell_species ss ON ss.id = sf.species_id
+       WHERE cr.status = $1
+       ORDER BY cr.created_at DESC`,
+      [status]
+    );
+
+    res.json(
+      await Promise.all(
+        result.rows.map(async (row) => ({
+          id: row.id,
+          reason: row.reason,
+          notes: row.notes,
+          status: row.status,
+          createdAt: row.created_at,
+          reviewedAt: row.reviewed_at,
+          reporterEmail: row.reporter_email,
+          reportedUserId: row.reported_user_id,
+          reportedEmail: row.reported_email,
+          reportedDisplayName: row.reported_display_name,
+          find: row.find_id
+            ? {
+                id: row.find_id,
+                speciesName: row.species_name,
+                notes: row.find_notes,
+                photoUrl: row.find_photo_key ? await getDownloadUrl(row.find_photo_key) : null,
+              }
+            : null,
+        }))
+      )
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.patch('/reports/:id', async (req, res, next) => {
+  try {
+    const { action } = (req.body ?? {}) as { action?: 'dismiss' | 'remove_find' };
+    if (action !== 'dismiss' && action !== 'remove_find') {
+      res.status(400).json({ error: 'action must be "dismiss" or "remove_find"' });
+      return;
+    }
+
+    const report = await pool.query<{ id: string; find_id: string | null }>(
+      'SELECT id, find_id FROM content_reports WHERE id = $1',
+      [req.params.id]
+    );
+    if (report.rows.length === 0) {
+      res.status(404).json({ error: 'Report not found' });
+      return;
+    }
+
+    if (action === 'remove_find') {
+      const findId = report.rows[0].find_id;
+      if (findId) {
+        const find = await pool.query<{ photo_key: string | null }>('SELECT photo_key FROM shell_finds WHERE id = $1', [
+          findId,
+        ]);
+        // Deleting the find first cascades find_id -> NULL on this (and any
+        // other) report referencing it, matching account deletion's pattern:
+        // the DB row is the part that matters, R2 cleanup is best-effort and
+        // shouldn't fail the request if it hiccups.
+        await pool.query('DELETE FROM shell_finds WHERE id = $1', [findId]);
+        if (find.rows[0]?.photo_key) {
+          try {
+            await deleteObject(find.rows[0].photo_key);
+          } catch (err) {
+            console.error(`Failed to delete R2 photo for removed find ${findId}:`, err);
+          }
+        }
+      }
+    }
+
+    const status = action === 'dismiss' ? 'dismissed' : 'find_removed';
+    await pool.query(
+      `UPDATE content_reports SET status = $1, reviewed_at = now(), reviewed_by_admin_id = $2 WHERE id = $3`,
+      [status, req.user!.id, req.params.id]
+    );
+
+    await logAdminAction(req.user!, action === 'dismiss' ? 'Dismissed content report' : 'Removed reported find', req.params.id);
+
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }

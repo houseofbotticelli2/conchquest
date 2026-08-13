@@ -1,5 +1,12 @@
 import { randomUUID } from 'crypto';
-import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  ListObjectsV2Command,
+  DeleteObjectsCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from '../config/env';
 
@@ -55,6 +62,10 @@ export function getDownloadUrl(key: string): Promise<string> {
   return getSignedUrl(client, new GetObjectCommand({ Bucket: env.bucketName, Key: key }), {
     expiresIn: DOWNLOAD_URL_EXPIRES_SECONDS,
   });
+}
+
+export async function deleteObject(key: string): Promise<void> {
+  await client.send(new DeleteObjectCommand({ Bucket: env.bucketName, Key: key }));
 }
 
 // Uploads are keyed as `{folder}/{userId}/{uuid}.{ext}` (see createUploadUrl),
