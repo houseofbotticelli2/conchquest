@@ -11,6 +11,7 @@ A quick map of what's in this folder and when to reach for each one.
 | [`GOOGLE_MAPS_SETUP.md`](GOOGLE_MAPS_SETUP.md) | Creating/restricting the Google Maps API key that Android map rendering needs. |
 | [`ANDROID_EMULATOR_SETUP.md`](ANDROID_EMULATOR_SETUP.md) | You need to test an Android build but don't have a physical Android phone. |
 | [`STANDALONE_BUILD_GUIDE.md`](STANDALONE_BUILD_GUIDE.md) | Getting a permanently-installed copy of the app onto a phone (not the day-to-day dev-client workflow) — includes the iOS device-registration process. |
+| [`TABLEPLUS_DATABASE_ACCESS.md`](TABLEPLUS_DATABASE_ACCESS.md) | You need to browse the shared Postgres database directly with TablePlus, via Railway's private SSH tunnel (no public DB host). |
 | `Conchquest PRD - Updated.docx` | The product requirements doc — feature scope and rationale, not implementation detail. |
 
 Also worth knowing about, outside `docs/`:
