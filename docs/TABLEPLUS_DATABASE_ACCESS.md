@@ -119,6 +119,45 @@ only works while the tunnel terminal is running.
 3. When you're done, close the terminal (or Ctrl+C) to close the tunnel —
    nothing is left listening or exposed between sessions.
 
+## Connecting to a local Postgres instead (optional)
+
+Some machines also have a **separate, local** Postgres running via Homebrew
+or Postgres.app — this is not the shared project database, just whatever
+was set up during initial local dev setup, and it may or may not have
+anything useful in it. No tunnel needed for this one since it's already on
+your machine.
+
+1. Check it's actually running and find its port:
+
+   ```bash
+   lsof -i :5432
+   ```
+
+   If something's listening, that's it (Homebrew's default Postgres port).
+   If nothing is, you don't have one and can skip this section.
+
+2. Find the database name:
+
+   ```bash
+   psql -h localhost -p 5432 -U "$(whoami)" -d postgres -c "\l"
+   ```
+
+   Look for something like `conchquest_dev` in the list (alongside
+   `postgres`/`template0`/`template1`, which are just Postgres defaults).
+
+3. In TablePlus, create a **separate** connection:
+
+   - **Host:** `127.0.0.1`
+   - **Port:** `5432`
+   - **User:** your Mac username (e.g. `whoami`)
+   - **Password:** usually blank (local trust auth) — try blank first
+   - **Database:** `conchquest_dev` (or whatever `\l` showed)
+
+   Save it with an obviously different name than the tunnel connection —
+   e.g. "Conchquest LOCAL — not shared" — so the two are never confused.
+   This one is only ever local dev data on your machine, not the real
+   shared database.
+
 ## Troubleshooting
 
 - **"No SSH keys found in your SSH agent"** — run `ssh-add ~/.ssh/id_ed25519`
