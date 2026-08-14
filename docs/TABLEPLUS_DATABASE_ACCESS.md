@@ -72,12 +72,12 @@ Pick the `conchquest` project and the `dev` environment when prompted.
 In a terminal (from `api/`, once linked):
 
 ```bash
-railway connect conchquest-postgres --tunnel-only --ssh -P 5432
+railway connect conchquest-postgres --tunnel-only --ssh -P 5433
 ```
 
 - `--tunnel-only` skips launching `psql` and just holds the tunnel open —
   exactly what an external GUI client needs.
-- `-P 5432` pins the local port so you don't have to update your TablePlus
+- `-P 5433` pins the local port so you don't have to update your TablePlus
   connection every time (Railway picks a random port otherwise).
 
 It prints something like:
@@ -86,12 +86,12 @@ It prints something like:
 PostgreSQL tunnel open — point an external client at:
 
   Host:     127.0.0.1
-  Port:     5432
+  Port:     5433
   User:     postgres
   Password: <real password>
   Database: railway
 
-  URL:      postgres://postgres:<password>@127.0.0.1:5432/railway
+  URL:      postgres://postgres:<password>@127.0.0.1:5433/railway
 ```
 
 **Leave this terminal window open** — the tunnel only exists while this
@@ -102,7 +102,7 @@ command is running. Closing it (or Ctrl+C) disconnects TablePlus.
 In TablePlus, create a new **PostgreSQL** connection with:
 
 - **Host:** `127.0.0.1`
-- **Port:** `5432`
+- **Port:** `5433`
 - **User:** `postgres`
 - **Password:** the password printed by the tunnel command (paste it once,
   TablePlus saves it)
@@ -113,7 +113,7 @@ only works while the tunnel terminal is running.
 
 ### 3. Day-to-day use
 
-1. Run the `railway connect ... --tunnel-only --ssh -P 5432` command above in
+1. Run the `railway connect ... --tunnel-only --ssh -P 5433` command above in
    a terminal.
 2. Connect via the saved TablePlus connection.
 3. When you're done, close the terminal (or Ctrl+C) to close the tunnel —
@@ -130,4 +130,6 @@ only works while the tunnel terminal is running.
 - **TablePlus connection refused** — the tunnel terminal probably isn't
   running, or was closed. Reopen it.
 - **Port already in use** — another tunnel is still running from an earlier
-  session; close that terminal, or use a different `-P` port.
+  session, or you have a local Postgres (Postgres.app, Homebrew) already
+  listening on that port. Either close it, or pick a different `-P` port and
+  update your TablePlus connection to match.
