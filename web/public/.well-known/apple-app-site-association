@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appID": "X26PNHUK4D.com.conchquest.app",
+        "appIDs": ["X26PNHUK4D.com.conchquest.app"],
+        "paths": ["/reset-password", "/reset-password/*"]
+      }
+    ]
+  }
+}

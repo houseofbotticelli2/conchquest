@@ -16,6 +16,17 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<AuthResult>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<AuthResult>;
+  // True once a recovery-link deep link has set a recovery session --
+  // RootNavigator uses this to show the Reset Password screen instead of
+  // the normal logged-in app, even though `session` is now non-null.
+  isPasswordRecovery: boolean;
+  beginPasswordRecovery: (accessToken: string, refreshToken: string) => Promise<AuthResult>;
+  completePasswordRecovery: (newPassword: string) => Promise<AuthResult>;
+  // Signs out of the recovery session and clears isPasswordRecovery --
+  // used both for an explicit "Cancel" and as the "Continue" action after
+  // a successful update (there's no meaningful difference between the two:
+  // either way, recovery mode ends and the user lands back at login).
+  exitPasswordRecovery: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -23,6 +34,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -80,8 +92,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
         return { error: updateError?.message ?? null };
       },
+      isPasswordRecovery,
+      // Called by the deep-link handler once it's parsed a recovery link's
+      // tokens -- this necessarily makes `session` non-null (there's no
+      // separate "recovery-only" session type in Supabase), which is why
+      // isPasswordRecovery exists as its own flag: RootNavigator checks it
+      // to show the Reset Password screen instead of jumping straight into
+      // the logged-in app the instant this resolves.
+      async beginPasswordRecovery(accessToken, refreshToken) {
+        const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        if (error) return { error: error.message };
+        setIsPasswordRecovery(true);
+        return { error: null };
+      },
+      async completePasswordRecovery(newPassword) {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        return { error: error?.message ?? null };
+      },
+      // Deliberately signs out rather than leaving the recovery session as
+      // the active one -- mirrors web's messaging ("head back to the app
+      // and log in with your new password") and avoids treating a
+      // short-lived recovery token as an ordinary logged-in session.
+      async exitPasswordRecovery() {
+        await supabase.auth.signOut();
+        setIsPasswordRecovery(false);
+      },
     }),
-    [session, loading]
+    [session, loading, isPasswordRecovery]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

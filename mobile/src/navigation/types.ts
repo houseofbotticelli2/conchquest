@@ -52,4 +52,5 @@ export type RootStackParamList = {
   Onboarding: undefined;
   Main: undefined;
   LogModal: NavigatorScreenParams<LogStackParamList> | undefined;
+  ResetPassword: undefined;
 };
