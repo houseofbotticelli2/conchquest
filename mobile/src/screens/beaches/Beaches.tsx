@@ -252,6 +252,12 @@ export function Beaches(_props: Props) {
                 <ShellingMap
                   latitude={(newLocation ?? DEFAULT_LOCATION).lat}
                   longitude={(newLocation ?? DEFAULT_LOCATION).lon}
+                  // getCurrentLocation() resolves asynchronously, so the map
+                  // mounts with DEFAULT_LOCATION first -- this forces one
+                  // remount (picking up the real coordinate as its new
+                  // initialRegion) once newLocation actually resolves,
+                  // without resetting position on every later drag.
+                  centerKey={newLocation ? 'located' : 'pending'}
                   onCenterMarkerDragEnd={handleNewLocationDragEnd}
                   fallback={<MapUnavailableOnWeb color={t.muted} />}
                 />

@@ -50,6 +50,16 @@ export interface ShellingMapProps {
   // release -- used by the add/edit beach flows to let the user fine-tune a
   // beach's exact location. Unused (no-op) when showCenterMarker is false.
   onCenterMarkerDragEnd?: (coords: { lat: number; lon: number }) => void;
+  // Draggable mode deliberately keeps a constant map key (see below) so a
+  // drag doesn't reset the user's zoom/pan -- but that also means the
+  // camera is only ever set once, from whatever latitude/longitude happens
+  // to be current at first mount. If the initial coordinate comes from an
+  // async source (e.g. getCurrentLocation()), the map can end up stuck on
+  // a placeholder/fallback location forever, since a later prop update
+  // alone won't move the camera. Pass a value here that changes exactly
+  // once -- when the real location resolves -- to force one intentional
+  // remount at that point, then stays stable through actual drags.
+  centerKey?: string;
   // Fires on any tap on the map surface itself -- used by the Map screen to
   // expand a collapsed map to fullscreen on first touch. Rendered behind
   // (i.e. z-order below) the layers/recenter buttons below, so it never
@@ -81,6 +91,7 @@ export function ShellingMap({
   showsUserLocation = false,
   showCenterMarker = true,
   onCenterMarkerDragEnd,
+  centerKey,
   onCollapsedTap,
   edgeToEdge = false,
   style,
@@ -109,11 +120,13 @@ export function ShellingMap({
         // Remount (instead of using the controlled `region` prop) when the
         // center changes -- e.g. switching from device location to a chosen
         // beach -- so the map recenters without fighting the user's own
-        // pan/zoom gestures the rest of the time. Skipped in draggable-pin
-        // mode: there, every lat/lon change comes from the marker's own drag
-        // (fed back through the same props), so remounting on every drag
-        // would reset the user's zoom/pan right after they set it.
-        key={onCenterMarkerDragEnd ? 'draggable' : `${latitude.toFixed(4)},${longitude.toFixed(4)}`}
+        // pan/zoom gestures the rest of the time. In draggable-pin mode,
+        // remounting on every lat/lon change would fight the user's own
+        // drags, so it's pinned to `centerKey` instead (falling back to a
+        // constant if the caller doesn't pass one) -- callers can use that
+        // to force exactly one remount once an async initial location
+        // resolves, without resetting position on every subsequent drag.
+        key={onCenterMarkerDragEnd ? (centerKey ?? 'draggable') : `${latitude.toFixed(4)},${longitude.toFixed(4)}`}
         style={[styles.map, style]}
         initialRegion={region}
         scrollEnabled={scrollEnabled}
@@ -125,7 +138,13 @@ export function ShellingMap({
         {showCenterMarker && (
           <Marker
             coordinate={{ latitude, longitude }}
-            pinColor="#1a2e35"
+            // Red specifically while draggable (add/edit beach) -- a beta
+            // tester reported losing the dark navy pin while dragging it
+            // across hybrid/satellite map imagery. Left as the original
+            // dark color when not draggable (Score/Map's read-only beach
+            // view), since red there would clash with the reddish
+            // rare-find markers already on those maps.
+            pinColor={onCenterMarkerDragEnd ? '#D32F2F' : '#1a2e35'}
             draggable={!!onCenterMarkerDragEnd}
             onDragEnd={(e) => handleCenterMarkerDragEnd(e.nativeEvent.coordinate)}
           />
