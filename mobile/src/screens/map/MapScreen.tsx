@@ -82,6 +82,10 @@ function regionToRadiusFeet(region: Region): number {
 }
 
 const REGION_CHANGE_DEBOUNCE_MS = 400;
+// Matches api.ts's listNearbyFinds default -- named here since this file
+// needs to pass it explicitly (runSearch has no default parameter of its
+// own, unlike the bare API function).
+const DEFAULT_NEARBY_RADIUS_FEET = 16_000;
 
 export function MapScreen({ navigation }: Props) {
   const { theme: t } = useTheme();
@@ -93,6 +97,14 @@ export function MapScreen({ navigation }: Props) {
   const clusters = nearbyResult.mode === 'clusters' ? nearbyResult.clusters : [];
   const [loading, setLoading] = useState(true);
   const regionChangeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks wherever was actually last searched -- either the selected
+  // beach/device location, or a pan/zoom's region -- so refocusing this
+  // screen can refresh data in place instead of resetting back to the
+  // original location every time (the map's own camera position already
+  // persists across a focus/blur cycle on its own; this keeps the data in
+  // sync with it instead of fighting it).
+  const lastSearchRef = useRef<{ lat: number; lon: number; radiusFeet: number } | null>(null);
+  const hasFocusedOnceRef = useRef(false);
   const [activeFilter, setActiveFilter] = useState(0);
   const [mapExpanded, setMapExpanded] = useState(false);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(null);
@@ -101,14 +113,39 @@ export function MapScreen({ navigation }: Props) {
   const { beaches, selectedBeach, location, titleLabel, subLabel, pickerOpen, setPickerOpen, selectBeach } =
     useBeachContext(DEFAULT_LOCATION);
 
+  const runSearch = useCallback((lat: number, lon: number, radiusFeet: number) => {
+    lastSearchRef.current = { lat, lon, radiusFeet };
+    setLoading(true);
+    listNearbyFinds(lat, lon, radiusFeet)
+      .then(setNearbyResult)
+      .catch(() => setNearbyResult({ mode: 'individual', finds: [] }))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Runs whenever the selected beach/device location changes -- always
+  // resets to that location's default view, even if the map was previously
+  // panned elsewhere (picking a different beach is a deliberate "start
+  // over here" action).
+  useEffect(() => {
+    runSearch(location.lat, location.lon, DEFAULT_NEARBY_RADIUS_FEET);
+  }, [location.lat, location.lon, runSearch]);
+
+  // Refreshes data on returning to this screen (e.g. after blocking someone,
+  // logging a find, or reporting a find) WITHOUT resetting back to the
+  // original location -- re-searches wherever was last actually searched,
+  // including a pan/zoom, since the map's own camera already stays put on
+  // its own. Skips the very first focus, since the location effect above
+  // just fetched.
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      listNearbyFinds(location.lat, location.lon)
-        .then(setNearbyResult)
-        .catch(() => setNearbyResult({ mode: 'individual', finds: [] }))
-        .finally(() => setLoading(false));
-    }, [location.lat, location.lon])
+      if (!hasFocusedOnceRef.current) {
+        hasFocusedOnceRef.current = true;
+        return;
+      }
+      if (lastSearchRef.current) {
+        runSearch(lastSearchRef.current.lat, lastSearchRef.current.lon, lastSearchRef.current.radiusFeet);
+      }
+    }, [runSearch])
   );
 
   // Fires (debounced) after a pan/zoom settles -- searches around wherever
@@ -122,16 +159,15 @@ export function MapScreen({ navigation }: Props) {
     };
   }, []);
 
-  const handleRegionChangeComplete = useCallback((region: Region) => {
-    if (regionChangeTimeout.current) clearTimeout(regionChangeTimeout.current);
-    regionChangeTimeout.current = setTimeout(() => {
-      setLoading(true);
-      listNearbyFinds(region.latitude, region.longitude, regionToRadiusFeet(region))
-        .then(setNearbyResult)
-        .catch(() => setNearbyResult({ mode: 'individual', finds: [] }))
-        .finally(() => setLoading(false));
-    }, REGION_CHANGE_DEBOUNCE_MS);
-  }, []);
+  const handleRegionChangeComplete = useCallback(
+    (region: Region) => {
+      if (regionChangeTimeout.current) clearTimeout(regionChangeTimeout.current);
+      regionChangeTimeout.current = setTimeout(() => {
+        runSearch(region.latitude, region.longitude, regionToRadiusFeet(region));
+      }, REGION_CHANGE_DEBOUNCE_MS);
+    },
+    [runSearch]
+  );
 
   // Reset to the normal layout every time this screen regains focus (e.g.
   // returning from a find's detail page), so a fullscreen map never lingers
