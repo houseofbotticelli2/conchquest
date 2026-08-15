@@ -28,7 +28,7 @@ All routes except `/health` require `Authorization: Bearer <supabase-access-toke
 - `POST /api/finds` — log a find: `{ lat, lon, speciesId?, foundAt?, condition?, notes?, photoKey?, isPrivate? }`
 - `GET /api/finds?limit=&offset=` — list the current user's finds
 - `GET /api/finds/:id` — a single find owned by the current user
-- `GET /api/finds/nearby?lat=&lon=&radiusFeet=&limit=` — community finds within a radius (everyone's, not just the caller's). Private finds get their location fuzzed by a configurable radius (`app_config` table, keys `fuzz_radius_standard_feet` / `fuzz_radius_rare_feet`) rather than hidden entirely; rare/very_rare species are always fuzzed regardless of their own privacy setting
+- `GET /api/finds/nearby?lat=&lon=&radiusFeet=&limit=` — public community finds within a radius (everyone's, not just the caller's); private finds never appear here at any location. Returns `{ mode: 'individual', finds }` normally, or `{ mode: 'clusters', clusters }` when the area is too dense to list individually (see `map_cluster_threshold`/`map_cluster_grid_divisions` in `app_config`)
 - `POST /api/uploads/presign` — `{ contentType }` (one of `image/jpeg`, `image/png`, `image/heic`, `image/webp`) → `{ uploadUrl, key }`; the client `PUT`s the photo bytes directly to `uploadUrl` (Railway Bucket, private), then passes `key` as `photoKey` when creating/updating a find
 
 All distances in requests/responses are **feet**, never meters or km — PostGIS/geo-math still operate in meters internally where the underlying functions require it, converted at the API boundary.

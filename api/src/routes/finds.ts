@@ -2,13 +2,11 @@ import { Router } from 'express';
 import { pool } from '../config/db';
 import { getConfigNumber } from '../services/appConfig';
 import { getDownloadUrl } from '../services/storage';
-import { fuzzLocation } from '../utils/fuzzLocation';
 import { feetToMeters, metersToFeet } from '../utils/units';
 
 export const findsRouter = Router();
 
 const VALID_CONDITIONS = ['pristine', 'good', 'fair', 'poor', 'fragment'];
-const RARE_RARITIES = ['rare', 'very_rare'];
 const DEFAULT_NEARBY_RADIUS_FEET = 16_000; // ~3mi
 // This used to be a ~30mi legibility cap -- now that dense areas return
 // clusters instead of a wall of individual pins, it's just a sanity bound
@@ -56,17 +54,10 @@ async function toResponse(row: FindRow) {
   };
 }
 
+// Only ever called for a public find -- a private one is hidden from
+// non-owners entirely (see GET /:id), not shown with any kind of
+// approximated location.
 async function toCommunityResponse(row: FindRow) {
-  const [standardFuzzRadiusFeet, rareFuzzRadiusFeet] = await Promise.all([
-    getConfigNumber('fuzz_radius_standard_feet', 300),
-    getConfigNumber('fuzz_radius_rare_feet', 5280),
-  ]);
-
-  const isRare = row.species_rarity !== null && RARE_RARITIES.includes(row.species_rarity);
-  const fuzzRadiusFeet = isRare ? rareFuzzRadiusFeet : row.is_private ? standardFuzzRadiusFeet : 0;
-  const location =
-    fuzzRadiusFeet > 0 ? fuzzLocation({ lat: row.lat, lon: row.lon }, row.id, feetToMeters(fuzzRadiusFeet)) : { lat: row.lat, lon: row.lon };
-
   return {
     isOwner: false as const,
     id: row.id,
@@ -75,8 +66,7 @@ async function toCommunityResponse(row: FindRow) {
     speciesName: row.species_name,
     speciesRarity: row.species_rarity,
     loggedBy: row.logged_by,
-    location,
-    isLocationFuzzed: fuzzRadiusFeet > 0,
+    location: { lat: row.lat, lon: row.lon },
     foundAt: row.found_at,
     condition: row.condition,
     notes: row.notes,
@@ -207,7 +197,8 @@ findsRouter.get('/nearby', async (req, res, next) => {
 
     const countResult = await pool.query<{ count: string }>(
       `SELECT count(*) FROM shell_finds sf
-       WHERE ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
+       WHERE NOT sf.is_private
+         AND ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
          AND NOT EXISTS (
            SELECT 1 FROM user_blocks ub WHERE ub.blocker_user_id = $4 AND ub.blocked_user_id = sf.user_id
          )`,
@@ -221,9 +212,6 @@ findsRouter.get('/nearby', async (req, res, next) => {
     ]);
 
     if (matchCount > clusterThreshold) {
-      // A cluster centroid is already an average of many finds' real
-      // coordinates, well beyond any single find's own fuzz radius at this
-      // zoomed-out scale -- no additional fuzzing needed on top of it.
       const radiusDegrees = radiusFeet / FEET_PER_DEGREE_LATITUDE;
       const cellSizeDegrees = (radiusDegrees * 2) / gridDivisions;
 
@@ -233,7 +221,8 @@ findsRouter.get('/nearby', async (req, res, next) => {
            avg(ST_X(sf.geog::geometry)) AS cluster_lon,
            count(*) AS find_count
          FROM shell_finds sf
-         WHERE ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
+         WHERE NOT sf.is_private
+           AND ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
            AND NOT EXISTS (
              SELECT 1 FROM user_blocks ub WHERE ub.blocker_user_id = $5 AND ub.blocked_user_id = sf.user_id
            )
@@ -254,11 +243,6 @@ findsRouter.get('/nearby', async (req, res, next) => {
       return;
     }
 
-    const [standardFuzzRadiusFeet, rareFuzzRadiusFeet] = await Promise.all([
-      getConfigNumber('fuzz_radius_standard_feet', 300),
-      getConfigNumber('fuzz_radius_rare_feet', 5280),
-    ]);
-
     const result = await pool.query<NearbyFindRow>(
       `SELECT
          sf.id, sf.user_id, sf.species_id, ss.common_name AS species_name, ss.rarity AS species_rarity,
@@ -269,7 +253,8 @@ findsRouter.get('/nearby', async (req, res, next) => {
        FROM shell_finds sf
        JOIN users u ON u.id = sf.user_id
        LEFT JOIN shell_species ss ON ss.id = sf.species_id
-       WHERE ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
+       WHERE NOT sf.is_private
+         AND ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
          AND NOT EXISTS (
            SELECT 1 FROM user_blocks ub WHERE ub.blocker_user_id = $5 AND ub.blocked_user_id = sf.user_id
          )
@@ -279,30 +264,20 @@ findsRouter.get('/nearby', async (req, res, next) => {
     );
 
     const finds = await Promise.all(
-      result.rows.map(async (row) => {
-        const isRare = row.species_rarity !== null && RARE_RARITIES.includes(row.species_rarity);
-        const fuzzRadiusFeet = isRare ? rareFuzzRadiusFeet : row.is_private ? standardFuzzRadiusFeet : 0;
-        const location =
-          fuzzRadiusFeet > 0
-            ? fuzzLocation({ lat: row.lat, lon: row.lon }, row.id, feetToMeters(fuzzRadiusFeet))
-            : { lat: row.lat, lon: row.lon };
-
-        return {
-          id: row.id,
-          loggedByUserId: row.user_id,
-          speciesId: row.species_id,
-          speciesName: row.species_name,
-          speciesRarity: row.species_rarity,
-          loggedBy: row.logged_by,
-          location,
-          isLocationFuzzed: fuzzRadiusFeet > 0,
-          foundAt: row.found_at,
-          condition: row.condition,
-          notes: row.notes,
-          photoUrl: row.photo_key ? await getDownloadUrl(row.photo_key) : null,
-          distanceFeet: Math.round(metersToFeet(row.distance_m)),
-        };
-      })
+      result.rows.map(async (row) => ({
+        id: row.id,
+        loggedByUserId: row.user_id,
+        speciesId: row.species_id,
+        speciesName: row.species_name,
+        speciesRarity: row.species_rarity,
+        loggedBy: row.logged_by,
+        location: { lat: row.lat, lon: row.lon },
+        foundAt: row.found_at,
+        condition: row.condition,
+        notes: row.notes,
+        photoUrl: row.photo_key ? await getDownloadUrl(row.photo_key) : null,
+        distanceFeet: Math.round(metersToFeet(row.distance_m)),
+      }))
     );
 
     res.json({ mode: 'individual' as const, finds });
@@ -324,6 +299,15 @@ findsRouter.get('/:id', async (req, res, next) => {
 
     const row = result.rows[0];
     const isOwner = row.user_id === req.user!.id;
+
+    // A private find is hidden from everyone but its owner -- responding
+    // 404 (not a 403) so a non-owner can't distinguish "doesn't exist"
+    // from "exists but is private."
+    if (!isOwner && row.is_private) {
+      res.status(404).json({ error: 'Find not found' });
+      return;
+    }
+
     res.json(isOwner ? await toResponse(row) : await toCommunityResponse(row));
   } catch (err) {
     next(err);

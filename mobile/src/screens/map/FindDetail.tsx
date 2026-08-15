@@ -120,7 +120,10 @@ export function FindDetail({ navigation, route }: Props) {
     }, [findId])
   );
 
-  const isPrivate = find ? (find.isOwner ? find.isPrivate : find.isLocationFuzzed) : false;
+  // Only ever meaningful for the owner -- a non-owner can never actually
+  // reach a private find's detail page (the API hides it entirely), so
+  // there's no "is this shown approximately" case to account for here.
+  const isPrivate = find?.isOwner ? find.isPrivate : false;
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
@@ -216,11 +219,7 @@ export function FindDetail({ navigation, route }: Props) {
               <Eyebrow>Location sharing</Eyebrow>
               <View style={[styles.inputRow, { backgroundColor: t.inputBg, borderColor: t.border }]}>
                 <Text style={[styles.inputText, { color: t.text }]}>
-                  {isPrivate
-                    ? find.isOwner
-                      ? '🔒 Private - general vicinity shown'
-                      : '🔒 Approximate location shown'
-                    : '🌐 Public · exact location shown'}
+                  {isPrivate ? '🔒 Private - only visible to you' : '🌐 Public · exact location shown'}
                 </Text>
               </View>
             </View>

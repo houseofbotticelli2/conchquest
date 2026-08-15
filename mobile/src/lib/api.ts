@@ -161,7 +161,6 @@ export interface CommunityFind {
   speciesRarity: BadgeRarity | null;
   loggedBy: string;
   location: { lat: number; lon: number };
-  isLocationFuzzed: boolean;
   foundAt: string;
   condition: FindCondition | null;
   notes: string | null;
@@ -246,7 +245,6 @@ export interface NearbyFind {
   speciesRarity: BadgeRarity | null;
   loggedBy: string;
   location: { lat: number; lon: number };
-  isLocationFuzzed: boolean;
   foundAt: string;
   condition: FindCondition | null;
   notes: string | null;

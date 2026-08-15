@@ -9,6 +9,24 @@ Build numbers here are the **production/TestFlight** build number
 
 Built and committed, pending the next production build + TestFlight submission:
 
+- **Fixed: Map screen resetting on refocus** — panning/zooming to see finds
+  elsewhere, then navigating away and back, used to silently snap the data
+  back to your original location while the map still looked panned. Now
+  stays in sync with wherever you last searched.
+- **Fixed: draggable beach-location pin** — the add/edit-beach pin is now
+  red while dragging (the old dark navy was hard to see against
+  satellite/hybrid map imagery), and adding a new beach now actually
+  centers the map on your real location instead of getting stuck on the
+  Sanibel fallback.
+- **Removed location "vicinity blur"** — a private find used to still show
+  up on the community map, just offset within a radius; that middle ground
+  is gone. Now it's a plain binary: **Public** = exact location shown to
+  everyone, **Private** = hidden from the community entirely, visible only
+  to you. This also removes the extra fuzzing that previously applied to
+  rare/very_rare species regardless of their own privacy setting.
+
+## Build 4 — v0.1.0 (shipped 2026-08-15)
+
 - **Map clustering + region-based search** — the Map screen's ~30mi search
   cap is gone; zooming out now groups dense areas into a count bubble
   (e.g. "245") instead of a wall of pins, and the map refetches based on
@@ -22,9 +40,9 @@ Built and committed, pending the next production build + TestFlight submission:
 - **Native password reset (partial)** — tapping the reset-password email
   link can now reopen the app directly and complete the reset natively,
   instead of only ever opening a browser page. Verified via a dev-client
-  build; still needs a production build + on-device confirmation before
-  it's live for testers. Email confirmation (a separate email) is not
-  included in this — it still only opens the browser.
+  build; still needs on-device confirmation of the production build before
+  it's fully confirmed live for testers. Email confirmation (a separate
+  email) is not included in this — it still only opens the browser.
 
 ## Build 3 — v0.1.0 (shipped 2026-08-13, tag `ios-build-3`)
 
