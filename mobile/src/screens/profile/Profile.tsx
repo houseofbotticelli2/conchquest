@@ -162,7 +162,6 @@ export function Profile({ navigation }: Props) {
   );
 
   const displayName = profile?.displayName ?? profile?.email.split('@')[0] ?? 'Shell collector';
-  const homeBeach = beaches.find((b) => b.isHome) ?? null;
 
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [editName, setEditName] = useState('');
@@ -455,12 +454,6 @@ export function Profile({ navigation }: Props) {
           <View>
             <Text style={[styles.userName, { color: t.text }]}>{displayName}</Text>
             {profile && <Text style={[styles.userSub, { color: t.muted }]}>Shelling since {profile.shellingSinceYear}</Text>}
-            {homeBeach && (
-              <Text style={[styles.userHome, { color: t.sea }]}>
-                {homeBeach.name}
-                {homeBeach.city ? ` · ${homeBeach.city}` : ''} · Home beach
-              </Text>
-            )}
           </View>
         </View>
 
@@ -711,7 +704,6 @@ const styles = StyleSheet.create({
   changePhotoText: { fontFamily: fonts.bodySemiBold, fontSize: 13 },
   userName: { fontFamily: fonts.display, fontSize: 17, fontWeight: '600' },
   userSub: { fontFamily: fonts.data, fontSize: 11 },
-  userHome: { fontFamily: fonts.data, fontSize: 11, marginTop: 1 },
   statsRow: { flexDirection: 'row', borderBottomWidth: 1 },
   statItem: { flex: 1, paddingVertical: 12, alignItems: 'center' },
   statVal: { fontFamily: fonts.displayBold, fontSize: 24 },
