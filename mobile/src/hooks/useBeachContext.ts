@@ -110,7 +110,7 @@ export function useBeachContext(defaultLocation: { lat: number; lon: number; lab
     beaches,
     selectedBeach,
     location,
-    titleLabel: selectedBeach ? selectedBeach.name : 'No Beach',
+    titleLabel: selectedBeach ? selectedBeach.name : 'Current Location',
     subLabel: selectedBeach ? selectedBeach.city : isUsingDefaultLocation ? defaultLocation.label : geocodedCity,
     pickerOpen,
     setPickerOpen,
