@@ -8,6 +8,7 @@ A quick map of what's in this folder and when to reach for each one.
 | [`MAC_SETUP.md`](MAC_SETUP.md) | Setting up a Mac to run Conchquest locally for the first time. |
 | [`GETTING_STARTED.md`](GETTING_STARTED.md) | Your environment is already set up — this covers project architecture, working conventions with Claude Code, and how to pick a first task. |
 | [`TODO.md`](TODO.md) | Checking what's done, in progress, or open — kept in sync with the task tracker. |
+| [`CHANGELOG.md`](CHANGELOG.md) | Tester-facing record of what shipped in each build, and what's changed since the last one. |
 | [`GOOGLE_MAPS_SETUP.md`](GOOGLE_MAPS_SETUP.md) | Creating/restricting the Google Maps API key that Android map rendering needs. |
 | [`ANDROID_EMULATOR_SETUP.md`](ANDROID_EMULATOR_SETUP.md) | You need to test an Android build but don't have a physical Android phone. |
 | [`STANDALONE_BUILD_GUIDE.md`](STANDALONE_BUILD_GUIDE.md) | Getting a permanently-installed copy of the app onto a phone (not the day-to-day dev-client workflow) — includes the iOS device-registration process. |
