@@ -10,7 +10,15 @@ export const findsRouter = Router();
 const VALID_CONDITIONS = ['pristine', 'good', 'fair', 'poor', 'fragment'];
 const RARE_RARITIES = ['rare', 'very_rare'];
 const DEFAULT_NEARBY_RADIUS_FEET = 16_000; // ~3mi
-const MAX_NEARBY_RADIUS_FEET = 160_000; // ~30mi
+// This used to be a ~30mi legibility cap -- now that dense areas return
+// clusters instead of a wall of individual pins, it's just a sanity bound
+// (covers zooming out to see the whole contiguous US) rather than a limit
+// on how far a user can actually see finds.
+const MAX_NEARBY_RADIUS_FEET = 16_000_000; // ~3,030mi
+// One degree of latitude is ~364,000ft everywhere; used only to size
+// clustering grid cells, not for real distance math, so this doesn't need
+// to account for longitude's latitude-dependent scaling.
+const FEET_PER_DEGREE_LATITUDE = 364_000;
 
 interface FindRow {
   id: string;
@@ -178,6 +186,12 @@ interface NearbyFindRow {
   distance_m: number;
 }
 
+interface ClusterRow {
+  cluster_lat: number;
+  cluster_lon: number;
+  find_count: string;
+}
+
 findsRouter.get('/nearby', async (req, res, next) => {
   try {
     const lat = Number(req.query.lat);
@@ -189,6 +203,56 @@ findsRouter.get('/nearby', async (req, res, next) => {
 
     const radiusFeet = Math.min(Number(req.query.radiusFeet) || DEFAULT_NEARBY_RADIUS_FEET, MAX_NEARBY_RADIUS_FEET);
     const limit = Math.min(Number(req.query.limit) || 100, 200);
+    const radiusMeters = feetToMeters(radiusFeet);
+
+    const countResult = await pool.query<{ count: string }>(
+      `SELECT count(*) FROM shell_finds sf
+       WHERE ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
+         AND NOT EXISTS (
+           SELECT 1 FROM user_blocks ub WHERE ub.blocker_user_id = $4 AND ub.blocked_user_id = sf.user_id
+         )`,
+      [lon, lat, radiusMeters, req.user!.id]
+    );
+    const matchCount = Number(countResult.rows[0].count);
+
+    const [clusterThreshold, gridDivisions] = await Promise.all([
+      getConfigNumber('map_cluster_threshold', 60),
+      getConfigNumber('map_cluster_grid_divisions', 20),
+    ]);
+
+    if (matchCount > clusterThreshold) {
+      // A cluster centroid is already an average of many finds' real
+      // coordinates, well beyond any single find's own fuzz radius at this
+      // zoomed-out scale -- no additional fuzzing needed on top of it.
+      const radiusDegrees = radiusFeet / FEET_PER_DEGREE_LATITUDE;
+      const cellSizeDegrees = (radiusDegrees * 2) / gridDivisions;
+
+      const clusterResult = await pool.query<ClusterRow>(
+        `SELECT
+           avg(ST_Y(sf.geog::geometry)) AS cluster_lat,
+           avg(ST_X(sf.geog::geometry)) AS cluster_lon,
+           count(*) AS find_count
+         FROM shell_finds sf
+         WHERE ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
+           AND NOT EXISTS (
+             SELECT 1 FROM user_blocks ub WHERE ub.blocker_user_id = $5 AND ub.blocked_user_id = sf.user_id
+           )
+         GROUP BY floor(ST_Y(sf.geog::geometry) / $4), floor(ST_X(sf.geog::geometry) / $4)
+         ORDER BY find_count DESC
+         LIMIT 300`,
+        [lon, lat, radiusMeters, cellSizeDegrees, req.user!.id]
+      );
+
+      res.json({
+        mode: 'clusters' as const,
+        clusters: clusterResult.rows.map((row) => ({
+          lat: Number(row.cluster_lat),
+          lon: Number(row.cluster_lon),
+          count: Number(row.find_count),
+        })),
+      });
+      return;
+    }
 
     const [standardFuzzRadiusFeet, rareFuzzRadiusFeet] = await Promise.all([
       getConfigNumber('fuzz_radius_standard_feet', 300),
@@ -211,7 +275,7 @@ findsRouter.get('/nearby', async (req, res, next) => {
          )
        ORDER BY sf.found_at DESC
        LIMIT $4`,
-      [lon, lat, feetToMeters(radiusFeet), limit, req.user!.id]
+      [lon, lat, radiusMeters, limit, req.user!.id]
     );
 
     const finds = await Promise.all(
@@ -241,7 +305,7 @@ findsRouter.get('/nearby', async (req, res, next) => {
       })
     );
 
-    res.json(finds);
+    res.json({ mode: 'individual' as const, finds });
   } catch (err) {
     next(err);
   }

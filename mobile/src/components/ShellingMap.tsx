@@ -1,14 +1,24 @@
 import React, { useRef, useState } from 'react';
-import { StyleSheet, ViewStyle, StyleProp, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { StyleSheet, ViewStyle, StyleProp, TouchableOpacity, TouchableWithoutFeedback, View, Text } from 'react-native';
 import MapView, { Marker, Region, LatLng } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { fonts } from '../theme/tokens';
 
 export interface ShellingMapMarker {
   id: string;
   lat: number;
   lon: number;
   pinColor?: string;
+}
+
+// A grouped-count bubble shown in place of individual pins once an area has
+// too many finds to render legibly -- see /api/finds/nearby's cluster mode.
+export interface ShellingMapCluster {
+  id: string;
+  lat: number;
+  lon: number;
+  count: number;
 }
 
 export interface ShellingMapProps {
@@ -18,6 +28,14 @@ export interface ShellingMapProps {
   longitudeDelta?: number;
   markers?: ShellingMapMarker[];
   onSelectMarker?: (id: string) => void;
+  // Rendered instead of `markers` when the caller is in clustered mode --
+  // the two are mutually exclusive in practice (a given /nearby response is
+  // either individual finds or clusters, never both).
+  clusters?: ShellingMapCluster[];
+  // Fires after a pan/zoom gesture settles (not on every frame) -- used by
+  // the Map screen to refetch finds for whatever's now visible, instead of
+  // a fixed radius around one fixed point.
+  onRegionChangeComplete?: (region: Region) => void;
   scrollEnabled?: boolean;
   zoomEnabled?: boolean;
   // Renders the native "blue dot" at the device's real GPS position
@@ -56,6 +74,8 @@ export function ShellingMap({
   longitudeDelta = 0.05,
   markers = [],
   onSelectMarker,
+  clusters = [],
+  onRegionChangeComplete,
   scrollEnabled = true,
   zoomEnabled = true,
   showsUserLocation = false,
@@ -100,6 +120,7 @@ export function ShellingMap({
         zoomEnabled={zoomEnabled}
         showsUserLocation={showsUserLocation}
         mapType={mapType}
+        onRegionChangeComplete={onRegionChangeComplete}
       >
         {showCenterMarker && (
           <Marker
@@ -116,6 +137,13 @@ export function ShellingMap({
             pinColor={m.pinColor}
             onPress={() => onSelectMarker?.(m.id)}
           />
+        ))}
+        {clusters.map((c) => (
+          <Marker key={c.id} coordinate={{ latitude: c.lat, longitude: c.lon }} anchor={{ x: 0.5, y: 0.5 }}>
+            <View style={styles.clusterBubble}>
+              <Text style={styles.clusterBubbleText}>{c.count}</Text>
+            </View>
+          </Marker>
         ))}
       </MapView>
       {onCollapsedTap && (
@@ -145,6 +173,23 @@ export function ShellingMap({
 
 const styles = StyleSheet.create({
   map: { width: '100%', height: '100%' },
+  clusterBubble: {
+    minWidth: 34,
+    height: 34,
+    borderRadius: 17,
+    paddingHorizontal: 6,
+    backgroundColor: '#4A8B8C',
+    borderWidth: 2,
+    borderColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  clusterBubbleText: { fontFamily: fonts.bodySemiBold, fontSize: 12, color: 'white' },
   recenterBtn: {
     position: 'absolute',
     width: 36,

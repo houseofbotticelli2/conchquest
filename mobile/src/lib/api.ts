@@ -254,8 +254,18 @@ export interface NearbyFind {
   distanceFeet: number;
 }
 
-export function listNearbyFinds(lat: number, lon: number, radiusFeet = 16_000): Promise<NearbyFind[]> {
-  return apiFetch<NearbyFind[]>(`/api/finds/nearby?lat=${lat}&lon=${lon}&radiusFeet=${radiusFeet}`);
+export interface FindCluster {
+  lat: number;
+  lon: number;
+  count: number;
+}
+
+export type NearbyFindsResult =
+  | { mode: 'individual'; finds: NearbyFind[] }
+  | { mode: 'clusters'; clusters: FindCluster[] };
+
+export function listNearbyFinds(lat: number, lon: number, radiusFeet = 16_000): Promise<NearbyFindsResult> {
+  return apiFetch<NearbyFindsResult>(`/api/finds/nearby?lat=${lat}&lon=${lon}&radiusFeet=${radiusFeet}`);
 }
 
 export interface Species {

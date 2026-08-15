@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import type { Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Rect, Circle, Text as SvgText } from 'react-native-svg';
@@ -15,7 +16,7 @@ import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { DateRangeSheet } from '../../components/DateRangeSheet';
 import { MapStackParamList } from '../../navigation/types';
 import { useAuth } from '../../auth/AuthProvider';
-import { listNearbyFinds, NearbyFind } from '../../lib/api';
+import { listNearbyFinds, NearbyFind, NearbyFindsResult } from '../../lib/api';
 import { useBeachContext } from '../../hooks/useBeachContext';
 
 type Props = NativeStackScreenProps<MapStackParamList, 'Map'>;
@@ -70,13 +71,28 @@ function isToday(iso: string): boolean {
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
 }
 
+// Rough, not exact -- only used to decide how wide a radius to search, not
+// for real distance math. One degree of latitude is ~364,000ft everywhere;
+// the 1.4x buffer covers a viewport's corners, which sit further from the
+// center than half of latitudeDelta/longitudeDelta alone would suggest.
+const FEET_PER_DEGREE_LATITUDE = 364_000;
+function regionToRadiusFeet(region: Region): number {
+  const spanDegrees = Math.max(region.latitudeDelta, region.longitudeDelta);
+  return Math.round((spanDegrees / 2) * FEET_PER_DEGREE_LATITUDE * 1.4);
+}
+
+const REGION_CHANGE_DEBOUNCE_MS = 400;
+
 export function MapScreen({ navigation }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { user } = useAuth();
-  const [finds, setFinds] = useState<NearbyFind[]>([]);
+  const [nearbyResult, setNearbyResult] = useState<NearbyFindsResult>({ mode: 'individual', finds: [] });
+  const finds: NearbyFind[] = nearbyResult.mode === 'individual' ? nearbyResult.finds : [];
+  const clusters = nearbyResult.mode === 'clusters' ? nearbyResult.clusters : [];
   const [loading, setLoading] = useState(true);
+  const regionChangeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeFilter, setActiveFilter] = useState(0);
   const [mapExpanded, setMapExpanded] = useState(false);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(null);
@@ -89,11 +105,33 @@ export function MapScreen({ navigation }: Props) {
     useCallback(() => {
       setLoading(true);
       listNearbyFinds(location.lat, location.lon)
-        .then(setFinds)
-        .catch(() => setFinds([]))
+        .then(setNearbyResult)
+        .catch(() => setNearbyResult({ mode: 'individual', finds: [] }))
         .finally(() => setLoading(false));
     }, [location.lat, location.lon])
   );
+
+  // Fires (debounced) after a pan/zoom settles -- searches around wherever
+  // the map is now centered, with a radius derived from how far zoomed out
+  // it is, instead of only ever refetching around the original beach/device
+  // location. Cleared on unmount so a pending fetch never lands on an
+  // already-left screen.
+  useEffect(() => {
+    return () => {
+      if (regionChangeTimeout.current) clearTimeout(regionChangeTimeout.current);
+    };
+  }, []);
+
+  const handleRegionChangeComplete = useCallback((region: Region) => {
+    if (regionChangeTimeout.current) clearTimeout(regionChangeTimeout.current);
+    regionChangeTimeout.current = setTimeout(() => {
+      setLoading(true);
+      listNearbyFinds(region.latitude, region.longitude, regionToRadiusFeet(region))
+        .then(setNearbyResult)
+        .catch(() => setNearbyResult({ mode: 'individual', finds: [] }))
+        .finally(() => setLoading(false));
+    }, REGION_CHANGE_DEBOUNCE_MS);
+  }, []);
 
   // Reset to the normal layout every time this screen regains focus (e.g.
   // returning from a find's detail page), so a fullscreen map never lingers
@@ -206,13 +244,19 @@ export function MapScreen({ navigation }: Props) {
           </View>
           <View style={styles.list}>
             {loading && <ActivityIndicator color={t.accent} style={{ marginVertical: 12 }} />}
-            {!loading && finds.length === 0 && (
+            {!loading && nearbyResult.mode === 'clusters' && (
+              <Text style={[styles.emptyText, { color: t.muted }]}>
+                Too many finds here to list individually — zoom in on the map to see them.
+              </Text>
+            )}
+            {!loading && nearbyResult.mode === 'individual' && finds.length === 0 && (
               <Text style={[styles.emptyText, { color: t.muted }]}>No community finds nearby yet.</Text>
             )}
-            {!loading && finds.length > 0 && visibleFinds.length === 0 && (
+            {!loading && nearbyResult.mode === 'individual' && finds.length > 0 && visibleFinds.length === 0 && (
               <Text style={[styles.emptyText, { color: t.muted }]}>No finds match this filter.</Text>
             )}
             {!loading &&
+              nearbyResult.mode === 'individual' &&
               visibleFinds.map((f) => (
                 <FindRow
                   key={f.id}
@@ -292,7 +336,9 @@ export function MapScreen({ navigation }: Props) {
               lon: f.location.lon,
               pinColor: markerColorForRarity(f.speciesRarity),
             }))}
+            clusters={clusters.map((c, i) => ({ id: `cluster-${i}`, lat: c.lat, lon: c.lon, count: c.count }))}
             onSelectMarker={(id) => navigation.navigate('FindDetail', { findId: id })}
+            onRegionChangeComplete={handleRegionChangeComplete}
             onCollapsedTap={!mapExpanded ? () => setMapExpanded(true) : undefined}
             edgeToEdge={mapExpanded}
             fallback={
