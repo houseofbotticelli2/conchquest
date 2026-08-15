@@ -4,7 +4,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "com.conchquest.app",
-      "sha256_cert_fingerprints": ["REPLACE_WITH_REAL_SHA256_FINGERPRINT"]
+      "sha256_cert_fingerprints": ["14:D7:AD:25:85:24:0F:35:D4:AB:9F:F9:4D:0E:D8:82:E0:34:06:4C:0E:7B:94:02:BC:BA:D0:8B:DB:C4:4E:BA"]
     }
   }
 ]
