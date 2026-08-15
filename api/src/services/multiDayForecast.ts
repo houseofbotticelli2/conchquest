@@ -18,6 +18,12 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface MultiDayEntry extends ShellingScoreResult {
   date: string; // YYYY-MM-DD
+  // A semidiurnal day often has two lows -- bestWindow.lowTideTime is
+  // always the one actually scored against (the day's lowest, see
+  // selectDayLowTide), never this one. Purely a display extra: the day's
+  // *other* low tide, if one exists in the same day window. Doesn't feed
+  // into scoring or bestWindow at all.
+  altLowTide: { time: string; heightFt: number } | null;
 }
 
 function bucket(lat: number, lon: number) {
@@ -107,6 +113,20 @@ async function fetchMultiDayForecast(lat: number, lon: number, restrictShellingT
     // whichever comes first chronologically -- see selectDayLowTide.
     const candidateLow = tideRange ? selectDayLowTide(tideRange.events, dayStart, dayEnd) : null;
 
+    // Display-only: the day's other low tide (if this is a two-low day),
+    // never the one used for scoring/bestWindow above. Excluded by time
+    // rather than object identity, since candidateLow is a fresh object
+    // returned from selectDayLowTide, not necessarily the same reference
+    // as its matching entry in tideRange.events.
+    const altLow = tideRange
+      ? tideRange.events.find((e) => {
+          if (e.type !== 'low') return false;
+          if (candidateLow && e.time === candidateLow.time) return false;
+          const t = new Date(e.time).getTime();
+          return t >= dayStart.getTime() && t < dayEnd.getTime();
+        }) ?? null
+      : null;
+
     // Score against this day's low tide -- or midday if it has none -- not
     // the literal current instant, even for today. Evaluated a minute
     // *before* the low, not at it -- deriveTideConditions' nextEvents only
@@ -166,7 +186,11 @@ async function fetchMultiDayForecast(lat: number, lon: number, restrictShellingT
     };
 
     const score = computeShellingScore(conditions, referenceTime, restrictShellingToDaylight);
-    entries.push({ ...score, date: dayMidpoint.toISOString().slice(0, 10) });
+    entries.push({
+      ...score,
+      date: dayMidpoint.toISOString().slice(0, 10),
+      altLowTide: altLow ? { time: altLow.time, heightFt: altLow.heightFt } : null,
+    });
   }
 
   return entries;

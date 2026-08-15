@@ -85,6 +85,11 @@ export function getScore(lat: number, lon: number): Promise<ShellingScoreResult>
 
 export interface MultiDayScoreEntry extends ShellingScoreResult {
   date: string; // YYYY-MM-DD
+  // The day's *other* low tide on a two-low day, if any -- display only,
+  // never the one bestWindow/scoring is anchored to. Optional since a
+  // still-fresh cached response written before this field existed won't
+  // have it.
+  altLowTide?: { time: string; heightFt: number } | null;
 }
 
 export async function getMultiDayScore(lat: number, lon: number): Promise<MultiDayScoreEntry[]> {

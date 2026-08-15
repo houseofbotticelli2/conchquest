@@ -295,6 +295,12 @@ export function Score({ navigation, route }: Props) {
                       })()}
                   </Text>
                 )}
+                {result.altLowTide && new Date(result.altLowTide.time).getTime() > Date.now() && (
+                  <Text style={[styles.windowNote, { color: t.muted, marginTop: 2 }]}>
+                    Alt low tide: {formatTime(result.altLowTide.time)}
+                    {relativeDaySuffix(result.altLowTide.time, result.date)}
+                  </Text>
+                )}
               </Card>
             </TouchableOpacity>
 
