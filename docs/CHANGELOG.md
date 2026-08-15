@@ -24,6 +24,12 @@ Built and committed, pending the next production build + TestFlight submission:
   everyone, **Private** = hidden from the community entirely, visible only
   to you. This also removes the extra fuzzing that previously applied to
   rare/very_rare species regardless of their own privacy setting.
+- **Removed home beach/location line from Profile** — the line under your
+  name and shelling-since year is gone.
+- **Alt low tide on two-low days** — some days have two low tides; the
+  Shellcast/breakdown screens now show the day's *other* low tide (when
+  there is one and it hasn't already passed) alongside the existing "Low
+  tide" line. Doesn't change which low tide is actually scored.
 
 ## Build 4 — v0.1.0 (shipped 2026-08-15)
 
