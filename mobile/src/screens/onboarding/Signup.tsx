@@ -118,6 +118,8 @@ export function Signup({ navigation, route }: Props) {
               onChangeText={setDisplayName}
               placeholder="Sandy C."
               placeholderTextColor={t.muted}
+              textContentType="name"
+              autoComplete="name"
               style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]}
             />
           </View>
@@ -131,6 +133,8 @@ export function Signup({ navigation, route }: Props) {
             placeholderTextColor={t.muted}
             autoCapitalize="none"
             keyboardType="email-address"
+            textContentType="emailAddress"
+            autoComplete="email"
             style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]}
           />
         </View>
@@ -143,6 +147,8 @@ export function Signup({ navigation, route }: Props) {
             placeholderTextColor={t.muted}
             secureTextEntry
             autoCapitalize="none"
+            textContentType={isSignup ? 'newPassword' : 'password'}
+            autoComplete={isSignup ? 'new-password' : 'current-password'}
             style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]}
           />
         </View>
