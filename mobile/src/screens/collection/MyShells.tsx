@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { FindRow } from '../../components/FindRow';
+import { Field } from '../../components/Field';
 import { BadgeType } from '../../components/Badge';
 import { DateRangeSheet } from '../../components/DateRangeSheet';
 import { CollectionStackParamList } from '../../navigation/types';
@@ -128,8 +129,7 @@ export function MyShells({ navigation }: Props) {
             value={search}
             onChangeText={setSearch}
             placeholder="Search your shells..."
-            placeholderTextColor={t.muted}
-            style={[styles.searchText, { color: t.text }]}
+            style={styles.searchText}
           />
         </View>
 

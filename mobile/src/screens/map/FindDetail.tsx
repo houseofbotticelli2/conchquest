@@ -1,11 +1,12 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, LayoutChangeEvent } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, LayoutChangeEvent } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Rect, Circle } from 'react-native-svg';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
+import { Field } from '../../components/Field';
 import { Badge, BadgeType } from '../../components/Badge';
 import { ShellingMap } from '../../components/ShellingMap';
 import { PhotoViewer } from '../../components/PhotoViewer';
@@ -294,11 +295,11 @@ export function FindDetail({ navigation, route }: Props) {
         })}
         <View style={styles.reportNotesSection}>
           <Eyebrow>Additional details (optional)</Eyebrow>
-          <TextInput
+          <Field
             value={reportNotes}
             onChangeText={setReportNotes}
             multiline
-            style={[styles.reportNotesInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
+            style={styles.reportNotesInput}
           />
         </View>
         {submittingReport ? (

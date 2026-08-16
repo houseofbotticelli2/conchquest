@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Badge, BadgeType } from '../../components/Badge';
+import { Field } from '../../components/Field';
 import { NavBar } from '../../components/NavBar';
 import { CollectionStackParamList } from '../../navigation/types';
 import { listSpecies, Species } from '../../lib/api';
@@ -58,8 +59,7 @@ export function Library({ navigation }: Props) {
             value={search}
             onChangeText={setSearch}
             placeholder="Search shells..."
-            placeholderTextColor={t.muted}
-            style={[styles.searchText, { color: t.text }]}
+            style={styles.searchText}
           />
         </View>
 

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor, tabularNums } from '../../theme/tokens';
 import { Btn } from '../../components/Btn';
+import { Field } from '../../components/Field';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { ShellingMap } from '../../components/ShellingMap';
 import { BeachesStackParamList } from '../../navigation/types';
@@ -233,12 +234,11 @@ export function Beaches(_props: Props) {
       <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
         {adding && (
           <View style={[styles.addBox, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
-            <TextInput
+            <Field
               value={newName}
               onChangeText={setNewName}
               placeholder={`Beach name (near ${newCity.trim() || DEFAULT_LOCATION.label})`}
-              placeholderTextColor={t.muted}
-              style={[styles.addInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
+              style={styles.addInput}
             />
 
             <View style={styles.addSection}>
@@ -303,8 +303,7 @@ export function Beaches(_props: Props) {
             value={search}
             onChangeText={setSearch}
             placeholder="Search your beaches..."
-            placeholderTextColor={t.muted}
-            style={[styles.searchText, { color: t.text }]}
+            style={styles.searchText}
           />
         </View>
 
@@ -399,10 +398,10 @@ export function Beaches(_props: Props) {
                 <View style={[styles.editPanel, { backgroundColor: t.surfaceInset, borderTopColor: t.borderSoftAlpha }]}>
                   <View style={styles.editSection}>
                     <Text style={[styles.editLabel, { color: t.muted }]}>NAME</Text>
-                    <TextInput
+                    <Field
                       value={editName}
                       onChangeText={setEditName}
-                      style={[styles.nameInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceCardHi }, t.shadowRaised]}
+                      style={styles.nameInput}
                     />
                   </View>
 

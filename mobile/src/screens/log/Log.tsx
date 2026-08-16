@@ -4,8 +4,8 @@ import {
   Text,
   Image,
   ScrollView,
-  TouchableOpacity,
   TextInput,
+  TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -19,6 +19,7 @@ import Svg, { Rect, Circle } from 'react-native-svg';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
+import { Field } from '../../components/Field';
 import { Btn } from '../../components/Btn';
 import { NavBar } from '../../components/NavBar';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -308,8 +309,7 @@ export function Log({ navigation, route }: Props) {
                       value={speciesQuery}
                       onChangeText={setSpeciesQuery}
                       placeholder="Search the shell library..."
-                      placeholderTextColor={t.muted}
-                      style={[styles.inputText, styles.speciesInput, { color: t.text }]}
+                      style={[styles.inputText, styles.speciesInput]}
                     />
                     {speciesSearching && <ActivityIndicator size="small" color={t.accent} />}
                   </View>
@@ -336,8 +336,7 @@ export function Log({ navigation, route }: Props) {
                     value={speciesQuery}
                     onChangeText={setSpeciesQuery}
                     placeholder="Search the shell library..."
-                    placeholderTextColor={t.muted}
-                    style={[styles.inputText, styles.speciesInput, { color: t.text }]}
+                    style={[styles.inputText, styles.speciesInput]}
                   />
                   {speciesSearching && <ActivityIndicator size="small" color={t.accent} />}
                 </View>
@@ -398,13 +397,12 @@ export function Log({ navigation, route }: Props) {
 
           <View>
             <Eyebrow>Notes</Eyebrow>
-            <TextInput
+            <Field
               value={notes}
               onChangeText={setNotes}
               placeholder="Add a note..."
-              placeholderTextColor={t.muted}
               multiline
-              style={[styles.notesBox, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha, color: t.text }]}
+              style={styles.notesBox}
             />
           </View>
 

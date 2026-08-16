@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Btn } from '../../components/Btn';
+import { Field } from '../../components/Field';
 import { Eyebrow } from '../../components/Eyebrow';
 import { Dots } from '../../components/Dots';
 import { OnboardingStackParamList } from '../../navigation/types';
@@ -119,43 +120,40 @@ export function Signup({ navigation, route }: Props) {
         {isSignup && (
           <View style={styles.field}>
             <Eyebrow>Display name</Eyebrow>
-            <TextInput
+            <Field raised
               value={displayName}
               onChangeText={setDisplayName}
               placeholder="Sandy C."
-              placeholderTextColor={t.muted}
               textContentType="name"
               autoComplete="name"
-              style={[styles.input, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha, color: t.text }, t.shadowRaised]}
+              style={styles.input}
             />
           </View>
         )}
         <View style={styles.field}>
           <Eyebrow>Email</Eyebrow>
-          <TextInput
+          <Field raised
             value={email}
             onChangeText={setEmail}
             placeholder="you@email.com"
-            placeholderTextColor={t.muted}
             autoCapitalize="none"
             keyboardType="email-address"
             textContentType="emailAddress"
             autoComplete="email"
-            style={[styles.input, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha, color: t.text }, t.shadowRaised]}
+            style={styles.input}
           />
         </View>
         <View style={styles.field}>
           <Eyebrow>Password</Eyebrow>
-          <TextInput
+          <Field raised
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
-            placeholderTextColor={t.muted}
             secureTextEntry
             autoCapitalize="none"
             textContentType={isSignup ? 'newPassword' : 'password'}
             autoComplete={isSignup ? 'new-password' : 'current-password'}
-            style={[styles.input, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha, color: t.text }, t.shadowRaised]}
+            style={styles.input}
           />
         </View>
 

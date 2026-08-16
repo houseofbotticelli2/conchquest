@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Btn } from '../../components/Btn';
+import { Field } from '../../components/Field';
 import { useAuth } from '../../auth/AuthProvider';
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -66,29 +67,27 @@ export function ResetPasswordScreen() {
             )}
 
             <View style={styles.field}>
-              <TextInput
+              <Field raised
                 value={password}
                 onChangeText={setPassword}
                 placeholder="At least 8 characters"
-                placeholderTextColor={t.muted}
                 secureTextEntry
                 autoCapitalize="none"
                 textContentType="newPassword"
                 autoComplete="new-password"
-                style={[styles.input, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha, color: t.text }, t.shadowRaised]}
+                style={styles.input}
               />
             </View>
             <View style={styles.field}>
-              <TextInput
+              <Field raised
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Confirm new password"
-                placeholderTextColor={t.muted}
                 secureTextEntry
                 autoCapitalize="none"
                 textContentType="newPassword"
                 autoComplete="new-password"
-                style={[styles.input, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha, color: t.text }, t.shadowRaised]}
+                style={styles.input}
               />
             </View>
 

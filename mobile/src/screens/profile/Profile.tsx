@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Platform, Linking } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import { enableBeachAlerts, disableBeachAlerts } from '../../lib/notifications';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor, tabularNums } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
+import { Field } from '../../components/Field';
 import { FindRow } from '../../components/FindRow';
 import { Btn } from '../../components/Btn';
 import { BadgeType } from '../../components/Badge';
@@ -546,19 +547,19 @@ export function Profile({ navigation }: Props) {
         </TouchableOpacity>
         <View style={styles.editSection}>
           <Text style={[styles.editLabel, { color: t.muted }]}>NAME</Text>
-          <TextInput
+          <Field
             value={editName}
             onChangeText={setEditName}
-            style={[styles.editInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
+            style={styles.editInput}
           />
         </View>
         <View style={styles.editSection}>
           <Text style={[styles.editLabel, { color: t.muted }]}>SHELLING SINCE (YEAR)</Text>
-          <TextInput
+          <Field
             value={editYear}
             onChangeText={setEditYear}
             keyboardType="number-pad"
-            style={[styles.editInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
+            style={styles.editInput}
           />
         </View>
         {savingProfile ? (
@@ -571,34 +572,33 @@ export function Profile({ navigation }: Props) {
       <SlideUpSheet visible={changePasswordOpen} onClose={() => setChangePasswordOpen(false)} title="Change password">
         <View style={styles.editSection}>
           <Text style={[styles.editLabel, { color: t.muted }]}>CURRENT PASSWORD</Text>
-          <TextInput
+          <Field
             value={currentPassword}
             onChangeText={setCurrentPassword}
             secureTextEntry
             autoCapitalize="none"
-            style={[styles.editInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
+            style={styles.editInput}
           />
         </View>
         <View style={styles.editSection}>
           <Text style={[styles.editLabel, { color: t.muted }]}>NEW PASSWORD</Text>
-          <TextInput
+          <Field
             value={newPassword}
             onChangeText={setNewPassword}
             placeholder="At least 8 characters"
-            placeholderTextColor={t.muted}
             secureTextEntry
             autoCapitalize="none"
-            style={[styles.editInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
+            style={styles.editInput}
           />
         </View>
         <View style={styles.editSection}>
           <Text style={[styles.editLabel, { color: t.muted }]}>CONFIRM NEW PASSWORD</Text>
-          <TextInput
+          <Field
             value={confirmNewPassword}
             onChangeText={setConfirmNewPassword}
             secureTextEntry
             autoCapitalize="none"
-            style={[styles.editInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
+            style={styles.editInput}
           />
         </View>
         {changingPassword ? (
