@@ -9,6 +9,30 @@ Build numbers here are the **production/TestFlight** build number
 
 Built and committed, pending the next production build + TestFlight submission:
 
+- **Redesigned for depth** — a tester said the app looked "flat." Every
+  surface used to be one of two colors separated by a hairline, with no
+  shadows anywhere. Cards now lift off the page, inputs are visibly
+  recessed, the Shellcast score sits on a floating disc, and the Best
+  Window card stands above the Conditions card instead of matching it.
+- **New typeface** — the app is now a single font (Figtree) across four
+  weights instead of three mixed typefaces. The "Conchquest" wordmark
+  keeps its original serif.
+- **Tapping a text field now shows it's selected** — previously nothing
+  changed visually, so there was no way to tell which field the keyboard
+  was attached to. Buttons also compress when pressed.
+- **Fixed: the "Log in" and "Save" buttons looked disabled** even when
+  they were perfectly usable.
+- **Fixed: viewing someone else's find looked editable** — condition
+  rendered as a tappable-looking selector on a screen where nothing is
+  editable.
+- **Fixed: UV "Extreme" showed in green**, the color that means "good"
+  everywhere else in the app. It now follows the same green/gold/coral
+  progression as the Shelling Score.
+- Score breakdown is now seven separate cards instead of one striped
+  column, and the Wind Direction note no longer reads like an error.
+
+## Build 5 — v0.1.0 (shipped 2026-08-15)
+
 - **Fixed: Map screen resetting on refocus** — panning/zooming to see finds
   elsewhere, then navigating away and back, used to silently snap the data
   back to your original location while the map still looked panned. Now
