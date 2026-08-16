@@ -230,7 +230,7 @@ export function Log({ navigation, route }: Props) {
       />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
         {isEditMode ? (
-          <View style={[styles.mapBox, { borderColor: t.border }]}>
+          <View style={[styles.mapBox, { borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
             <ShellingMap
               latitude={editingFind!.location.lat}
               longitude={editingFind!.location.lon}
@@ -278,7 +278,8 @@ export function Log({ navigation, route }: Props) {
                 onPress={() => currentPhotoUri && setPhotoViewerOpen(true)}
                 style={[
                   styles.photoSquare,
-                  { width: speciesBoxHeight, height: speciesBoxHeight, borderColor: t.border, backgroundColor: t.surfaceAlt },
+                  { width: speciesBoxHeight, height: speciesBoxHeight, borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceInset },
+                  t.shadowRaised,
                 ]}
               >
                 {currentPhotoUri ? (
@@ -345,7 +346,7 @@ export function Log({ navigation, route }: Props) {
           )}
 
           {speciesResults.length > 0 && (
-            <View style={[styles.resultsBox, { backgroundColor: t.surface, borderColor: t.border }]}>
+            <View style={[styles.resultsBox, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowFloating]}>
               {speciesResults.map((s) => (
                 <TouchableOpacity key={s.id} style={[styles.resultRow, { borderBottomColor: t.borderSoft }]} onPress={() => selectSpecies(s)}>
                   <Text style={[styles.inputText, { color: t.text }]}>{s.commonName}</Text>
@@ -369,7 +370,8 @@ export function Log({ navigation, route }: Props) {
                     onPress={() => setCondition(c.value)}
                     style={[
                       styles.conditionChip,
-                      { backgroundColor: active ? t.text : t.surface, borderColor: active ? t.text : t.border },
+                      { backgroundColor: active ? t.text : t.surfaceCardHi, borderColor: active ? t.text : t.borderSoftAlpha },
+                      active ? t.shadowRaised : undefined,
                     ]}
                   >
                     <Text style={{ fontFamily: active ? fonts.bodySemiBold : fonts.body, fontSize: 12, color: active ? t.bg : t.muted }}>

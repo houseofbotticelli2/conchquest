@@ -19,7 +19,7 @@ export function Welcome({ navigation }: Props) {
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 22 }]}>
-        <View style={[styles.logo, { backgroundColor: t.surface, borderColor: t.border }]}>
+        <View style={[styles.logo, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
           <Text style={styles.logoEmoji}>🐚</Text>
         </View>
         <Text style={[styles.title, { color: t.text }]}>Conchquest</Text>

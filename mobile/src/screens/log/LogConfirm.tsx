@@ -29,7 +29,7 @@ export function LogConfirm({ navigation }: Props) {
         <Text style={[styles.headerTitle, { color: t.text }]}>Find logged</Text>
       </View>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.check, { backgroundColor: t.surface, borderColor: t.accent }]}>
+        <View style={[styles.check, { backgroundColor: t.surfaceCardHi, borderColor: t.accent }, t.shadowFloating]}>
           <Text style={[styles.checkMark, { color: t.accent }]}>✓</Text>
         </View>
         <Text style={[styles.title, { color: t.text }]}>Find logged!</Text>

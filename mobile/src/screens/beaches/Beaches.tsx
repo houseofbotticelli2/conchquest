@@ -232,13 +232,13 @@ export function Beaches(_props: Props) {
       </View>
       <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
         {adding && (
-          <View style={[styles.addBox, { backgroundColor: t.surface, borderColor: t.border }]}>
+          <View style={[styles.addBox, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
             <TextInput
               value={newName}
               onChangeText={setNewName}
               placeholder={`Beach name (near ${newCity.trim() || DEFAULT_LOCATION.label})`}
               placeholderTextColor={t.muted}
-              style={[styles.addInput, { borderColor: t.border, color: t.text }]}
+              style={[styles.addInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
             />
 
             <View style={styles.addSection}>
@@ -315,7 +315,8 @@ export function Beaches(_props: Props) {
               onPress={() => setActiveFilter(i)}
               style={[
                 styles.filterChip,
-                { borderColor: t.border, backgroundColor: i === activeFilter ? t.navBg : t.surface, color: i === activeFilter ? t.navText : t.muted },
+                { borderColor: t.borderSoftAlpha, backgroundColor: i === activeFilter ? t.navBg : t.surfaceCardHi, color: i === activeFilter ? t.navText : t.muted },
+                i === activeFilter && t.shadowRaised,
               ]}
             >
               {f.label}

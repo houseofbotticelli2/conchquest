@@ -40,7 +40,8 @@ export function Beach({ navigation }: Props) {
             style={[
               styles.beachRow,
               styles.beachRowSelected,
-              { backgroundColor: t.surface, borderColor: t.accent },
+              { backgroundColor: t.surfaceCardHi, borderColor: t.accent },
+              t.shadowFloating,
             ]}
           >
             <View>
@@ -53,7 +54,7 @@ export function Beach({ navigation }: Props) {
             <TouchableOpacity
               key={b.name}
               onPress={() => setSelected(b.name)}
-              style={[styles.beachRow, { backgroundColor: t.surface, borderColor: t.border }]}
+              style={[styles.beachRow, { backgroundColor: t.surfaceCard, borderColor: t.borderSoftAlpha }, t.shadowRaised]}
             >
               <View>
                 <Text style={[styles.beachName, { color: t.text }]}>{b.name}</Text>

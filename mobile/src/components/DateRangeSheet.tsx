@@ -58,7 +58,7 @@ export function DateRangeSheet({ visible, onClose, from, to, onApply, onClear }:
       <View style={styles.row}>
         <Text style={[styles.rowLabel, { color: t.muted }]}>From</Text>
         <TouchableOpacity
-          style={[styles.dateButton, { borderColor: t.border, backgroundColor: t.surface }]}
+          style={[styles.dateButton, { borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceInset }]}
           onPress={() => setActiveField(activeField === 'from' ? null : 'from')}
         >
           <Text style={[styles.dateButtonText, { color: t.text }]}>{localFrom ? formatDate(localFrom) : 'Select date'}</Text>
@@ -77,7 +77,7 @@ export function DateRangeSheet({ visible, onClose, from, to, onApply, onClear }:
       <View style={styles.row}>
         <Text style={[styles.rowLabel, { color: t.muted }]}>To</Text>
         <TouchableOpacity
-          style={[styles.dateButton, { borderColor: t.border, backgroundColor: t.surface }]}
+          style={[styles.dateButton, { borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceInset }]}
           onPress={() => setActiveField(activeField === 'to' ? null : 'to')}
         >
           <Text style={[styles.dateButtonText, { color: t.text }]}>{localTo ? formatDate(localTo) : 'Select date'}</Text>
