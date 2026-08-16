@@ -191,7 +191,11 @@ export function Score({ navigation, route }: Props) {
                     onPress={() => setSelectedIndex(i)}
                     style={[
                       styles.dayChip,
-                      { backgroundColor: selected ? t.text : t.surface, borderColor: selected ? t.text : t.borderSoft },
+                      {
+                        backgroundColor: selected ? t.text : t.surfaceCard,
+                        borderColor: selected ? t.text : isBest ? t.sea : t.borderSoftAlpha,
+                      },
+                      selected ? t.shadowFloating : t.shadowRaised,
                     ]}
                   >
                     {isBest && (
@@ -220,7 +224,11 @@ export function Score({ navigation, route }: Props) {
               accessibilityRole="button"
               accessibilityLabel="See score breakdown"
             >
-              <ScoreRing score={result.score} size={150} lowTideTime={nextLowTide ? formatTime(nextLowTide.time) : undefined} />
+              {/* The hero number gets a real container -- a floating white
+                  disc -- rather than sitting directly on the page. */}
+              <View style={[styles.ringDisc, { backgroundColor: t.surfaceCardHi }, t.shadowFloating]}>
+                <ScoreRing score={result.score} size={150} lowTideTime={nextLowTide ? formatTime(nextLowTide.time) : undefined} />
+              </View>
             </TouchableOpacity>
 
             <View style={styles.chipsRow}>
@@ -229,7 +237,7 @@ export function Score({ navigation, route }: Props) {
                   key={c.label}
                   style={[
                     styles.chip,
-                    { backgroundColor: t.surface, borderColor: c.unavailable ? t.muted : t.border, color: c.color },
+                    { backgroundColor: t.surfaceCardHi, borderColor: c.unavailable ? t.muted : t.borderSoftAlpha, color: c.color },
                     c.unavailable && styles.chipUnavailable,
                   ]}
                 >
@@ -250,7 +258,7 @@ export function Score({ navigation, route }: Props) {
                 })
               }
             >
-              <Card style={styles.windowCard}>
+              <Card hi style={styles.windowCard}>
                 <View style={styles.windowHeader}>
                   <Eyebrow style={styles.windowEyebrow}>Best window {sentenceLabel}</Eyebrow>
                   {windowIsNow && <NowBadge />}
@@ -388,6 +396,7 @@ const styles = StyleSheet.create({
   },
   chipUnavailable: { borderStyle: 'dashed', opacity: 0.75 },
   ringWrap: { paddingVertical: 12, alignItems: 'center' },
+  ringDisc: { width: 186, height: 186, borderRadius: 93, alignItems: 'center', justifyContent: 'center' },
   windowCard: { marginHorizontal: 16, marginBottom: 12 },
   windowHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   windowEyebrow: { marginBottom: 0 },
