@@ -92,7 +92,7 @@ export function ConditionsDetail({ navigation, route }: Props) {
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hourlyRow}>
               {hourly.map((block) => (
-                <View key={block.time} style={[styles.hourlyBlock, { borderColor: t.borderSoft }]}>
+                <View key={block.time} style={[styles.hourlyBlock, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
                   <Text style={[styles.hourlyTime, { color: t.muted }]}>{formatTime(block.time)}</Text>
                   <Text style={[styles.hourlyTemp, { color: t.text }]}>
                     {block.tempF != null ? `${Math.round(block.tempF)}°` : '--'}

@@ -102,7 +102,7 @@ export function DateRangeSheet({ visible, onClose, from, to, onApply, onClear }:
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.footerButton, { borderColor: t.border }]}
+          style={[styles.footerButton, { borderColor: t.borderSoftAlpha }]}
           onPress={() => {
             onClear();
             onClose();

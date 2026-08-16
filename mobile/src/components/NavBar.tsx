@@ -21,7 +21,7 @@ export function NavBar({ title, left, leftIcon, onLeft, right, rightIcon, onRigh
   const insets = useSafeAreaInsets();
   const rightColor = rightDisabled ? t.muted : t.body;
   return (
-    <View style={[styles.base, { backgroundColor: t.bg, borderBottomColor: t.border, paddingTop: insets.top + 12 }]}>
+    <View style={[styles.base, { backgroundColor: t.bg, borderBottomColor: t.borderSoftAlpha, paddingTop: insets.top + 12 }]}>
       <TouchableOpacity onPress={onLeft} disabled={!onLeft} style={styles.side}>
         {leftIcon ? (
           <Ionicons name={leftIcon} size={22} color={t.accent} />

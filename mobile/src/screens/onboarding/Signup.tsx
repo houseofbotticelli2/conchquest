@@ -101,12 +101,12 @@ export function Signup({ navigation, route }: Props) {
         )}
 
         {confirmationNotice && (
-          <Text style={[styles.notice, { color: t.sea, borderColor: t.border, backgroundColor: t.surfaceAlt }]}>
+          <Text style={[styles.notice, { color: t.sea, borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceInset }]}>
             Check your email to confirm your account, then log in below.
           </Text>
         )}
         {resetNotice && (
-          <Text style={[styles.notice, { color: t.sea, borderColor: t.border, backgroundColor: t.surfaceAlt }]}>
+          <Text style={[styles.notice, { color: t.sea, borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceInset }]}>
             Check your email for a link to reset your password.
           </Text>
         )}
@@ -126,7 +126,7 @@ export function Signup({ navigation, route }: Props) {
               placeholderTextColor={t.muted}
               textContentType="name"
               autoComplete="name"
-              style={[styles.input, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha, color: t.text }]}
+              style={[styles.input, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha, color: t.text }, t.shadowRaised]}
             />
           </View>
         )}
@@ -141,7 +141,7 @@ export function Signup({ navigation, route }: Props) {
             keyboardType="email-address"
             textContentType="emailAddress"
             autoComplete="email"
-            style={[styles.input, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha, color: t.text }]}
+            style={[styles.input, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha, color: t.text }, t.shadowRaised]}
           />
         </View>
         <View style={styles.field}>
@@ -155,7 +155,7 @@ export function Signup({ navigation, route }: Props) {
             autoCapitalize="none"
             textContentType={isSignup ? 'newPassword' : 'password'}
             autoComplete={isSignup ? 'new-password' : 'current-password'}
-            style={[styles.input, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha, color: t.text }]}
+            style={[styles.input, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha, color: t.text }, t.shadowRaised]}
           />
         </View>
 

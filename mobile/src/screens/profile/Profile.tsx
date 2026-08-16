@@ -500,12 +500,12 @@ export function Profile({ navigation }: Props) {
           )}
           {!loading &&
             beaches.map((b) => (
-              <View key={b.id} style={[styles.beachRow, { borderBottomColor: t.borderSoft }]}>
+              <View key={b.id} style={[styles.beachRow, { backgroundColor: t.surfaceCard, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
                 <View style={styles.beachRowBody}>
                   <View style={styles.beachRowNameLine}>
                     <Text style={[styles.beachRowName, { color: t.text }]}>{b.name}</Text>
                     {b.isHome && (
-                      <Text style={[styles.homeBadge, { backgroundColor: t.surfaceAlt, color: t.text, borderColor: t.border }]}>
+                      <Text style={[styles.homeBadge, { backgroundColor: t.surfaceCardHi, color: t.text, borderColor: t.borderSoftAlpha }]}>
                         HOME
                       </Text>
                     )}
@@ -713,13 +713,7 @@ const styles = StyleSheet.create({
   findsSection: { paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 },
   findsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   emptyText: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 12 },
-  beachRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
+  beachRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, marginBottom: 8 },
   beachRowBody: { flex: 1 },
   beachRowNameLine: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 },
   beachRowAlert: { fontFamily: fonts.data, fontSize: 10, letterSpacing: 0.3 },

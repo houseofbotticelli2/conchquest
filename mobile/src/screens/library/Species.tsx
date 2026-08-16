@@ -66,7 +66,7 @@ export function Species({ navigation, route }: Props) {
         {!loading && species && (
           <>
             <View style={styles.headerRow}>
-              <View style={[styles.icon, { backgroundColor: t.iconRare, borderColor: t.border }]}>
+              <View style={[styles.icon, { backgroundColor: t.iconRare, borderColor: t.borderSoftAlpha }, t.shadowFloating]}>
                 <Text style={{ fontSize: 32 }}>🐚</Text>
               </View>
               <View>

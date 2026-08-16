@@ -151,7 +151,7 @@ export function Score({ navigation, route }: Props) {
               <View style={styles.pickerRowNameLine}>
                 <Text style={[styles.pickerRowName, { color: t.text }]}>{b.name}</Text>
                 {b.isHome && (
-                  <Text style={[styles.homeBadge, { backgroundColor: t.surfaceAlt, color: t.text, borderColor: t.border }]}>
+                  <Text style={[styles.homeBadge, { backgroundColor: t.surfaceCardHi, color: t.text, borderColor: t.borderSoftAlpha }]}>
                     HOME
                   </Text>
                 )}
@@ -195,7 +195,7 @@ export function Score({ navigation, route }: Props) {
                         backgroundColor: selected ? t.text : t.surfaceCard,
                         borderColor: selected ? t.text : isBest ? t.sea : t.borderSoftAlpha,
                       },
-                      selected ? t.shadowFloating : t.shadowRaised,
+                      selected ? t.shadowFloating : undefined,
                     ]}
                   >
                     {isBest && (

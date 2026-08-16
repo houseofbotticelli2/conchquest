@@ -179,7 +179,7 @@ export function FindDetail({ navigation, route }: Props) {
 
               <View style={styles.speciesColumn} onLayout={handleSpeciesBoxLayout}>
                 <Eyebrow>Shell species</Eyebrow>
-                <View style={[styles.inputRow, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
+                <View style={[styles.inputRow, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
                   <View style={{ flexShrink: 1 }}>
                     <View style={styles.nameRow}>
                       <Text style={[styles.inputText, { color: t.text }]}>{find.speciesName ?? 'Unidentified shell'}</Text>
@@ -201,7 +201,7 @@ export function FindDetail({ navigation, route }: Props) {
                     every condition with one highlighted, which reads as a
                     tappable selector even though it isn't one when viewing
                     someone else's find. */}
-                <View style={[styles.conditionChip, styles.conditionChipStatic, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
+                <View style={[styles.conditionChip, styles.conditionChipStatic, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
                   <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 12, color: t.text }}>
                     {CONDITIONS.find((c) => c.value === find.condition)?.label ?? find.condition}
                   </Text>
@@ -211,7 +211,7 @@ export function FindDetail({ navigation, route }: Props) {
 
             <View>
               <Eyebrow>Location sharing</Eyebrow>
-              <View style={[styles.inputRow, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
+              <View style={[styles.inputRow, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
                 <Text style={[styles.inputText, { color: t.text }]}>
                   {isPrivate ? '🔒 Private - only visible to you' : '🌐 Public - visible to everyone'}
                 </Text>
@@ -227,7 +227,11 @@ export function FindDetail({ navigation, route }: Props) {
 
             <TouchableOpacity
               onPress={() => navigation.navigate('Species', { speciesId: find.speciesId ?? undefined })}
-              style={[styles.libraryBtn, { backgroundColor: t.accent }]}
+              style={[
+                styles.libraryBtn,
+                { backgroundColor: t.accent },
+                { shadowColor: t.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 3 },
+              ]}
             >
               <Text style={styles.libraryBtnText}>View in library</Text>
             </TouchableOpacity>

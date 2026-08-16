@@ -60,7 +60,7 @@ export function ResetPasswordScreen() {
             </Text>
 
             {error && (
-              <Text style={[styles.notice, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceAlt }]}>
+              <Text style={[styles.notice, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceInset }]}>
                 {error}
               </Text>
             )}
@@ -75,7 +75,7 @@ export function ResetPasswordScreen() {
                 autoCapitalize="none"
                 textContentType="newPassword"
                 autoComplete="new-password"
-                style={[styles.input, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha, color: t.text }]}
+                style={[styles.input, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha, color: t.text }, t.shadowRaised]}
               />
             </View>
             <View style={styles.field}>
@@ -88,7 +88,7 @@ export function ResetPasswordScreen() {
                 autoCapitalize="none"
                 textContentType="newPassword"
                 autoComplete="new-password"
-                style={[styles.input, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha, color: t.text }]}
+                style={[styles.input, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha, color: t.text }, t.shadowRaised]}
               />
             </View>
 

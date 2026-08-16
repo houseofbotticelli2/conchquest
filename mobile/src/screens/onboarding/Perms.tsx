@@ -50,7 +50,7 @@ export function Perms({ navigation }: Props) {
 
         <Card style={styles.card}>
           <View style={styles.cardRow}>
-            <View style={[styles.iconBox, { backgroundColor: t.surfaceAlt, borderColor: t.border }]}>
+            <View style={[styles.iconBox, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
               <Text style={styles.iconText}>📍</Text>
             </View>
             <View style={styles.cardTextWrap}>
@@ -70,7 +70,7 @@ export function Perms({ navigation }: Props) {
 
         <Card style={styles.card}>
           <View style={styles.cardRow}>
-            <View style={[styles.iconBox, { backgroundColor: t.surfaceAlt, borderColor: t.border }]}>
+            <View style={[styles.iconBox, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
               <Text style={styles.iconText}>🔔</Text>
             </View>
             <View style={styles.cardTextWrap}>

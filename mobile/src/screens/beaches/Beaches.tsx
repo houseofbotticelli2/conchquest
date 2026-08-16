@@ -248,7 +248,7 @@ export function Beaches(_props: Props) {
 
             <View style={styles.addSection}>
               <Text style={[styles.editLabel, { color: t.muted }]}>LOCATION (DRAG PIN TO ADJUST)</Text>
-              <View style={[styles.mapBox, { borderColor: t.border }]}>
+              <View style={[styles.mapBox, { borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
                 <ShellingMap
                   latitude={(newLocation ?? DEFAULT_LOCATION).lat}
                   longitude={(newLocation ?? DEFAULT_LOCATION).lon}
@@ -343,7 +343,7 @@ export function Beaches(_props: Props) {
               }}
               style={[
                 styles.beachCard,
-                { backgroundColor: t.surfaceCardHi, borderColor: b.isHome ? t.accent : t.borderSoftAlpha, borderWidth: b.isHome ? 1.5 : 1 },
+                { backgroundColor: b.isHome ? t.surfaceCardHi : t.surfaceCard, borderColor: b.isHome ? t.accent : t.borderSoftAlpha, borderWidth: b.isHome ? 1.5 : 1 },
                 // Home beach is elevated, not just outlined -- it should
                 // read as the one card sitting above the rest.
                 b.isHome ? t.shadowFloating : t.shadowRaised,
@@ -356,7 +356,7 @@ export function Beaches(_props: Props) {
                       <View style={styles.nameRow}>
                         <Text style={[styles.beachName, { color: t.text }]}>{b.name}</Text>
                         {b.isHome && (
-                          <Text style={[styles.homeBadge, { backgroundColor: t.surfaceAlt, color: t.text, borderColor: t.border }]}>
+                          <Text style={[styles.homeBadge, { backgroundColor: t.surfaceCardHi, color: t.text, borderColor: t.borderSoftAlpha }]}>
                             HOME
                           </Text>
                         )}
@@ -378,7 +378,7 @@ export function Beaches(_props: Props) {
                       <View style={styles.nameRow}>
                         <Text style={[styles.beachName, { color: t.text }]}>{b.name}</Text>
                         {b.isHome && (
-                          <Text style={[styles.homeBadge, { backgroundColor: t.surfaceAlt, color: t.text, borderColor: t.border }]}>
+                          <Text style={[styles.homeBadge, { backgroundColor: t.surfaceCardHi, color: t.text, borderColor: t.borderSoftAlpha }]}>
                             HOME
                           </Text>
                         )}
@@ -396,7 +396,7 @@ export function Beaches(_props: Props) {
               )}
 
               {editingId === b.id ? (
-                <View style={[styles.editPanel, { backgroundColor: t.surfaceAlt, borderTopColor: t.borderSoft }]}>
+                <View style={[styles.editPanel, { backgroundColor: t.surfaceInset, borderTopColor: t.borderSoftAlpha }]}>
                   <View style={styles.editSection}>
                     <Text style={[styles.editLabel, { color: t.muted }]}>NAME</Text>
                     <TextInput
@@ -413,7 +413,7 @@ export function Beaches(_props: Props) {
 
                   <View style={styles.editSection}>
                     <Text style={[styles.editLabel, { color: t.muted }]}>LOCATION (DRAG PIN TO ADJUST)</Text>
-                    <View style={[styles.mapBox, { borderColor: t.border }]}>
+                    <View style={[styles.mapBox, { borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
                       <ShellingMap
                         latitude={(editLocation ?? b.location).lat}
                         longitude={(editLocation ?? b.location).lon}

@@ -37,13 +37,13 @@ export function FindRow({ icon, bg, name, sub, badge, dateSuffix, condition, not
       </View>
       <View style={styles.badgeRow}>
         {condition && (
-          <Text style={[styles.neutralChip, { backgroundColor: t.surfaceAlt, color: t.muted, borderColor: t.border }]}>
+          <Text style={[styles.neutralChip, { backgroundColor: t.surfaceCardHi, color: t.muted, borderColor: t.borderSoftAlpha }]}>
             {condition.charAt(0).toUpperCase() + condition.slice(1)}
           </Text>
         )}
         <Badge type={badge} />
         {isPrivate != null && (
-          <Text style={[styles.neutralChip, { backgroundColor: t.surfaceAlt, color: t.muted, borderColor: t.border }]}>
+          <Text style={[styles.neutralChip, { backgroundColor: t.surfaceCardHi, color: t.muted, borderColor: t.borderSoftAlpha }]}>
             {isPrivate ? 'Private' : 'Public'}
           </Text>
         )}

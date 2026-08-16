@@ -267,7 +267,7 @@ export function Log({ navigation, route }: Props) {
 
         <View style={styles.content}>
           {error && (
-            <Text style={[styles.errorText, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceAlt }]}>
+            <Text style={[styles.errorText, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceInset }]}>
               {error}
             </Text>
           )}
@@ -292,7 +292,7 @@ export function Log({ navigation, route }: Props) {
               <View style={styles.speciesColumn} onLayout={handleSpeciesBoxLayout}>
                 <Eyebrow>Shell species</Eyebrow>
                 {selectedSpecies ? (
-                  <View style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
+                  <View style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
                     <View style={{ flexShrink: 1 }}>
                       <Text style={[styles.inputText, { color: t.text }]}>{selectedSpecies.commonName}</Text>
                       <Text style={[styles.speciesSci, { color: t.muted }]}>{selectedSpecies.scientificName}</Text>
@@ -320,7 +320,7 @@ export function Log({ navigation, route }: Props) {
             <View>
               <Eyebrow>Shell species</Eyebrow>
               {selectedSpecies ? (
-                <View style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
+                <View style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
                   <View style={{ flexShrink: 1 }}>
                     <Text style={[styles.inputText, { color: t.text }]}>{selectedSpecies.commonName}</Text>
                     <Text style={[styles.speciesSci, { color: t.muted }]}>{selectedSpecies.scientificName}</Text>
@@ -387,7 +387,7 @@ export function Log({ navigation, route }: Props) {
             <Eyebrow>Location sharing</Eyebrow>
             <TouchableOpacity
               onPress={() => setIsPrivate((prev) => !prev)}
-              style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}
+              style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}
             >
               <Text style={[styles.inputText, { color: t.text }]}>
                 {isPrivate ? '🔒 Private - only visible to you' : '🌐 Public - visible to everyone'}
