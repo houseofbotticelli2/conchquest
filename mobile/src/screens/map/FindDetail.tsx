@@ -143,7 +143,7 @@ export function FindDetail({ navigation, route }: Props) {
 
       {!loading && find && (
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={[styles.mapBox, { borderColor: t.border }]}>
+          <View style={[styles.mapBox, { borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
             <ShellingMap
               latitude={find.location.lat}
               longitude={find.location.lon}
@@ -166,7 +166,8 @@ export function FindDetail({ navigation, route }: Props) {
                 onPress={() => find.photoUrl && setPhotoViewerOpen(true)}
                 style={[
                   styles.photoSquare,
-                  { width: speciesBoxHeight, height: speciesBoxHeight, borderColor: t.border, backgroundColor: t.surfaceAlt },
+                  { width: speciesBoxHeight, height: speciesBoxHeight, borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceInset },
+                  t.shadowRaised,
                 ]}
               >
                 {find.photoUrl ? (
@@ -178,7 +179,7 @@ export function FindDetail({ navigation, route }: Props) {
 
               <View style={styles.speciesColumn} onLayout={handleSpeciesBoxLayout}>
                 <Eyebrow>Shell species</Eyebrow>
-                <View style={[styles.inputRow, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+                <View style={[styles.inputRow, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
                   <View style={{ flexShrink: 1 }}>
                     <View style={styles.nameRow}>
                       <Text style={[styles.inputText, { color: t.text }]}>{find.speciesName ?? 'Unidentified shell'}</Text>
@@ -193,40 +194,33 @@ export function FindDetail({ navigation, route }: Props) {
               </View>
             </View>
 
-            <View>
-              <Eyebrow>Condition</Eyebrow>
-              <View style={styles.chipsRow}>
-                {CONDITIONS.map((c) => {
-                  const active = find.condition === c.value;
-                  return (
-                    <View
-                      key={c.value}
-                      style={[
-                        styles.conditionChip,
-                        { backgroundColor: active ? t.text : t.surface, borderColor: active ? t.text : t.border },
-                      ]}
-                    >
-                      <Text style={{ fontFamily: active ? fonts.bodySemiBold : fonts.body, fontSize: 12, color: active ? t.bg : t.muted }}>
-                        {c.label}
-                      </Text>
-                    </View>
-                  );
-                })}
+            {find.condition && (
+              <View>
+                <Eyebrow>Condition</Eyebrow>
+                {/* Static pill, not the full option row -- this used to render
+                    every condition with one highlighted, which reads as a
+                    tappable selector even though it isn't one when viewing
+                    someone else's find. */}
+                <View style={[styles.conditionChip, styles.conditionChipStatic, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
+                  <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 12, color: t.text }}>
+                    {CONDITIONS.find((c) => c.value === find.condition)?.label ?? find.condition}
+                  </Text>
+                </View>
               </View>
-            </View>
+            )}
 
             <View>
               <Eyebrow>Location sharing</Eyebrow>
-              <View style={[styles.inputRow, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+              <View style={[styles.inputRow, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
                 <Text style={[styles.inputText, { color: t.text }]}>
-                  {isPrivate ? '🔒 Private - only visible to you' : '🌐 Public · exact location shown'}
+                  {isPrivate ? '🔒 Private - only visible to you' : '🌐 Public - visible to everyone'}
                 </Text>
               </View>
             </View>
 
             <View>
               <Eyebrow>Notes</Eyebrow>
-              <View style={[styles.notesBox, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+              <View style={[styles.notesBox, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
                 <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.text }}>{find.notes || '—'}</Text>
               </View>
             </View>
@@ -300,7 +294,7 @@ export function FindDetail({ navigation, route }: Props) {
             value={reportNotes}
             onChangeText={setReportNotes}
             multiline
-            style={[styles.reportNotesInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+            style={[styles.reportNotesInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
           />
         </View>
         {submittingReport ? (
@@ -368,6 +362,7 @@ const styles = StyleSheet.create({
   speciesSci: { fontFamily: fonts.data, fontSize: 11, marginTop: 3 },
   chipsRow: { flexDirection: 'row', gap: 7, flexWrap: 'wrap' },
   conditionChip: { borderRadius: 6, paddingVertical: 7, paddingHorizontal: 13, borderWidth: 1 },
+  conditionChipStatic: { alignSelf: 'flex-start' },
   notesBox: { borderWidth: 1, borderRadius: 6, padding: 11, minHeight: 60 },
   libraryBtn: { borderRadius: 6, paddingVertical: 12, alignItems: 'center' },
   libraryBtnText: { fontFamily: fonts.bodySemiBold, fontSize: 14, color: '#fff' },

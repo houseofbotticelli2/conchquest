@@ -28,7 +28,7 @@ export function Beach({ navigation }: Props) {
         <Text style={[styles.title, { color: t.text }]}>Your home beach</Text>
         <Text style={[styles.subtitle, { color: t.body }]}>Set a default location. Change it anytime.</Text>
 
-        <View style={[styles.searchBox, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+        <View style={[styles.searchBox, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
           <Text style={{ color: t.muted }}>🔍</Text>
           <Text style={[styles.searchText, { color: t.muted }]}>Search beaches...</Text>
         </View>
@@ -74,7 +74,7 @@ export function Beach({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { padding: 20, paddingBottom: 22 },
-  title: { fontFamily: fonts.display, fontSize: 22, fontWeight: '600', marginBottom: 4 },
+  title: { fontFamily: fonts.display, fontSize: 22, marginBottom: 4 },
   subtitle: { fontFamily: fonts.body, fontSize: 12, marginBottom: 14 },
   searchBox: {
     flexDirection: 'row',

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
-import { fonts, scoreColor } from '../theme/tokens';
+import { fonts, scoreColor, tabularNums } from '../theme/tokens';
 
 interface ScoreRingProps {
   score: number;
@@ -58,6 +58,7 @@ const styles = StyleSheet.create({
   },
   score: {
     fontFamily: fonts.displayBold,
+    ...tabularNums,
     lineHeight: undefined,
   },
   label: {

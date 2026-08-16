@@ -75,7 +75,7 @@ export function ResetPasswordScreen() {
                 autoCapitalize="none"
                 textContentType="newPassword"
                 autoComplete="new-password"
-                style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]}
+                style={[styles.input, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha, color: t.text }]}
               />
             </View>
             <View style={styles.field}>
@@ -88,7 +88,7 @@ export function ResetPasswordScreen() {
                 autoCapitalize="none"
                 textContentType="newPassword"
                 autoComplete="new-password"
-                style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]}
+                style={[styles.input, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha, color: t.text }]}
               />
             </View>
 
@@ -113,7 +113,7 @@ export function ResetPasswordScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: 22, paddingBottom: 22 },
-  title: { fontFamily: fonts.display, fontSize: 24, fontWeight: '600', marginBottom: 8 },
+  title: { fontFamily: fonts.display, fontSize: 24, marginBottom: 8 },
   subtitle: { fontFamily: fonts.body, fontSize: 13, marginBottom: 24, lineHeight: 18 },
   notice: { fontFamily: fonts.body, fontSize: 12, padding: 10, borderRadius: 6, borderWidth: 1, marginBottom: 14 },
   field: { marginBottom: 12 },

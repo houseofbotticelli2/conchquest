@@ -122,7 +122,7 @@ export function MyShells({ navigation }: Props) {
         </View>
       </View>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.searchBox, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+        <View style={[styles.searchBox, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
           <Text style={{ color: t.muted }}>🔍</Text>
           <TextInput
             value={search}
@@ -143,7 +143,8 @@ export function MyShells({ navigation }: Props) {
               }}
               style={[
                 styles.filterChip,
-                { borderColor: t.border, backgroundColor: i === activeFilter ? t.navBg : t.surface, color: i === activeFilter ? t.navText : t.muted },
+                { borderColor: t.borderSoftAlpha, backgroundColor: i === activeFilter ? t.navBg : t.surfaceCardHi, color: i === activeFilter ? t.navText : t.muted },
+                i === activeFilter && t.shadowRaised,
               ]}
             >
               {f.label}
@@ -155,9 +156,10 @@ export function MyShells({ navigation }: Props) {
               styles.filterChip,
               styles.dateChip,
               {
-                borderColor: t.border,
-                backgroundColor: activeFilter === DATE_FILTER_INDEX ? t.navBg : t.surface,
+                borderColor: t.borderSoftAlpha,
+                backgroundColor: activeFilter === DATE_FILTER_INDEX ? t.navBg : t.surfaceCardHi,
               },
+              activeFilter === DATE_FILTER_INDEX && t.shadowRaised,
             ]}
           >
             <Ionicons name="calendar-outline" size={12} color={activeFilter === DATE_FILTER_INDEX ? t.navText : t.muted} />
@@ -216,7 +218,7 @@ export function MyShells({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
+  title: { fontFamily: fonts.display, fontSize: 19 },
   headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   content: { paddingHorizontal: 14, paddingBottom: 16 },
   emptyText: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 20, textAlign: 'center' },

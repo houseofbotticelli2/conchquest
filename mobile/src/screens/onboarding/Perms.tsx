@@ -113,7 +113,7 @@ export function Perms({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { padding: 20, paddingBottom: 22 },
-  title: { fontFamily: fonts.display, fontSize: 22, fontWeight: '600', marginBottom: 4 },
+  title: { fontFamily: fonts.display, fontSize: 22, marginBottom: 4 },
   subtitle: { fontFamily: fonts.body, fontSize: 12, marginBottom: 20 },
   card: { marginBottom: 12 },
   cardRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', marginBottom: 12 },
@@ -127,6 +127,6 @@ const styles = StyleSheet.create({
   },
   iconText: { fontSize: 20 },
   cardTextWrap: { flex: 1 },
-  cardTitle: { fontFamily: fonts.display, fontSize: 14, fontWeight: '600', marginBottom: 4 },
+  cardTitle: { fontFamily: fonts.display, fontSize: 14, marginBottom: 4 },
   cardDesc: { fontFamily: fonts.body, fontSize: 12, lineHeight: 18 },
 });

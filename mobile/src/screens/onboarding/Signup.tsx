@@ -11,6 +11,12 @@ import { OnboardingStackParamList } from '../../navigation/types';
 import { useAuth } from '../../auth/AuthProvider';
 import { WEB_APP_URL } from '../../lib/supabase';
 
+// Google/Apple buttons are built but not wired to any provider yet (see
+// docs/TODO.md #71) -- hidden rather than shipped with an "isn't wired up
+// yet" caption, since testers tap them first. Flip to true once the OAuth
+// flows actually work.
+const SOCIAL_LOGIN_ENABLED = false;
+
 type Props = NativeStackScreenProps<OnboardingStackParamList, 'Signup'>;
 
 type Mode = 'signup' | 'login';
@@ -120,7 +126,7 @@ export function Signup({ navigation, route }: Props) {
               placeholderTextColor={t.muted}
               textContentType="name"
               autoComplete="name"
-              style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]}
+              style={[styles.input, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha, color: t.text }]}
             />
           </View>
         )}
@@ -135,7 +141,7 @@ export function Signup({ navigation, route }: Props) {
             keyboardType="email-address"
             textContentType="emailAddress"
             autoComplete="email"
-            style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]}
+            style={[styles.input, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha, color: t.text }]}
           />
         </View>
         <View style={styles.field}>
@@ -149,7 +155,7 @@ export function Signup({ navigation, route }: Props) {
             autoCapitalize="none"
             textContentType={isSignup ? 'newPassword' : 'password'}
             autoComplete={isSignup ? 'new-password' : 'current-password'}
-            style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]}
+            style={[styles.input, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha, color: t.text }]}
           />
         </View>
 
@@ -196,17 +202,20 @@ export function Signup({ navigation, route }: Props) {
           </Text>
         </TouchableOpacity>
 
-        <View style={styles.dividerRow}>
-          <View style={[styles.divider, { backgroundColor: t.border }]} />
-          <Text style={[styles.dividerText, { color: t.muted }]}>or</Text>
-          <View style={[styles.divider, { backgroundColor: t.border }]} />
-        </View>
+        {SOCIAL_LOGIN_ENABLED && (
+          <>
+            <View style={styles.dividerRow}>
+              <View style={[styles.divider, { backgroundColor: t.border }]} />
+              <Text style={[styles.dividerText, { color: t.muted }]}>or</Text>
+              <View style={[styles.divider, { backgroundColor: t.border }]} />
+            </View>
 
-        <View style={styles.socialActions}>
-          <Btn label="G  Continue with Google" variant="secondary" onPress={() => {}} />
-          <Btn label="🍎  Continue with Apple" variant="secondary" onPress={() => {}} />
-        </View>
-        <Text style={[styles.socialNote, { color: t.muted }]}>Social sign-in isn't wired up yet.</Text>
+            <View style={styles.socialActions}>
+              <Btn label="G  Continue with Google" variant="secondary" onPress={() => {}} />
+              <Btn label="🍎  Continue with Apple" variant="secondary" onPress={() => {}} />
+            </View>
+          </>
+        )}
       </ScrollView>
       <Dots step={1} />
     </View>
@@ -218,7 +227,7 @@ const styles = StyleSheet.create({
   statusRow: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 },
   back: { fontFamily: fonts.body, fontSize: 14 },
   content: { paddingHorizontal: 22, paddingBottom: 22 },
-  title: { fontFamily: fonts.display, fontSize: 24, fontWeight: '600', marginBottom: 4 },
+  title: { fontFamily: fonts.display, fontSize: 24, marginBottom: 4 },
   subtitle: { fontFamily: fonts.body, fontSize: 12, marginBottom: 20 },
   notice: { fontFamily: fonts.body, fontSize: 12, padding: 10, borderRadius: 6, borderWidth: 1, marginBottom: 14 },
   field: { marginBottom: 12 },
@@ -239,5 +248,4 @@ const styles = StyleSheet.create({
   divider: { flex: 1, height: 1 },
   dividerText: { fontFamily: fonts.body, fontSize: 12 },
   socialActions: { gap: 8 },
-  socialNote: { fontFamily: fonts.body, fontSize: 11, textAlign: 'center', marginTop: 8 },
 });

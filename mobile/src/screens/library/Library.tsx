@@ -52,7 +52,7 @@ export function Library({ navigation }: Props) {
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <NavBar title="Shell Library" left="← My Shells" onLeft={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.searchBox, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+        <View style={[styles.searchBox, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
           <Text style={{ color: t.muted }}>🔍</Text>
           <TextInput
             value={search}
@@ -70,7 +70,8 @@ export function Library({ navigation }: Props) {
               onPress={() => setActiveFilter(i)}
               style={[
                 styles.filterChip,
-                { borderColor: t.border, backgroundColor: i === activeFilter ? t.navBg : t.surface, color: i === activeFilter ? t.navText : t.muted },
+                { borderColor: t.borderSoftAlpha, backgroundColor: i === activeFilter ? t.navBg : t.surfaceCardHi, color: i === activeFilter ? t.navText : t.muted },
+                i === activeFilter && t.shadowRaised,
               ]}
             >
               {f.label}

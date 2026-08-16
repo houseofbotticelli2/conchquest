@@ -8,7 +8,7 @@ import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
 import { enableBeachAlerts, disableBeachAlerts } from '../../lib/notifications';
 import { useTheme } from '../../theme/ThemeProvider';
-import { fonts, scoreColor } from '../../theme/tokens';
+import { fonts, scoreColor, tabularNums } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
 import { FindRow } from '../../components/FindRow';
 import { Btn } from '../../components/Btn';
@@ -444,7 +444,7 @@ export function Profile({ navigation }: Props) {
       </SlideUpSheet>
       <ScrollView>
         <View style={[styles.userRow, { borderBottomColor: t.border }]}>
-          <View style={[styles.avatar, { backgroundColor: t.navBg }]}>
+          <View style={[styles.avatar, { backgroundColor: t.navBg, borderColor: t.surfaceCardHi }, t.shadowRaised]}>
             {profile?.avatarUrl ? (
               <Image source={{ uri: profile.avatarUrl }} style={styles.avatarPhoto} />
             ) : (
@@ -457,9 +457,11 @@ export function Profile({ navigation }: Props) {
           </View>
         </View>
 
-        <View style={[styles.statsRow, { borderBottomColor: t.border }]}>
+        {/* The trophy shelf -- lifted onto its own card rather than sharing
+            the page plane with everything else. */}
+        <View style={[styles.statsRow, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
           {statItems.map((s, i) => (
-            <View key={s.label} style={[styles.statItem, i < statItems.length - 1 && { borderRightWidth: 1, borderRightColor: t.border }]}>
+            <View key={s.label} style={[styles.statItem, i < statItems.length - 1 && { borderRightWidth: 1, borderRightColor: t.borderSoftAlpha }]}>
               <Text style={[styles.statVal, { color: statColor[s.tone] }]}>{s.val}</Text>
               <Text style={[styles.statLabel, { color: t.muted }]}>{s.label.toUpperCase()}</Text>
             </View>
@@ -514,7 +516,7 @@ export function Profile({ navigation }: Props) {
                 </View>
                 <View style={styles.beachRowScoreWrap}>
                   <Text style={[styles.beachRowScore, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
-                  <Text style={[styles.beachRowScoreLabel, { color: t.muted }]}>SHELLCAST SCORE</Text>
+                  <Text style={[styles.beachRowScoreLabel, { color: t.muted }]}>SHELLING SCORE</Text>
                 </View>
               </View>
             ))}
@@ -547,7 +549,7 @@ export function Profile({ navigation }: Props) {
           <TextInput
             value={editName}
             onChangeText={setEditName}
-            style={[styles.editInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+            style={[styles.editInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
           />
         </View>
         <View style={styles.editSection}>
@@ -556,7 +558,7 @@ export function Profile({ navigation }: Props) {
             value={editYear}
             onChangeText={setEditYear}
             keyboardType="number-pad"
-            style={[styles.editInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+            style={[styles.editInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
           />
         </View>
         {savingProfile ? (
@@ -574,7 +576,7 @@ export function Profile({ navigation }: Props) {
             onChangeText={setCurrentPassword}
             secureTextEntry
             autoCapitalize="none"
-            style={[styles.editInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+            style={[styles.editInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
           />
         </View>
         <View style={styles.editSection}>
@@ -586,7 +588,7 @@ export function Profile({ navigation }: Props) {
             placeholderTextColor={t.muted}
             secureTextEntry
             autoCapitalize="none"
-            style={[styles.editInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+            style={[styles.editInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
           />
         </View>
         <View style={styles.editSection}>
@@ -596,7 +598,7 @@ export function Profile({ navigation }: Props) {
             onChangeText={setConfirmNewPassword}
             secureTextEntry
             autoCapitalize="none"
-            style={[styles.editInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+            style={[styles.editInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
           />
         </View>
         {changingPassword ? (
@@ -686,7 +688,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
+  title: { fontFamily: fonts.display, fontSize: 19 },
   sheetRow: { paddingVertical: 14 },
   sheetRowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sheetRowText: { fontFamily: fonts.bodySemiBold, fontSize: 15 },
@@ -696,17 +698,17 @@ const styles = StyleSheet.create({
   helpBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
   helpBullet: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
   userRow: { paddingHorizontal: 18, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1 },
-  avatar: { width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatar: { width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderWidth: 2 },
   avatarPhoto: { width: '100%', height: '100%' },
-  avatarText: { fontFamily: fonts.display, fontSize: 18, fontWeight: '600' },
+  avatarText: { fontFamily: fonts.display, fontSize: 18 },
   editAvatarWrap: { alignItems: 'center', gap: 8, marginBottom: 16 },
   editAvatar: { width: 76, height: 76, borderRadius: 38 },
   changePhotoText: { fontFamily: fonts.bodySemiBold, fontSize: 13 },
-  userName: { fontFamily: fonts.display, fontSize: 17, fontWeight: '600' },
+  userName: { fontFamily: fonts.display, fontSize: 17 },
   userSub: { fontFamily: fonts.data, fontSize: 11 },
-  statsRow: { flexDirection: 'row', borderBottomWidth: 1 },
+  statsRow: { flexDirection: 'row', marginHorizontal: 14, marginTop: 14, borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
   statItem: { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  statVal: { fontFamily: fonts.displayBold, fontSize: 24 },
+  statVal: { fontFamily: fonts.displayBold, fontSize: 24 , ...tabularNums },
   statLabel: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4 },
   findsSection: { paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 },
   findsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
@@ -724,7 +726,7 @@ const styles = StyleSheet.create({
   beachRowScoreWrap: { alignItems: 'flex-end' },
   beachRowScoreLabel: { fontFamily: fonts.data, fontSize: 8, letterSpacing: 0.3 },
   beachRowName: { fontFamily: fonts.bodySemiBold, fontSize: 13 },
-  beachRowScore: { fontFamily: fonts.displayBold, fontSize: 18 },
+  beachRowScore: { fontFamily: fonts.displayBold, fontSize: 18 , ...tabularNums },
   homeBadge: {
     fontFamily: fonts.data,
     fontSize: 9,

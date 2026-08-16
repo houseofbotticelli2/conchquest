@@ -55,5 +55,5 @@ const styles = StyleSheet.create({
   sideRight: { alignItems: 'flex-end' },
   leftLabel: { fontFamily: fonts.body, fontSize: 13 },
   rightLabel: { fontFamily: fonts.bodySemiBold, fontSize: 13 },
-  title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
+  title: { fontFamily: fonts.display, fontSize: 19 },
 });

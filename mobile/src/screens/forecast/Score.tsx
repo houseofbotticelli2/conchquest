@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  place: { fontFamily: fonts.display, fontSize: 18, fontWeight: '600' },
+  place: { fontFamily: fonts.display, fontSize: 18 },
   placeSub: { fontFamily: fonts.data, fontSize: 11 },
   centerBox: { paddingVertical: 60, alignItems: 'center', paddingHorizontal: 24 },
   errorText: { fontFamily: fonts.body, fontSize: 14, textAlign: 'center' },
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
   windowCard: { marginHorizontal: 16, marginBottom: 12 },
   windowHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   windowEyebrow: { marginBottom: 0 },
-  windowTime: { fontFamily: fonts.display, fontSize: 20, fontWeight: '600', marginBottom: 2 },
+  windowTime: { fontFamily: fonts.display, fontSize: 20, marginBottom: 2 },
   windowNote: { fontFamily: fonts.data, fontSize: 12 },
   chipsRow: {
     flexDirection: 'row',

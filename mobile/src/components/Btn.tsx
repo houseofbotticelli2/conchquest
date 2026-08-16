@@ -23,6 +23,18 @@ export function Btn({ label, variant = 'primary', onPress, style, disabled }: Bt
     dark: { background: t.text, color: t.bg },
   };
   const v = variantStyle[variant];
+  // A colored glow under the primary CTA -- the cheapest "premium" signal
+  // in the app, and it reuses the accent color rather than introducing a
+  // new one. Android's elevation can't tint, so this renders as a plain
+  // grey elevation shadow there instead -- acceptable, not worth a fake-
+  // glow workaround for a button shadow.
+  const primaryGlow = {
+    shadowColor: t.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 3,
+  };
 
   return (
     <TouchableOpacity
@@ -31,6 +43,7 @@ export function Btn({ label, variant = 'primary', onPress, style, disabled }: Bt
       style={[
         styles.base,
         { backgroundColor: v.background, borderWidth: v.border ? 1.5 : 0, borderColor: v.border },
+        variant === 'primary' && !disabled && primaryGlow,
         disabled && styles.disabled,
         style,
       ]}

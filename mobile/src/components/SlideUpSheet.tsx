@@ -47,7 +47,9 @@ export function SlideUpSheet({ visible, onClose, onDismiss, title, children }: S
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} onDismiss={onDismiss}>
       <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
-      <Animated.View style={[styles.sheet, { backgroundColor: t.bg, transform: [{ translateY }] }]}>
+      {/* One step lighter than the dimmed page beneath, so the sheet visibly
+          sits *above* it rather than being the same cream. */}
+      <Animated.View style={[styles.sheet, { backgroundColor: t.surfaceCardHi, transform: [{ translateY }] }, t.shadowOverlay]}>
         <View {...panResponder.panHandlers} style={styles.dragArea}>
           <View style={[styles.handle, { backgroundColor: t.border }]} />
           <Text style={[styles.title, { color: t.text }]}>{title}</Text>
@@ -61,12 +63,12 @@ export function SlideUpSheet({ visible, onClose, onDismiss, title, children }: S
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
   sheet: {
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     paddingHorizontal: 18,
     paddingBottom: 32,
   },
   dragArea: { paddingTop: 10 },
   handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 14 },
-  title: { fontFamily: fonts.display, fontSize: 17, fontWeight: '600', marginBottom: 14 },
+  title: { fontFamily: fonts.display, fontSize: 17, marginBottom: 14 },
 });

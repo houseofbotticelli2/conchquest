@@ -245,7 +245,8 @@ export function MapScreen({ navigation }: Props) {
                 }}
                 style={[
                   styles.filterChip,
-                  { borderColor: t.border, backgroundColor: i === activeFilter ? t.navBg : t.surface, color: i === activeFilter ? t.navText : t.muted },
+                  { borderColor: t.borderSoftAlpha, backgroundColor: i === activeFilter ? t.navBg : t.surfaceCardHi, color: i === activeFilter ? t.navText : t.muted },
+                  i === activeFilter && t.shadowRaised,
                 ]}
               >
                 {f.label}
@@ -257,9 +258,10 @@ export function MapScreen({ navigation }: Props) {
                 styles.filterChip,
                 styles.dateChip,
                 {
-                  borderColor: t.border,
-                  backgroundColor: activeFilter === DATE_FILTER_INDEX ? t.navBg : t.surface,
+                  borderColor: t.borderSoftAlpha,
+                  backgroundColor: activeFilter === DATE_FILTER_INDEX ? t.navBg : t.surfaceCardHi,
                 },
+                activeFilter === DATE_FILTER_INDEX && t.shadowRaised,
               ]}
             >
               <Ionicons
@@ -350,7 +352,10 @@ export function MapScreen({ navigation }: Props) {
         style={[
           styles.mapBox,
           mapExpanded && styles.mapBoxExpanded,
-          { borderColor: t.border },
+          { borderColor: t.borderSoftAlpha },
+          // Sits on the page rather than being punched into it. Skipped
+          // when fullscreen -- there's no page left to sit on.
+          !mapExpanded && t.shadowRaised,
           // Explicit pixel width/height rather than relying on top+bottom
           // (or left+right) to auto-resolve the size of an absolutely
           // positioned view -- that inference doesn't reliably reach the
@@ -435,7 +440,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  title: { fontFamily: fonts.display, fontSize: 18, fontWeight: '600' },
+  title: { fontFamily: fonts.display, fontSize: 18 },
   titleSub: { fontFamily: fonts.data, fontSize: 11 },
   // Positioned absolutely (relative to `screen`) rather than sitting inline
   // in the scrollable content, so it can grow from a pinned 270px box into a

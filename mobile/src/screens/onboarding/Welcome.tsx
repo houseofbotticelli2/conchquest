@@ -58,8 +58,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   logoEmoji: { fontSize: 36 },
-  title: { fontFamily: fonts.displayBold, fontSize: 32, marginBottom: 4, textAlign: 'center' },
-  tagline: { fontFamily: fonts.displayItalic, fontSize: 15, marginBottom: 28, textAlign: 'center' },
+  // The one place Fraunces survives -- the wordmark, for continuity with
+  // the website. Everything else on this screen (and every other) is Figtree.
+  title: { fontFamily: fonts.wordmark, fontSize: 32, marginBottom: 4, textAlign: 'center' },
+  tagline: { fontFamily: fonts.body, fontSize: 15, marginBottom: 28, textAlign: 'center', fontStyle: 'italic' },
   card: { width: '100%', marginBottom: 24 },
   cardTitle: { fontFamily: fonts.display, fontSize: 17, marginBottom: 14 },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 11 },

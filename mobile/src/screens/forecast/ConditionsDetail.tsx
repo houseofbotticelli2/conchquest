@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { padding: 16, paddingBottom: 24, gap: 12 },
   headerCard: {},
-  temp: { fontFamily: fonts.display, fontSize: 22, fontWeight: '600', marginBottom: 2 },
+  temp: { fontFamily: fonts.display, fontSize: 22, marginBottom: 2 },
   sub: { fontFamily: fonts.data, fontSize: 12 },
   statsRow: { flexDirection: 'row', gap: 12 },
   statCard: { flex: 1 },

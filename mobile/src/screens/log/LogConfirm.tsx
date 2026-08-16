@@ -61,11 +61,11 @@ export function LogConfirm({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
-  headerTitle: { fontFamily: fonts.display, fontSize: 16, fontWeight: '600' },
+  headerTitle: { fontFamily: fonts.display, fontSize: 16 },
   content: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24, paddingTop: 20 },
   check: { width: 72, height: 72, borderRadius: 36, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
   checkMark: { fontSize: 36 },
-  title: { fontFamily: fonts.display, fontSize: 22, fontWeight: '600', marginBottom: 8 },
+  title: { fontFamily: fonts.display, fontSize: 22, marginBottom: 8 },
   subtitle: { fontFamily: fonts.body, fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
   card: { width: '100%', marginBottom: 24 },
   conditionsRow: { flexDirection: 'row', justifyContent: 'space-around' },

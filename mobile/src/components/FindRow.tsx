@@ -22,7 +22,7 @@ export function FindRow({ icon, bg, name, sub, badge, dateSuffix, condition, not
   const { theme: t } = useTheme();
   return (
     <TouchableOpacity onPress={onPress} disabled={!onPress} style={[styles.row, { borderBottomColor: t.borderSoft }]}>
-      <View style={[styles.icon, { backgroundColor: bg, borderColor: t.border }]}>
+      <View style={[styles.icon, { backgroundColor: bg, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
         {photoUrl ? <Image source={{ uri: photoUrl }} style={styles.photo} /> : <Text style={styles.iconText}>{icon}</Text>}
       </View>
       <View style={styles.body}>

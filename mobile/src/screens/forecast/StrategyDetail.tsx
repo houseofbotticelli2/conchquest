@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   windowCard: {},
   windowHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   windowEyebrow: { marginBottom: 0 },
-  windowTime: { fontFamily: fonts.display, fontSize: 20, fontWeight: '600', marginBottom: 2 },
+  windowTime: { fontFamily: fonts.display, fontSize: 20, marginBottom: 2 },
   windowNote: { fontFamily: fonts.data, fontSize: 12 },
   strategyCard: {},
   strategyLoading: { marginTop: 10, alignSelf: 'flex-start' },

@@ -4,7 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
-import { fonts, scoreColor } from '../../theme/tokens';
+import { fonts, scoreColor, tabularNums } from '../../theme/tokens';
 import { Btn } from '../../components/Btn';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { ShellingMap } from '../../components/ShellingMap';
@@ -297,7 +297,7 @@ export function Beaches(_props: Props) {
           </View>
         )}
 
-        <View style={[styles.searchBox, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+        <View style={[styles.searchBox, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
           <Text style={{ color: t.muted }}>🔍</Text>
           <TextInput
             value={search}
@@ -342,7 +342,10 @@ export function Beaches(_props: Props) {
               }}
               style={[
                 styles.beachCard,
-                { backgroundColor: t.surface, borderColor: b.isHome ? t.accent : t.border, borderWidth: b.isHome ? 1.5 : 1 },
+                { backgroundColor: t.surfaceCardHi, borderColor: b.isHome ? t.accent : t.borderSoftAlpha, borderWidth: b.isHome ? 1.5 : 1 },
+                // Home beach is elevated, not just outlined -- it should
+                // read as the one card sitting above the rest.
+                b.isHome ? t.shadowFloating : t.shadowRaised,
               ]}
             >
               {editingId === b.id ? (
@@ -363,7 +366,7 @@ export function Beaches(_props: Props) {
                     </View>
                     <View style={styles.scoreWrap}>
                       <Text style={[styles.scoreVal, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
-                      <Text style={[styles.scoreLabel, { color: t.muted }]}>SHELLCAST SCORE</Text>
+                      <Text style={[styles.scoreLabel, { color: t.muted }]}>SHELLING SCORE</Text>
                     </View>
                   </View>
                 </View>
@@ -385,7 +388,7 @@ export function Beaches(_props: Props) {
                     </View>
                     <View style={styles.scoreWrap}>
                       <Text style={[styles.scoreVal, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
-                      <Text style={[styles.scoreLabel, { color: t.muted }]}>SHELLCAST SCORE</Text>
+                      <Text style={[styles.scoreLabel, { color: t.muted }]}>SHELLING SCORE</Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -398,7 +401,7 @@ export function Beaches(_props: Props) {
                     <TextInput
                       value={editName}
                       onChangeText={setEditName}
-                      style={[styles.nameInput, { borderColor: t.border, color: t.text, backgroundColor: t.inputBg }]}
+                      style={[styles.nameInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
                     />
                   </View>
 
@@ -490,7 +493,7 @@ export function Beaches(_props: Props) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  title: { fontFamily: fonts.display, fontSize: 19, fontWeight: '600' },
+  title: { fontFamily: fonts.display, fontSize: 19 },
   content: { paddingHorizontal: 14, paddingBottom: 16 },
   addBox: { borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 14 },
   addInput: { fontFamily: fonts.body, fontSize: 13, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12 },
@@ -509,10 +512,10 @@ const styles = StyleSheet.create({
   beachTopRow: { flexDirection: 'row', justifyContent: 'space-between' },
   nameColumn: { justifyContent: 'space-between' },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  beachName: { fontFamily: fonts.display, fontSize: 14, fontWeight: '600' },
+  beachName: { fontFamily: fonts.display, fontSize: 14 },
   homeBadge: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4, borderRadius: 10, paddingVertical: 2, paddingHorizontal: 7, borderWidth: 1, overflow: 'hidden' },
   scoreWrap: { alignItems: 'flex-end', justifyContent: 'space-between' },
-  scoreVal: { fontFamily: fonts.displayBold, fontSize: 28, lineHeight: 30 },
+  scoreVal: { fontFamily: fonts.displayBold, fontSize: 28, lineHeight: 30 , ...tabularNums },
   scoreLabel: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4 },
   cardAlertText: { fontFamily: fonts.data, fontSize: 11 },
   editPanel: { borderTopWidth: 1, padding: 14, gap: 14 },

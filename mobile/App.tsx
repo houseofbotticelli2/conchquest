@@ -3,9 +3,13 @@ import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useFonts, Fraunces_400Regular, Fraunces_400Regular_Italic, Fraunces_600SemiBold, Fraunces_700Bold } from '@expo-google-fonts/fraunces';
-import { PublicSans_400Regular, PublicSans_500Medium, PublicSans_600SemiBold } from '@expo-google-fonts/public-sans';
-import { IBMPlexMono_500Medium, IBMPlexMono_600SemiBold } from '@expo-google-fonts/ibm-plex-mono';
+import { useFonts, Fraunces_700Bold } from '@expo-google-fonts/fraunces';
+import {
+  Figtree_400Regular,
+  Figtree_500Medium,
+  Figtree_600SemiBold,
+  Figtree_800ExtraBold,
+} from '@expo-google-fonts/figtree';
 import { ThemeProvider } from './src/theme/ThemeProvider';
 import { AuthProvider } from './src/auth/AuthProvider';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -13,15 +17,14 @@ import { setupNotificationTapHandler } from './src/lib/notifications';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Fraunces_400Regular,
-    Fraunces_400Regular_Italic,
-    Fraunces_600SemiBold,
+    // Figtree carries the whole UI -- hierarchy comes from weight, not from
+    // mixing typefaces. Fraunces survives only as the "Conchquest" wordmark
+    // on the welcome screen, for brand continuity with the website.
+    Figtree_400Regular,
+    Figtree_500Medium,
+    Figtree_600SemiBold,
+    Figtree_800ExtraBold,
     Fraunces_700Bold,
-    PublicSans_400Regular,
-    PublicSans_500Medium,
-    PublicSans_600SemiBold,
-    IBMPlexMono_500Medium,
-    IBMPlexMono_600SemiBold,
   });
 
   useEffect(() => setupNotificationTapHandler(), []);

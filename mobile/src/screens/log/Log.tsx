@@ -255,7 +255,9 @@ export function Log({ navigation, route }: Props) {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={[styles.photoBox, { backgroundColor: t.surfaceAlt, borderBottomColor: t.border }]}
+            // Recessed + dashed reads as "put something here" -- an empty
+            // dropzone at the same tone as the page just looks broken.
+            style={[styles.photoBox, styles.photoBoxEmpty, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}
             onPress={() => setPhotoSourceOpen(true)}
           >
             <Text style={{ fontSize: 28 }}>📷</Text>
@@ -289,7 +291,7 @@ export function Log({ navigation, route }: Props) {
               <View style={styles.speciesColumn} onLayout={handleSpeciesBoxLayout}>
                 <Eyebrow>Shell species</Eyebrow>
                 {selectedSpecies ? (
-                  <View style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+                  <View style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
                     <View style={{ flexShrink: 1 }}>
                       <Text style={[styles.inputText, { color: t.text }]}>{selectedSpecies.commonName}</Text>
                       <Text style={[styles.speciesSci, { color: t.muted }]}>{selectedSpecies.scientificName}</Text>
@@ -299,7 +301,7 @@ export function Log({ navigation, route }: Props) {
                     </TouchableOpacity>
                   </View>
                 ) : (
-                  <View style={[styles.inputRow, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+                  <View style={[styles.inputRow, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
                     <Text style={{ color: t.muted }}>🔍</Text>
                     <TextInput
                       value={speciesQuery}
@@ -317,7 +319,7 @@ export function Log({ navigation, route }: Props) {
             <View>
               <Eyebrow>Shell species</Eyebrow>
               {selectedSpecies ? (
-                <View style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+                <View style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
                   <View style={{ flexShrink: 1 }}>
                     <Text style={[styles.inputText, { color: t.text }]}>{selectedSpecies.commonName}</Text>
                     <Text style={[styles.speciesSci, { color: t.muted }]}>{selectedSpecies.scientificName}</Text>
@@ -327,7 +329,7 @@ export function Log({ navigation, route }: Props) {
                   </TouchableOpacity>
                 </View>
               ) : (
-                <View style={[styles.inputRow, { backgroundColor: t.inputBg, borderColor: t.border }]}>
+                <View style={[styles.inputRow, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
                   <Text style={{ color: t.muted }}>🔍</Text>
                   <TextInput
                     value={speciesQuery}
@@ -383,10 +385,10 @@ export function Log({ navigation, route }: Props) {
             <Eyebrow>Location sharing</Eyebrow>
             <TouchableOpacity
               onPress={() => setIsPrivate((prev) => !prev)}
-              style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.inputBg, borderColor: t.border }]}
+              style={[styles.inputRow, styles.spaceBetween, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}
             >
               <Text style={[styles.inputText, { color: t.text }]}>
-                {isPrivate ? '🔒 Private - only visible to you' : '🌐 Public · exact location shown'}
+                {isPrivate ? '🔒 Private - only visible to you' : '🌐 Public - visible to everyone'}
               </Text>
               <Text style={[styles.changeText, { color: t.muted }]}>CHANGE</Text>
             </TouchableOpacity>
@@ -400,7 +402,7 @@ export function Log({ navigation, route }: Props) {
               placeholder="Add a note..."
               placeholderTextColor={t.muted}
               multiline
-              style={[styles.notesBox, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]}
+              style={[styles.notesBox, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha, color: t.text }]}
             />
           </View>
 
@@ -463,6 +465,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   scrollContent: { paddingBottom: 200 },
   photoBox: { height: 160, alignItems: 'center', justifyContent: 'center', gap: 6, borderBottomWidth: 1, overflow: 'hidden' },
+  photoBoxEmpty: { borderBottomWidth: 0, borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 10, marginHorizontal: 14, marginTop: 4 },
   photoText: { fontFamily: fonts.body, fontSize: 12 },
   photoPreview: { width: '100%', height: '100%' },
   photoRemove: { position: 'absolute', top: 10, right: 10 },
