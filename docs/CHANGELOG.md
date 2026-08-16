@@ -7,7 +7,9 @@ Build numbers here are the **production/TestFlight** build number
 
 ## Unreleased (not yet in a numbered build)
 
-Built and committed, pending the next production build + TestFlight submission:
+Nothing pending -- everything committed so far has shipped.
+
+## Build 6 — v0.1.0 (shipped 2026-08-16)
 
 - **Redesigned for depth** — a tester said the app looked "flat." Every
   surface used to be one of two colors separated by a hairline, with no
