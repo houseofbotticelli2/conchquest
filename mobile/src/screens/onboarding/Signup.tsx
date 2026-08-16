@@ -112,7 +112,7 @@ export function Signup({ navigation, route }: Props) {
           </Text>
         )}
         {error && (
-          <Text style={[styles.notice, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceAlt }]}>
+          <Text style={[styles.notice, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceInset }]}>
             {error}
           </Text>
         )}

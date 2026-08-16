@@ -279,7 +279,7 @@ export function Log({ navigation, route }: Props) {
                 onPress={() => currentPhotoUri && setPhotoViewerOpen(true)}
                 style={[
                   styles.photoSquare,
-                  { width: speciesBoxHeight, height: speciesBoxHeight, borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceInset },
+                  { width: speciesBoxHeight, height: speciesBoxHeight, borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceCardHi },
                   t.shadowRaised,
                 ]}
               >

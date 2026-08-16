@@ -183,7 +183,7 @@ export function MyShells({ navigation }: Props) {
             <FindRow
               key={f.id}
               icon="🐚"
-              bg={t.surfaceAlt}
+              bg={t.surfaceInset}
               name={f.speciesName ?? 'Unidentified shell'}
               sub=""
               dateSuffix={formatFindDate(f.foundAt)}

@@ -117,7 +117,9 @@ function scoreWindSpeed(conditions: NormalizedConditions): ScoreFactor {
 
 function scoreWindDirection(conditions: NormalizedConditions): ScoreFactor {
   const points = Math.round(WEIGHTS.windDirection * 0.5);
-  const explanation = `Wind from ${conditions.wind.directionCompass} — onshore/offshore effect can't be scored precisely yet without this beach's orientation on file.`;
+  // Phrased as a neutral hold, not a failure -- the old wording read like
+  // an error message and made users think the wind direction was *bad*.
+  const explanation = `Wind from ${conditions.wind.directionCompass} — scored neutral until we learn this beach's orientation.`;
   return { key: 'windDirection', label: 'Wind Direction', points, maxPoints: WEIGHTS.windDirection, explanation };
 }
 

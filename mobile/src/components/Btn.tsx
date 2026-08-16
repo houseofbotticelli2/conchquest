@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TouchableOpacity, StyleSheet, ViewStyle, StyleProp, GestureResponderEvent } from 'react-native';
+import { Text, Pressable, StyleSheet, ViewStyle, StyleProp, GestureResponderEvent } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 
@@ -19,7 +19,10 @@ export function Btn({ label, variant = 'primary', onPress, style, disabled }: Bt
   const variantStyle: Record<Variant, { background: string; color: string; border?: string }> = {
     primary: { background: t.accent, color: '#fff' },
     secondary: { background: 'transparent', color: t.text, border: t.text },
-    ghost: { background: t.surfaceAlt, color: t.text },
+    // Recessed with a visible edge rather than a flat tan fill -- the old
+    // fill read as *disabled* rather than secondary (this is the "Log in"
+    // button on Welcome).
+    ghost: { background: t.surfaceInset, color: t.text, border: t.borderSoftAlpha },
     dark: { background: t.text, color: t.bg },
   };
   const v = variantStyle[variant];
@@ -36,20 +39,26 @@ export function Btn({ label, variant = 'primary', onPress, style, disabled }: Bt
     elevation: 3,
   };
 
+  const pressedGlow = { ...primaryGlow, shadowOpacity: 0.12, shadowRadius: 4, elevation: 1 };
+
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={[
+      // Pressable (not TouchableOpacity) so the button can actually
+      // compress: the glow collapses and the surface darkens, rather than
+      // the whole control just fading out.
+      style={({ pressed }) => [
         styles.base,
         { backgroundColor: v.background, borderWidth: v.border ? 1.5 : 0, borderColor: v.border },
-        variant === 'primary' && !disabled && primaryGlow,
+        variant === 'primary' && !disabled && (pressed ? pressedGlow : primaryGlow),
+        pressed && !disabled && styles.pressed,
         disabled && styles.disabled,
         style,
       ]}
     >
       <Text style={[styles.label, { color: v.color }]}>{label}</Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -66,5 +75,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodySemiBold,
     fontSize: 15,
   },
+  // Compresses rather than fades -- a card/button should feel pushed in.
+  pressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
   disabled: { opacity: 0.5 },
 });

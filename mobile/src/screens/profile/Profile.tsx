@@ -482,7 +482,7 @@ export function Profile({ navigation }: Props) {
               <FindRow
                 key={f.id}
                 icon="🐚"
-                bg={t.surfaceAlt}
+                bg={t.surfaceInset}
                 name={f.speciesName ?? 'Unidentified shell'}
                 sub={`${formatFindDate(f.foundAt)}${f.condition ? ` · ${f.condition}` : ''}`}
                 badge={toBadgeType(f.speciesRarity)}
@@ -506,7 +506,7 @@ export function Profile({ navigation }: Props) {
                   <View style={styles.beachRowNameLine}>
                     <Text style={[styles.beachRowName, { color: t.text }]}>{b.name}</Text>
                     {b.isHome && (
-                      <Text style={[styles.homeBadge, { backgroundColor: t.surfaceCardHi, color: t.text, borderColor: t.borderSoftAlpha }]}>
+                      <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>
                         HOME
                       </Text>
                     )}

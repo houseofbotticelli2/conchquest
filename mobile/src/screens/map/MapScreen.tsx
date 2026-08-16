@@ -299,7 +299,7 @@ export function MapScreen({ navigation }: Props) {
                 <FindRow
                   key={f.id}
                   icon="🐚"
-                  bg={t.surfaceAlt}
+                  bg={t.surfaceInset}
                   name={f.speciesName ?? 'Unidentified shell'}
                   sub=""
                   dateSuffix={formatFindDate(f.foundAt)}
@@ -324,7 +324,7 @@ export function MapScreen({ navigation }: Props) {
             <View style={styles.pickerRowNameLine}>
               <Text style={[styles.pickerRowName, { color: t.text }]}>{b.name}</Text>
               {b.isHome && (
-                <Text style={[styles.homeBadge, { backgroundColor: t.surfaceCardHi, color: t.text, borderColor: t.borderSoftAlpha }]}>HOME</Text>
+                <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>HOME</Text>
               )}
             </View>
             <Text style={[styles.pickerRowScore, { color: scoreColor(b.score, t) }]}>{b.score}</Text>

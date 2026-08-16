@@ -167,7 +167,7 @@ export function FindDetail({ navigation, route }: Props) {
                 onPress={() => find.photoUrl && setPhotoViewerOpen(true)}
                 style={[
                   styles.photoSquare,
-                  { width: speciesBoxHeight, height: speciesBoxHeight, borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceInset },
+                  { width: speciesBoxHeight, height: speciesBoxHeight, borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceCardHi },
                   t.shadowRaised,
                 ]}
               >

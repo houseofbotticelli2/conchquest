@@ -355,7 +355,7 @@ export function Beaches(_props: Props) {
                       <View style={styles.nameRow}>
                         <Text style={[styles.beachName, { color: t.text }]}>{b.name}</Text>
                         {b.isHome && (
-                          <Text style={[styles.homeBadge, { backgroundColor: t.surfaceCardHi, color: t.text, borderColor: t.borderSoftAlpha }]}>
+                          <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>
                             HOME
                           </Text>
                         )}
@@ -377,7 +377,7 @@ export function Beaches(_props: Props) {
                       <View style={styles.nameRow}>
                         <Text style={[styles.beachName, { color: t.text }]}>{b.name}</Text>
                         {b.isHome && (
-                          <Text style={[styles.homeBadge, { backgroundColor: t.surfaceCardHi, color: t.text, borderColor: t.borderSoftAlpha }]}>
+                          <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>
                             HOME
                           </Text>
                         )}

@@ -15,6 +15,15 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
+// Sea-green reads as "good" across the app, so it must not be used for a
+// UV level that means "cover up." Mirrors scoreColor's green/gold/coral
+// progression so the whole app speaks one color language.
+function uvColor(uv: number, t: { sea: string; accent: string }): string {
+  if (uv <= 5) return t.sea;
+  if (uv <= 7) return '#D9B36C';
+  return t.accent;
+}
+
 function uvCategory(uv: number): string {
   if (uv <= 2) return 'Low';
   if (uv <= 5) return 'Moderate';
@@ -75,7 +84,7 @@ export function ConditionsDetail({ navigation, route }: Props) {
             {weather.uvIndex != null ? (
               <>
                 <Text style={[styles.statValue, { color: t.text }]}>{weather.uvIndex.toFixed(1)}</Text>
-                <Text style={[styles.statNote, { color: t.sea }]}>{uvCategory(weather.uvIndex)}</Text>
+                <Text style={[styles.statNote, { color: uvColor(weather.uvIndex, t) }]}>{uvCategory(weather.uvIndex)}</Text>
               </>
             ) : (
               <Text style={[styles.statNote, { color: t.muted, marginTop: 6 }]}>Only available for today</Text>
