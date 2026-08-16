@@ -272,7 +272,7 @@ export function Beaches(_props: Props) {
             {newAlertEnabled && (
               <View style={styles.addSection}>
                 <Text style={[styles.editLabel, { color: t.muted }]}>ALERT THRESHOLD</Text>
-                <View style={styles.alertStepperRow}>
+                <View style={[styles.alertStepperRow, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
                   <TouchableOpacity onPress={() => adjustNewAlert(-ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
                     <Ionicons name="arrow-down-circle-outline" size={26} color={t.text} />
                   </TouchableOpacity>
@@ -402,7 +402,7 @@ export function Beaches(_props: Props) {
                     <TextInput
                       value={editName}
                       onChangeText={setEditName}
-                      style={[styles.nameInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceInset }]}
+                      style={[styles.nameInput, { borderColor: t.borderSoftAlpha, color: t.text, backgroundColor: t.surfaceCardHi }, t.shadowRaised]}
                     />
                   </View>
 
@@ -425,7 +425,7 @@ export function Beaches(_props: Props) {
 
                   <View style={styles.editSection}>
                     <Text style={[styles.editLabel, { color: t.muted }]}>ALERT THRESHOLD</Text>
-                    <View style={styles.alertStepperRow}>
+                    <View style={[styles.alertStepperRow, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
                       <TouchableOpacity onPress={() => adjustDraftAlert(-ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
                         <Ionicons name="arrow-down-circle-outline" size={26} color={t.text} />
                       </TouchableOpacity>
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
   editSection: { gap: 6 },
   editLabel: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4 },
   nameInput: { fontFamily: fonts.body, fontSize: 13, borderWidth: 1, borderRadius: 6, paddingVertical: 8, paddingHorizontal: 10 },
-  alertStepperRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  alertStepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderWidth: 1, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10 },
   stepperBtn: { padding: 2 },
   editActionsRow: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingTop: 2 },
   alertText: { fontFamily: fonts.data, fontSize: 11, flex: 1 },
