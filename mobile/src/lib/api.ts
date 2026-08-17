@@ -6,19 +6,75 @@ const API_BASE_URL = 'https://conchquest-api-dev.up.railway.app';
 
 export class ApiError extends Error {}
 
+// Screens render error.message straight to the user, so anything thrown here
+// is product copy. Without this, a dropped connection showed testers
+// "fetch failed: UnexpectedException: The network connection was lost.
+// (at ExpoModulesCore/Promise.swift:56)" -- a Swift file and line number, on
+// the Shellcast screen.
+const NETWORK_MESSAGE = "Couldn't reach Conchquest. Check your connection and try again.";
+
+const REQUEST_TIMEOUT_MS = 15_000;
+const RETRY_DELAY_MS = 800;
+// Photo uploads are several MB over whatever signal a beach has; they need
+// far longer than a read before we call them dead.
+const UPLOAD_TIMEOUT_MS = 90_000;
+
+/**
+ * Transport-level failure, as opposed to the server answering with an error.
+ * fetch() rejects with TypeError when the connection itself fails -- which is
+ * how iOS surfaces NSURLErrorNetworkConnectionLost (-1005), the "connection
+ * died mid-request" you get on a Wi-Fi/cellular handoff or after the app has
+ * been backgrounded. Our own timeout arrives as AbortError.
+ */
+function isNetworkError(err: unknown): boolean {
+  return err instanceof TypeError || (err instanceof Error && err.name === 'AbortError');
+}
+
+// Without a timeout a dead socket can hang until iOS gives up, which reads as
+// a frozen screen rather than a failure the user can act on.
+async function fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!token) throw new ApiError('Not logged in');
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  const url = `${API_BASE_URL}${path}`;
+  const requestOptions: RequestInit = {
     ...options,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
       ...options.headers,
     },
-  });
+  };
+
+  // Only retry reads. A dropped connection gives no clue whether the server
+  // processed the request before the socket died, so replaying a POST could
+  // log the same find twice -- worse than the error we're papering over.
+  const isRead = (options.method ?? 'GET').toUpperCase() === 'GET';
+
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(url, requestOptions);
+  } catch (err) {
+    if (!isNetworkError(err) || !isRead) throw new ApiError(NETWORK_MESSAGE);
+    // These failures are transient by nature; one retry usually lands.
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+    try {
+      res = await fetchWithTimeout(url, requestOptions);
+    } catch {
+      throw new ApiError(NETWORK_MESSAGE);
+    }
+  }
 
   const text = await res.text();
   let json: unknown = null;
@@ -220,7 +276,30 @@ export function requestPhotoUploadUrl(
 
 export async function uploadPhoto(uploadUrl: string, uri: string, contentType: PhotoContentType): Promise<void> {
   const photoBlob = await (await fetch(uri)).blob();
-  const res = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': contentType }, body: photoBlob });
+
+  // This goes straight to the bucket's presigned URL, so it doesn't pass
+  // through apiFetch and needs its own handling. Photos run to several MB and
+  // people log finds standing on a beach, so the 15s read timeout would cut
+  // off perfectly healthy uploads -- hence a much longer one here.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+
+  let res: Response;
+  try {
+    res = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': contentType },
+      body: photoBlob,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    // Safe to leave to the caller's retry: the presigned URL targets one fixed
+    // key, so re-uploading overwrites rather than duplicating.
+    throw new ApiError(isNetworkError(err) ? NETWORK_MESSAGE : 'Photo upload failed. Please try again.');
+  } finally {
+    clearTimeout(timer);
+  }
+
   if (!res.ok) {
     throw new ApiError(`Photo upload failed (${res.status})`);
   }
