@@ -15,6 +15,10 @@ diagram below, for slides, chat, or anywhere that won't render mermaid. The
 fence is the source; **the images do not update themselves**. After changing
 it, regenerate them so they don't quietly disagree with the code:
 
+(First run on a new machine downloads a headless Chrome to
+`~/.cache/puppeteer`, roughly 200 MB -- mermaid-cli renders through a real
+browser. It looks like a hang; it isn't.)
+
 ```bash
 npx -y @mermaid-js/mermaid-cli@11 -i <(sed -n '/```mermaid/,/```/p' docs/ARCHITECTURE.md | sed '1d;$d') -o docs/architecture.png -b '#F2ECE4' -w 2400 -s 2
 ```
