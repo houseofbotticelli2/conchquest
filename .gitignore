@@ -1,2 +1,7 @@
 .DS_Store
 .claude/settings.local.json
+
+# Local DB dumps -- real user data, never commit
+backups/
+*.dump
+*.dump.SUSPECT

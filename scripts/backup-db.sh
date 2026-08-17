@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+#
+# Dumps the shared Conchquest Postgres database to a local file.
+#
+# This is the OFFSITE layer of the backup story. Railway's own scheduled
+# backups protect against bad migrations and accidental deletes, but they
+# live inside Railway -- if that account is ever lost or suspended, they go
+# with it. This script produces a copy you control. Put the output
+# somewhere durable (iCloud/Dropbox/an external drive); a dump sitting only
+# on this Mac is one spilled coffee from being no backup at all.
+#
+# Usage:
+#   ./scripts/backup-db.sh              # writes to ./backups/
+#   ./scripts/backup-db.sh ~/Dropbox/cq # writes to a directory you choose
+#
+# Requires: railway CLI (logged in), pg_dump 17+, and the SSH key registered
+# with Railway -- see docs/TABLEPLUS_DATABASE_ACCESS.md for that setup.
+
+set -euo pipefail
+
+OUT_DIR="${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/backups}"
+TUNNEL_PORT=5433
+SERVICE=conchquest-postgres
+KEEP=14  # local dumps to retain; Railway keeps its own separate history
+
+# Must match the server's major version -- an older pg_dump refuses to dump
+# a newer server outright, so don't silently fall back to whatever is on PATH.
+PG_DUMP=/opt/homebrew/opt/postgresql@17/bin/pg_dump
+[ -x "$PG_DUMP" ] || PG_DUMP=$(command -v pg_dump)
+# pg_restore must match too -- an older pg_restore can't even *read* a newer
+# archive ("unsupported version in file header"), which would make the
+# verify step below fail on a perfectly good dump.
+PG_RESTORE=/opt/homebrew/opt/postgresql@17/bin/pg_restore
+[ -x "$PG_RESTORE" ] || PG_RESTORE=$(command -v pg_restore)
+
+cd "$(dirname "${BASH_SOURCE[0]}")/../api"   # railway CLI needs the linked dir
+
+mkdir -p "$OUT_DIR"
+STAMP=$(date +%Y-%m-%d_%H%M%S)
+OUT_FILE="$OUT_DIR/conchquest_$STAMP.dump"
+
+# The database has no public host (see docs/TODO.md #79) -- everything goes
+# through an SSH tunnel that only exists while this process is alive.
+echo "Opening tunnel on port $TUNNEL_PORT..."
+railway connect "$SERVICE" --tunnel-only --ssh -P "$TUNNEL_PORT" >/tmp/cq-backup-tunnel.log 2>&1 &
+TUNNEL_PID=$!
+
+cleanup() {
+  # Kill the whole tree: the railway CLI spawns its own ssh child, and
+  # killing only the parent leaves the port held open.
+  pkill -P "$TUNNEL_PID" 2>/dev/null || true
+  kill "$TUNNEL_PID" 2>/dev/null || true
+}
+trap cleanup EXIT
+
+for _ in $(seq 1 30); do
+  nc -z 127.0.0.1 "$TUNNEL_PORT" 2>/dev/null && break
+  sleep 1
+done
+
+if ! nc -z 127.0.0.1 "$TUNNEL_PORT" 2>/dev/null; then
+  echo "ERROR: tunnel never came up. Last output:" >&2
+  cat /tmp/cq-backup-tunnel.log >&2
+  exit 1
+fi
+
+PASSWORD=$(grep -o 'Password: .*' /tmp/cq-backup-tunnel.log | head -1 | awk '{print $2}')
+if [ -z "$PASSWORD" ]; then
+  echo "ERROR: could not read the DB password from the tunnel output." >&2
+  exit 1
+fi
+
+echo "Dumping to $OUT_FILE ..."
+# Custom format (-Fc): compressed, and restorable selectively with pg_restore.
+PGPASSWORD="$PASSWORD" "$PG_DUMP" \
+  -h 127.0.0.1 -p "$TUNNEL_PORT" -U postgres -d railway \
+  -Fc --no-owner --no-privileges \
+  -f "$OUT_FILE"
+
+SIZE=$(du -h "$OUT_FILE" | cut -f1)
+
+# A dump that silently wrote 0 rows is worse than no dump, because you'd
+# trust it. Verify it's readable and actually contains the finds table.
+if ! "$PG_RESTORE" --list "$OUT_FILE" 2>/dev/null | grep -q "shell_finds"; then
+  echo "ERROR: dump wrote but does not contain shell_finds -- treating as failed." >&2
+  mv "$OUT_FILE" "$OUT_FILE.SUSPECT"
+  exit 1
+fi
+
+echo "OK: $OUT_FILE ($SIZE)"
+
+# Prune old local dumps. Railway's retention is separate and unaffected.
+ls -1t "$OUT_DIR"/conchquest_*.dump 2>/dev/null | tail -n +$((KEEP + 1)) | while read -r old; do
+  echo "Pruning old dump: $(basename "$old")"
+  rm -f "$old"
+done
+
+echo
+echo "Restore with:"
+echo "  $PG_RESTORE -h 127.0.0.1 -p $TUNNEL_PORT -U postgres -d railway --clean --no-owner \"$OUT_FILE\""
