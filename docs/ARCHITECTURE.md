@@ -10,6 +10,15 @@ Read off the live system on 2026-08-17 -- the Railway service list, the three
 Line style carries meaning: solid is a runtime request, dotted is build and
 deploy, thick is the nightly backup pull, dashed red is planned but not built.
 
+`architecture.png` and `architecture.svg` in this folder are exports of the
+diagram below, for slides, chat, or anywhere that won't render mermaid. The
+fence is the source; **the images do not update themselves**. After changing
+it, regenerate them so they don't quietly disagree with the code:
+
+```bash
+npx -y @mermaid-js/mermaid-cli@11 -i <(sed -n '/```mermaid/,/```/p' docs/ARCHITECTURE.md | sed '1d;$d') -o docs/architecture.png -b '#F2ECE4' -w 2400 -s 2
+```
+
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'16px','primaryTextColor':'#0F2A3D','lineColor':'#4A6274','clusterBkg':'#EAE2D6','clusterBorder':'#C9B896','edgeLabelBackground':'#F2ECE4'},'flowchart':{'nodeSpacing':45,'rankSpacing':110,'padding':14,'useMaxWidth':false,'htmlLabels':false}}}%%
 flowchart LR
@@ -26,7 +35,7 @@ flowchart LR
 
   cf["Cloudflare Access<br/>planned, not built"]:::planned
 
-  subgraph RW ["Railway &mdash; project: conchquest"]
+  subgraph RW ["Railway — project: conchquest"]
     direction TB
     admin["admin<br/>React SPA"]:::svc
     web["web<br/>Astro static site"]:::svc
@@ -39,13 +48,13 @@ flowchart LR
   resend["Resend<br/>SMTP for auth email"]:::ext
   feeds["Data feeds<br/>NOAA · NDBC<br/>Open-Meteo · OpenAI"]:::ext
 
-  subgraph SHIP ["Source &amp; delivery"]
+  subgraph SHIP ["Source & delivery"]
     direction TB
     gh["GitHub<br/>houseofbotticelli2/conchquest"]:::ext
     eas["EAS Build<br/>TestFlight · APK"]:::ext
   end
 
-  subgraph BK ["Nightly backup &mdash; 12:30 daily"]
+  subgraph BK ["Nightly backup — 12:30 daily"]
     direction TB
     mac["Your Mac<br/>launchd job"]:::backup
     icloud[("iCloud Drive")]:::backup

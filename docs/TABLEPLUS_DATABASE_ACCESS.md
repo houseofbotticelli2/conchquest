@@ -158,6 +158,41 @@ your machine.
    This one is only ever local dev data on your machine, not the real
    shared database.
 
+## Connecting to Supabase's database (and what you can see there)
+
+Everything above is the **Railway** database -- finds, beaches, species. User
+accounts are not in it. Those live in Supabase, which is a separate Postgres
+database, and there are two different doors into it that see different things:
+
+| Door | Credential | Sees password hashes? |
+| --- | --- | --- |
+| HTTPS Admin API (`/auth/v1/admin/*`) | `SUPABASE_SERVICE_ROLE_KEY` | **No** |
+| Postgres connection | the database password | **Yes** |
+
+The API's refusal is deliberate and not a permission you can raise -- no
+service-role key will return `auth.users.encrypted_password`. That asymmetry
+is the whole reason `scripts/backup-supabase-auth.sh` exists alongside
+`api/scripts/backup-auth.mjs`: the API export captures who your users are, and
+only a direct Postgres dump captures their credentials.
+
+**These two secrets are not interchangeable.** The database password is the
+more dangerous of the two in one specific respect: it is the only credential
+that exposes password hashes. Bear that in mind before putting it somewhere
+convenient.
+
+To browse it in TablePlus, use `SUPABASE_DB_URL` from `api/.env` -- TablePlus
+accepts the connection string directly, no tunnel needed (unlike Railway).
+Take the **session pooler** string on port 5432, not the transaction pooler on
+6543. Once connected, `auth.users` is fully readable, hash column included.
+
+**The auth dumps in `.../Conchquest Backups/supabase-auth/` are as sensitive
+as that password.** They contain every user's bcrypt hash -- not reversible,
+but crackable offline for weak passwords -- plus live `recovery_token`,
+`confirmation_token`, and `email_change_token` values, which are the contents
+of password-reset emails. They are written `0600` for that reason. Don't copy
+them somewhere less private than the backups directory, and delete any
+scratch copies you make while poking at one.
+
 ## Troubleshooting
 
 - **"No SSH keys found in your SSH agent"** — run `ssh-add ~/.ssh/id_ed25519`
