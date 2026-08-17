@@ -48,15 +48,37 @@ railway connect "$SERVICE" --tunnel-only --ssh -P "$TUNNEL_PORT" >/tmp/cq-backup
 TUNNEL_PID=$!
 
 cleanup() {
+  rc=$?
   # Kill the whole tree: the railway CLI spawns its own ssh child, and
   # killing only the parent leaves the port held open.
   pkill -P "$TUNNEL_PID" 2>/dev/null || true
   kill "$TUNNEL_PID" 2>/dev/null || true
+  # pg_dump creates its output file before writing anything to it, so any
+  # failure mid-dump leaves a truncated or 0-byte file sitting in the backup
+  # directory looking like a real backup. Bin it. (A dump that completed but
+  # failed verification has already been renamed .SUSPECT, so it survives
+  # this -- that one is worth keeping to look at.)
+  if [ "$rc" -ne 0 ] && [ -f "$OUT_FILE" ]; then
+    echo "Removing incomplete dump: $(basename "$OUT_FILE")" >&2
+    rm -f "$OUT_FILE"
+  fi
+  exit "$rc"
 }
 trap cleanup EXIT
 
+# Wait for the password line, not just for the port. The port opens a moment
+# before the CLI prints credentials, and an open port is a weak signal anyway
+# -- a stale tunnel from a previous run would satisfy it. Reading the password
+# out of this run's freshly-truncated log proves *this* tunnel is up.
+PASSWORD=""
 for _ in $(seq 1 30); do
-  nc -z 127.0.0.1 "$TUNNEL_PORT" 2>/dev/null && break
+  if nc -z 127.0.0.1 "$TUNNEL_PORT" 2>/dev/null; then
+    # `|| true` is load-bearing: under `set -e -o pipefail` a grep that matches
+    # nothing fails the pipeline and kills the script outright, so the error
+    # messages below would never print and the failure would look silent.
+    PASSWORD=$(grep -o 'Password: .*' /tmp/cq-backup-tunnel.log 2>/dev/null | head -1 | awk '{print $2}' || true)
+    [ -n "$PASSWORD" ] && break
+  fi
   sleep 1
 done
 
@@ -66,9 +88,9 @@ if ! nc -z 127.0.0.1 "$TUNNEL_PORT" 2>/dev/null; then
   exit 1
 fi
 
-PASSWORD=$(grep -o 'Password: .*' /tmp/cq-backup-tunnel.log | head -1 | awk '{print $2}')
 if [ -z "$PASSWORD" ]; then
-  echo "ERROR: could not read the DB password from the tunnel output." >&2
+  echo "ERROR: tunnel is up but never printed a password. Last output:" >&2
+  cat /tmp/cq-backup-tunnel.log >&2
   exit 1
 fi
 
