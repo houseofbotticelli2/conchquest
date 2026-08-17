@@ -26,7 +26,7 @@ Task numbers are stable references, not priority order.
 
 ### Security
 
-(none currently)
+- [ ] #102 Optionally rotate `SUPABASE_SERVICE_ROLE_KEY` -- it was pasted into a chat transcript on 2026-08-17. **Deliberately deferred; low risk.** Verified at the time that it had not leaked anywhere it shouldn't be: `api/.env` is gitignored (`api/.gitignore:3`), no `.env` or `sb_secret_` value appears anywhere in git history, and the mobile app hardcodes only the *publishable* key (`mobile/src/lib/supabase.ts:8`), so the secret never shipped to a device. It lives in exactly two places, both correct: local `api/.env` and Railway's env var on `conchquest-api`. If rotating later: the key is the newer `sb_secret_` format, so multiple secret keys coexist and rotation is zero-downtime -- Supabase dashboard -> Project Settings -> API Keys (NOT the org-level settings; the "Legacy API Keys" tab holds the old JWT `anon`/`service_role` instead) -> create new -> update `api/.env` -> **verify with `node api/scripts/backup-auth.mjs` before going further** (nothing else catches a bad key: `api/src/config/env.ts:33` reads the var without requiring it, so the API boots fine and only fails later at admin user-deletion) -> `railway variables --set` -> delete the old key, which is irreversible. Do **not** rotate the publishable key: it is compiled into shipped app binaries and changing it breaks every installed build until testers update.
 
 ### Infrastructure
 
