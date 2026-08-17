@@ -2,16 +2,18 @@
 #
 # Dumps the shared Conchquest Postgres database to a local file.
 #
-# This is the OFFSITE layer of the backup story. Railway's own scheduled
-# backups protect against bad migrations and accidental deletes, but they
-# live inside Railway -- if that account is ever lost or suspended, they go
-# with it. This script produces a copy you control. Put the output
-# somewhere durable (iCloud/Dropbox/an external drive); a dump sitting only
-# on this Mac is one spilled coffee from being no backup at all.
+# This is currently the ONLY backup of the database, not merely the offsite
+# layer of a larger story -- Railway's own scheduled backups need the Pro
+# plan and we're on Hobby (docs/TODO.md #101). So a dump that silently stops
+# happening, or that lives only on this Mac, is a real single point of
+# failure. Both are handled by running it on a schedule and writing to
+# iCloud; see scripts/backup-db-scheduled.sh.
 #
 # Usage:
-#   ./scripts/backup-db.sh              # writes to ./backups/
+#   ./scripts/backup-db.sh              # writes to ./backups/ (gitignored)
 #   ./scripts/backup-db.sh ~/Dropbox/cq # writes to a directory you choose
+#
+# The daily launchd job runs the wrapper, not this file directly.
 #
 # Requires: railway CLI (logged in), pg_dump 17+, and the SSH key registered
 # with Railway -- see docs/TABLEPLUS_DATABASE_ACCESS.md for that setup.
