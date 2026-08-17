@@ -42,6 +42,11 @@ FAILED=""
 echo "--- photos ---"
 node "$REPO/api/scripts/backup-photos.mjs" "$DEST/photos" || FAILED="$FAILED photos"
 
+# Accounts live in Supabase, not in the database dump above, and the free plan
+# backs up nothing. Without this the dump restores to finds owned by nobody.
+echo "--- auth ---"
+node "$REPO/api/scripts/backup-auth.mjs" "$DEST/auth" || FAILED="$FAILED auth"
+
 if [ -z "$FAILED" ]; then
   echo "=== $(date '+%Y-%m-%d %H:%M:%S') OK ==="
   exit 0
