@@ -1,5 +1,4 @@
 import { pool } from '../config/db';
-import { env } from '../config/env';
 import { NormalizedConditions, ShellingScoreResult } from '../types';
 import { getTideEventsForRange, deriveTideConditions, selectDayLowTide } from './noaaTides';
 import { getWaveConditions } from './noaaBuoys';
@@ -8,6 +7,7 @@ import { getMoonPhase } from './moonPhase';
 import { computeShellingScore } from './scoringEngine';
 import { round, degToCompass } from '../utils/units';
 import { ensureTideStationsSynced, ensureBuoyStationsSynced } from './noaaStations';
+import { getConditionsCacheTtlMinutes } from './appConfig';
 
 // OpenWeather's free-tier forecast endpoint only covers ~5 days at 3-hour
 // resolution -- projecting further would mean fabricating data, not
@@ -31,7 +31,7 @@ function bucket(lat: number, lon: number) {
 }
 
 // Same shape as conditionsAggregator.ts's conditions_cache -- this route just
-// never used it. Reuses conditionsCacheTtlMinutes since it's the same
+// never used it. Reuses the conditions cache TTL since it's the same
 // underlying freshness question (today's entry is scored against "now").
 // Keyed by restrictShellingToDaylight too, not just location -- this cache
 // stores the fully-computed result (bestWindow included), and that bakes in
@@ -52,7 +52,7 @@ async function readCache(lat: number, lon: number, restrictShellingToDaylight: b
 
 async function writeCache(lat: number, lon: number, payload: MultiDayEntry[], restrictShellingToDaylight: boolean): Promise<void> {
   const { latBucket, lonBucket } = bucket(lat, lon);
-  const expiresAt = new Date(Date.now() + env.conditionsCacheTtlMinutes * 60_000).toISOString();
+  const expiresAt = new Date(Date.now() + (await getConditionsCacheTtlMinutes()) * 60_000).toISOString();
   await pool.query(
     `INSERT INTO multi_day_forecast_cache (lat_bucket, lon_bucket, payload, expires_at, restrict_shelling_to_daylight) VALUES ($1, $2, $3, $4, $5)`,
     [latBucket, lonBucket, JSON.stringify(payload), expiresAt, restrictShellingToDaylight]

@@ -1,5 +1,4 @@
 import { pool } from '../config/db';
-import { env } from '../config/env';
 import { NormalizedConditions } from '../types';
 import { ensureTideStationsSynced, ensureBuoyStationsSynced } from './noaaStations';
 import { getTideEventsForRange, deriveTideConditions, findScoringReferenceTime } from './noaaTides';
@@ -7,6 +6,7 @@ import { getWaveConditions } from './noaaBuoys';
 import { getCurrentWeather, getForecast, getUvIndex, nearestForecastBlock } from './openWeather';
 import { getMoonPhase } from './moonPhase';
 import { round, degToCompass } from '../utils/units';
+import { getConditionsCacheTtlMinutes } from './appConfig';
 
 interface CacheRow {
   payload: Omit<NormalizedConditions, 'meta'> & { meta: NormalizedConditions['meta'] };
@@ -98,7 +98,7 @@ export async function getConditions(lat: number, lon: number): Promise<Normalize
 
   const moon = getMoonPhase(referenceTime);
   const fetchedAt = now.toISOString();
-  const expiresAt = new Date(now.getTime() + env.conditionsCacheTtlMinutes * 60_000).toISOString();
+  const expiresAt = new Date(now.getTime() + (await getConditionsCacheTtlMinutes()) * 60_000).toISOString();
 
   const conditions: NormalizedConditions = {
     location: { lat, lon },

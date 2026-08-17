@@ -1,4 +1,5 @@
 import { pool } from '../config/db';
+import { env } from '../config/env';
 
 const CACHE_TTL_MS = 30_000;
 const cache = new Map<string, { value: unknown; expiresAt: number }>();
@@ -21,4 +22,20 @@ export async function getConfigNumber(key: string, fallback: number): Promise<nu
 export async function getConfigString(key: string, fallback: string): Promise<string> {
   const value = await getConfigValue(key);
   return typeof value === 'string' ? value : fallback;
+}
+
+/**
+ * How long cached conditions and multi-day forecasts stay fresh, in minutes.
+ *
+ * Read through here rather than off `env` directly: it's tuned from the admin
+ * console, and it has two call sites (conditionsAggregator and
+ * multiDayForecast) that must agree -- they write expiry into two different
+ * cache tables for what is, to a user, the same data.
+ *
+ * The env var wins when set so a developer can shorten it locally without
+ * changing it for production, since we all share one database.
+ */
+export async function getConditionsCacheTtlMinutes(): Promise<number> {
+  return env.conditionsCacheTtlMinutesOverride
+    ?? getConfigNumber('conditions_cache_ttl_minutes', 20);
 }

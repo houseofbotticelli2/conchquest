@@ -15,6 +15,17 @@ function optionalNumber(name: string, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+// For settings whose real home is app_config: returns null when the variable
+// isn't set, so callers can tell "unset" apart from "deliberately set to the
+// same number as the default" and fall through to the database only in the
+// first case.
+function overrideNumber(name: string): number | null {
+  const raw = process.env[name];
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: optionalNumber('PORT', 3000),
@@ -43,7 +54,12 @@ export const env = {
     .filter(Boolean),
   openWeatherApiKey: required('OPENWEATHER_API_KEY'),
   openaiApiKey: required('OPENAI_API_KEY'),
-  conditionsCacheTtlMinutes: optionalNumber('CONDITIONS_CACHE_TTL_MINUTES', 20),
+  // Lives in app_config now (`conditions_cache_ttl_minutes`) so it can be
+  // changed without a redeploy. Setting the env var overrides the database
+  // value for this process only -- which is how you tune it locally without
+  // changing it for everyone, since all contributors share one database.
+  // Read it via getConditionsCacheTtlMinutes(), not directly.
+  conditionsCacheTtlMinutesOverride: overrideNumber('CONDITIONS_CACHE_TTL_MINUTES'),
   strategyCacheTtlMinutes: optionalNumber('STRATEGY_CACHE_TTL_MINUTES', 1440),
   noaaStationRefreshDays: optionalNumber('NOAA_STATION_REFRESH_DAYS', 30),
   bucketUrl: required('BUCKET_ENDPOINT'),
