@@ -32,7 +32,6 @@ Task numbers are stable references, not priority order.
 
 ### Infrastructure
 
-- [ ] #104 The mobile app points at Railway's generated domain, not our own: `mobile/src/lib/api.ts:5` hardcodes `https://conchquest-api-dev.up.railway.app` while the custom domain `api.conchquest.app` sits on the same service. Both are live and healthy today, but the generated domain is Railway's to change and the `-dev` in a name every TestFlight build calls is misleading. Switching it is a one-line change -- but it ships in a *binary*, so if the generated domain ever breaks, already-installed builds keep calling the dead host until testers update. Worth doing on the next build rather than urgently. Check CORS (`CORS_ALLOWED_ORIGINS`) still permits what it needs when swapping.
 
 
 - [ ] #64 Harden Railway build: keep secrets out of Nixpacks build stage
@@ -44,6 +43,8 @@ Task numbers are stable references, not priority order.
 - [ ] #75 Draft Privacy Policy, Terms of Service, and Community Guidelines -- required before App Store/Play Store submission (privacy policy is both legally required under GDPR/CCPA and mandated by both stores; ToS needed for account terms + subscription disclosure once #46 ships; Community Guidelines needed to satisfy Apple guideline 1.2's UGC requirement -- a report/block mechanism, tied to #47's admin console). All three now have real drafted content live on `web/` (Privacy/Terms via #89, Community Guidelines drafted separately, also linked from Profile > Settings in the mobile app). Remaining before submission: lawyer review of all three (not just Claude Code), Apple's App Privacy "nutrition label", Google Play's Data Safety section, and a children's-privacy (COPPA) statement.
 
 ## Completed
+
+- [x] #104 Point the mobile app at `api.conchquest.app` instead of Railway's generated `conchquest-api-dev.up.railway.app` (`mobile/src/lib/api.ts:5`). Both resolve to the same service, but the generated name is Railway's to change and this string is compiled into the binary -- if it ever stopped resolving, every installed build would be dead until testers updated from TestFlight, with no server-side fix available. A domain we own can just be repointed. CORS was checked and is unaffected: it gates on the *caller's* origin, and native apps send none. **Only takes effect in a new build** -- ships with the network retry work.
 
 - [x] #1 Scaffold package.json, tsconfig, env config
 - [x] #2 Write PostGIS migrations

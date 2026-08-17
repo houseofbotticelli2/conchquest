@@ -1,8 +1,12 @@
 import { supabase } from './supabase';
 
-// Matches api/src/routes' current default (railway.json's deployed dev
-// environment) — swap to http://localhost:3000 for local backend testing.
-const API_BASE_URL = 'https://conchquest-api-dev.up.railway.app';
+// Our own domain, deliberately, rather than Railway's generated
+// `conchquest-api-dev.up.railway.app` (both point at the same service). This
+// string is compiled into the binary: if the host it names ever stops
+// resolving, every installed build is dead until testers update from
+// TestFlight, and there is nothing we can do server-side. A domain we own can
+// simply be repointed. Swap to http://localhost:3000 for local backend testing.
+const API_BASE_URL = 'https://api.conchquest.app';
 
 export class ApiError extends Error {}
 
