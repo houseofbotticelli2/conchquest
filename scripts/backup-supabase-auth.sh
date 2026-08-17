@@ -71,10 +71,12 @@ umask 077   # hashes: never group- or world-readable, not even briefly
   -f "$OUT_FILE"
 
 # A dump that ran clean but captured no users is the dangerous case: it looks
-# like a backup and restores to an empty auth system. Check for the table that
-# actually matters before calling it a success.
-if ! "$PG_RESTORE" --list "$OUT_FILE" 2>/dev/null | grep -q "auth.*users"; then
-  echo "ERROR: dump does not contain auth.users -- treating as failed." >&2
+# like a backup and restores to an empty auth system. Match on TABLE DATA, not
+# just the table -- a schema-only dump (or one taken by a role that can see the
+# table definition but not its rows) still lists `TABLE auth users` and would
+# sail past a looser check while containing not a single account.
+if ! "$PG_RESTORE" --list "$OUT_FILE" 2>/dev/null | grep -qE 'TABLE DATA +auth +users'; then
+  echo "ERROR: dump has no data for auth.users -- treating as failed." >&2
   mv "$OUT_FILE" "$OUT_FILE.SUSPECT"
   exit 1
 fi
