@@ -47,6 +47,12 @@ node "$REPO/api/scripts/backup-photos.mjs" "$DEST/photos" || FAILED="$FAILED pho
 echo "--- auth ---"
 node "$REPO/api/scripts/backup-auth.mjs" "$DEST/auth" || FAILED="$FAILED auth"
 
+# The account list above has no password hashes; this fills that in. Exits 0
+# with a SKIP until SUPABASE_DB_URL is set in api/.env, so it can sit here
+# harmlessly and start working the day that credential is added.
+echo "--- supabase auth schema ---"
+"$REPO/scripts/backup-supabase-auth.sh" "$DEST/supabase-auth" || FAILED="$FAILED supabase-auth"
+
 if [ -z "$FAILED" ]; then
   echo "=== $(date '+%Y-%m-%d %H:%M:%S') OK ==="
   exit 0
