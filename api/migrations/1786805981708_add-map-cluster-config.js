@@ -6,9 +6,9 @@
 // real clustering (grouping nearby finds into a count bubble once an area
 // gets dense) removes the need for a legibility cap entirely; these two
 // values control when/how that grouping kicks in.
-export const shorthands = undefined;
+exports.shorthands = undefined;
 
-export const up = (pgm) => {
+exports.up = (pgm) => {
   pgm.sql(`
     INSERT INTO app_config (key, value, description) VALUES
       ('map_cluster_threshold', '60', 'If more than this many finds match a /api/finds/nearby request, return grouped clusters (with a count) instead of individual finds.'),
@@ -16,6 +16,6 @@ export const up = (pgm) => {
   `);
 };
 
-export const down = (pgm) => {
+exports.down = (pgm) => {
   pgm.sql(`DELETE FROM app_config WHERE key IN ('map_cluster_threshold', 'map_cluster_grid_divisions')`);
 };

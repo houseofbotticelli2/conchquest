@@ -5,12 +5,12 @@
 // to public, per product decision), so this default was never actually
 // hit in practice. Aligning it anyway so the schema's own default matches
 // what the app actually does.
-export const shorthands = undefined;
+exports.shorthands = undefined;
 
-export const up = (pgm) => {
+exports.up = (pgm) => {
   pgm.alterColumn('shell_finds', 'is_private', { default: false });
 };
 
-export const down = (pgm) => {
+exports.down = (pgm) => {
   pgm.alterColumn('shell_finds', 'is_private', { default: true });
 };

@@ -3,13 +3,13 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-export const shorthands = undefined;
+exports.shorthands = undefined;
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @returns {Promise<void> | void}
  */
-export const up = (pgm) => {
+exports.up = (pgm) => {
   pgm.createTable('admin_audit_log', {
     id: { type: 'uuid', primaryKey: true, default: pgm.func('gen_random_uuid()') },
     // SET NULL, not CASCADE -- if an admin's own account is later deleted,
@@ -30,6 +30,6 @@ export const up = (pgm) => {
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @returns {Promise<void> | void}
  */
-export const down = (pgm) => {
+exports.down = (pgm) => {
   pgm.dropTable('admin_audit_log');
 };

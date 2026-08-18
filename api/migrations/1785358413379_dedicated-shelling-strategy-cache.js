@@ -16,13 +16,13 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-export const shorthands = undefined;
+exports.shorthands = undefined;
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @returns {Promise<void> | void}
  */
-export const up = (pgm) => {
+exports.up = (pgm) => {
   pgm.dropColumns('conditions_cache', ['strategy_text', 'strategy_generated_at']);
 
   pgm.createTable('shelling_strategy_cache', {
@@ -42,7 +42,7 @@ export const up = (pgm) => {
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @returns {Promise<void> | void}
  */
-export const down = (pgm) => {
+exports.down = (pgm) => {
   pgm.dropTable('shelling_strategy_cache');
   pgm.addColumns('conditions_cache', {
     strategy_text: { type: 'text' },

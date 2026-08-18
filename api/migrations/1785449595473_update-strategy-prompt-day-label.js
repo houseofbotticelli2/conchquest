@@ -40,13 +40,13 @@ After working through the checklist, write 2-4 sentences that combine everything
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-export const shorthands = undefined;
+exports.shorthands = undefined;
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @returns {Promise<void> | void}
  */
-export const up = (pgm) => {
+exports.up = (pgm) => {
   const jsonValue = JSON.stringify(NEW_STRATEGY_SYSTEM_PROMPT).replace(/'/g, "''");
   pgm.sql(`UPDATE app_config SET value = '${jsonValue}' WHERE key = 'shelling_strategy_system_prompt'`);
   // Clear already-cached strategy text generated under the old prompt --
@@ -59,7 +59,7 @@ export const up = (pgm) => {
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @returns {Promise<void> | void}
  */
-export const down = (pgm) => {
+exports.down = (pgm) => {
   const jsonValue = JSON.stringify(OLD_STRATEGY_SYSTEM_PROMPT).replace(/'/g, "''");
   pgm.sql(`UPDATE app_config SET value = '${jsonValue}' WHERE key = 'shelling_strategy_system_prompt'`);
 };

@@ -3,13 +3,13 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-export const shorthands = undefined;
+exports.shorthands = undefined;
 
 // Per-user preference for whether findBestWindow (scoringEngine.ts) restricts
 // the shelling window to daylight hours. Defaults to false (all hours) --
 // plenty of shellers work low tides at night with a light, and the app
 // previously hard-coded daylight-only with no way to opt out.
-export const up = (pgm) => {
+exports.up = (pgm) => {
   pgm.addColumn('users', {
     restrict_shelling_to_daylight: { type: 'boolean', notNull: true, default: false },
   });
@@ -30,7 +30,7 @@ export const up = (pgm) => {
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @returns {Promise<void> | void}
  */
-export const down = (pgm) => {
+exports.down = (pgm) => {
   pgm.dropColumn('multi_day_forecast_cache', 'restrict_shelling_to_daylight');
   pgm.dropColumn('users', 'restrict_shelling_to_daylight');
 };

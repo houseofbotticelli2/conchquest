@@ -3,13 +3,13 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-export const shorthands = undefined;
+exports.shorthands = undefined;
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @returns {Promise<void> | void}
  */
-export const up = (pgm) => {
+exports.up = (pgm) => {
   // Were hardcoded constants in shellingStrategy.ts -- moved to app_config so
   // they're tunable from the admin console without a code deploy, same as
   // the other Shelling Strategy settings.
@@ -24,6 +24,6 @@ export const up = (pgm) => {
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @returns {Promise<void> | void}
  */
-export const down = (pgm) => {
+exports.down = (pgm) => {
   pgm.sql(`DELETE FROM app_config WHERE key IN ('shelling_strategy_temperature', 'shelling_strategy_max_tokens')`);
 };

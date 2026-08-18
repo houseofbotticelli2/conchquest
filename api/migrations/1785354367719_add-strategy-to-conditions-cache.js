@@ -23,13 +23,13 @@ After working through the checklist, write 2-4 sentences that combine everything
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-export const shorthands = undefined;
+exports.shorthands = undefined;
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @returns {Promise<void> | void}
  */
-export const up = (pgm) => {
+exports.up = (pgm) => {
   pgm.addColumns('conditions_cache', {
     strategy_text: { type: 'text' },
     strategy_generated_at: { type: 'timestamptz' },
@@ -46,7 +46,7 @@ export const up = (pgm) => {
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @returns {Promise<void> | void}
  */
-export const down = (pgm) => {
+exports.down = (pgm) => {
   pgm.sql(`DELETE FROM app_config WHERE key = 'shelling_strategy_system_prompt'`);
   pgm.dropColumns('conditions_cache', ['strategy_text', 'strategy_generated_at']);
 };
