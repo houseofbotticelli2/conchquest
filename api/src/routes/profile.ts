@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../config/db';
-import { getDownloadUrl } from '../services/storage';
+import { getDownloadUrl, isOwnUploadKey } from '../services/storage';
 
 export const profileRouter = Router();
 
@@ -56,9 +56,13 @@ profileRouter.patch('/', async (req, res, next) => {
       res.status(400).json({ error: 'shellingSinceYear must be a valid year' });
       return;
     }
-    if (avatarKey !== undefined && typeof avatarKey !== 'string') {
-      res.status(400).json({ error: 'avatarKey must be a string' });
-      return;
+    if (avatarKey !== undefined && avatarKey !== null) {
+      // Same ownership rule as a find's photo: an unchecked key here would be
+      // served back as a presigned avatar URL for someone else's object.
+      if (typeof avatarKey !== 'string' || !isOwnUploadKey(avatarKey, req.user!.id, 'avatar')) {
+        res.status(400).json({ error: 'avatarKey does not belong to this user' });
+        return;
+      }
     }
     if (restrictShellingToDaylight !== undefined && typeof restrictShellingToDaylight !== 'boolean') {
       res.status(400).json({ error: 'restrictShellingToDaylight must be a boolean' });

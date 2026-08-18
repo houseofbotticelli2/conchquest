@@ -58,6 +58,24 @@ export async function createUploadUrl(
   return { uploadUrl, key };
 }
 
+/**
+ * Does this key look like something `createUploadUrl` minted for this user?
+ *
+ * Upload keys are deliberately server-generated (`{folder}/{userId}/{uuid}`)
+ * so a client can never choose where its bytes land. That guarantee is only
+ * worth anything if the *write* paths re-check it: routes take `photoKey` /
+ * `avatarKey` back from the client as a plain string, and without this they
+ * would happily store a key belonging to somebody else -- which then gets a
+ * presigned download URL minted for it on read, and gets passed to
+ * deleteObject() when a find is removed by moderation.
+ *
+ * Lives here rather than in the routes because this file owns the key format;
+ * a prefix check written elsewhere would silently rot if that format changed.
+ */
+export function isOwnUploadKey(key: string, userId: string, purpose: UploadPurpose): boolean {
+  return key.startsWith(`${FOLDER_BY_PURPOSE[purpose]}/${userId}/`);
+}
+
 export function getDownloadUrl(key: string): Promise<string> {
   return getSignedUrl(client, new GetObjectCommand({ Bucket: env.bucketName, Key: key }), {
     expiresIn: DOWNLOAD_URL_EXPIRES_SECONDS,

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../config/db';
 import { getConfigNumber } from '../services/appConfig';
-import { getDownloadUrl } from '../services/storage';
+import { getDownloadUrl, isOwnUploadKey } from '../services/storage';
 import { feetToMeters, metersToFeet } from '../utils/units';
 
 export const findsRouter = Router();
@@ -96,6 +96,14 @@ findsRouter.post('/', async (req, res, next) => {
     }
     if (typeof photoKey !== 'string' || !photoKey.trim()) {
       res.status(400).json({ error: 'photoKey is required' });
+      return;
+    }
+    // The key has to be one we minted for *this* user. Without this the
+    // caller could point a find at anyone's object: it would be handed back
+    // as a presigned download URL, and deleted from the bucket if this find
+    // were ever removed by moderation.
+    if (!isOwnUploadKey(photoKey, req.user!.id, 'find')) {
+      res.status(400).json({ error: 'photoKey does not belong to this user' });
       return;
     }
 
@@ -321,6 +329,14 @@ findsRouter.patch('/:id', async (req, res, next) => {
     if (condition !== undefined && condition !== null && !VALID_CONDITIONS.includes(condition)) {
       res.status(400).json({ error: `condition must be one of: ${VALID_CONDITIONS.join(', ')}` });
       return;
+    }
+    // Optional here (COALESCE leaves the existing key when omitted), but when
+    // supplied it must be this user's -- same reasoning as POST above.
+    if (photoKey !== undefined && photoKey !== null) {
+      if (typeof photoKey !== 'string' || !isOwnUploadKey(photoKey, req.user!.id, 'find')) {
+        res.status(400).json({ error: 'photoKey does not belong to this user' });
+        return;
+      }
     }
 
     const result = await pool.query<{ id: string }>(
