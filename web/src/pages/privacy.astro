@@ -17,7 +17,7 @@ import Footer from '../components/Footer.astro';
     <h2>2. Data we collect</h2>
     <table>
       <tr><th>Data</th><th>Why we collect it</th></tr>
-      <tr><td><strong>Account info</strong> (email, display name)</td><td>To create and secure your account, via our authentication provider. Social login (Google/Apple) shares only what those providers permit.</td></tr>
+      <tr><td><strong>Account info</strong> (email, display name)</td><td>To create and secure your account, via our authentication provider. If we add social login (Google/Apple) later, it will share only what those providers permit.</td></tr>
       <tr><td><strong>Precise location</strong> (GPS)</td><td>To fetch tide, weather, and wave conditions for your current beach, and to let you log a find with coordinates.</td></tr>
       <tr><td><strong>Photos</strong></td><td>To attach images to shell finds you choose to log, stored with our cloud storage provider.</td></tr>
       <tr><td><strong>Find data</strong> (species, condition, notes, timestamp)</td><td>To build your personal shelling history and, if you choose to share it, contribute to the community find map.</td></tr>
@@ -58,21 +58,31 @@ import Footer from '../components/Footer.astro';
     <h2>6. Your choices</h2>
     <ul>
       <li>Turn off location access at any time in your device settings (the Shelling Score will no longer auto-detect your beach)</li>
-      <li>Delete individual finds or your entire account from Settings</li>
-      <li>Request a copy or deletion of your data by contacting us below</li>
+      <li>Delete any individual find from the app at any time</li>
+      <li>Close your account, or request a copy of your data, by emailing us below — we're building self-serve account deletion into the app, and this page will be updated when it ships</li>
       <li>Opt out of push notifications at any time</li>
     </ul>
 
     <h2>7. Data retention</h2>
-    <p>We keep your account and find data until you delete your account. Deleted finds are removed from the community map immediately; backups are purged within 30 days.</p>
+    <p>We keep your account and find data until your account is closed. A deleted find disappears from the app and the community map immediately.</p>
+    <p>Copies can survive a little longer in our backups, which exist so a mistake or an outage can't destroy everyone's shelling history. Database backups roll off within 30 days. Photo backups are deliberately kept longer and are never pruned automatically — that's what makes them useful when something is deleted by accident. If you need a specific photo removed from our backups as well as the app, email <a href="mailto:privacy@conchquest.app">privacy@conchquest.app</a> and we'll purge it.</p>
 
     <h2>8. Children's privacy</h2>
     <p>Conchquest is not intended for children under 13, and we do not knowingly collect data from them.</p>
 
-    <h2>9. Changes to this policy</h2>
+    <h2>9. How we protect your data</h2>
+    <p>Traffic between the app and our servers is encrypted in transit (HTTPS). Passwords are handled entirely by our authentication provider — we never see or store them. Photos are stored privately and served through short-lived links rather than public URLs. Backups are encrypted and access to them is limited. Access to production data is restricted to the people who operate Conchquest.</p>
+    <p>No service can promise perfect security. If a breach ever affects your personal data, we'll tell you and the relevant authorities as required by law.</p>
+
+    <h2>10. US state privacy rights</h2>
+    <p>Depending on where you live — California, Colorado, Connecticut, Virginia and a growing list of others — you may have the right to know what personal data we hold about you, get a copy of it, correct it, delete it, and not be discriminated against for exercising any of those rights.</p>
+    <p><strong>We do not sell your personal data, and we do not share it for cross-context behavioural advertising.</strong> We run no advertising and no third-party tracking in the app or on this site.</p>
+    <p>To exercise any of these rights, email <a href="mailto:privacy@conchquest.app">privacy@conchquest.app</a>. We'll verify your request against your account email and respond within 45 days.</p>
+
+    <h2>11. Changes to this policy</h2>
     <p>If we make material changes to how we handle your data, we'll notify you in-app before the changes take effect.</p>
 
-    <h2>10. Contact us</h2>
+    <h2>12. Contact us</h2>
     <p>Questions, or want to exercise a data right? Email <a href="mailto:privacy@conchquest.app">privacy@conchquest.app</a>.</p>
   </div>
 
