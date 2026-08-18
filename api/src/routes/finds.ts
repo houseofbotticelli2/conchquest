@@ -206,6 +206,9 @@ findsRouter.get('/nearby', async (req, res, next) => {
     const countResult = await pool.query<{ count: string }>(
       `SELECT count(*) FROM shell_finds sf
        WHERE NOT sf.is_private
+         -- An account pending deletion leaves the community straight away,
+         -- even though the real purge waits out the grace period.
+         AND NOT EXISTS (SELECT 1 FROM users du WHERE du.id = sf.user_id AND du.deletion_requested_at IS NOT NULL)
          AND ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
          AND NOT EXISTS (
            SELECT 1 FROM user_blocks ub WHERE ub.blocker_user_id = $4 AND ub.blocked_user_id = sf.user_id
@@ -230,6 +233,9 @@ findsRouter.get('/nearby', async (req, res, next) => {
            count(*) AS find_count
          FROM shell_finds sf
          WHERE NOT sf.is_private
+         -- An account pending deletion leaves the community straight away,
+         -- even though the real purge waits out the grace period.
+         AND NOT EXISTS (SELECT 1 FROM users du WHERE du.id = sf.user_id AND du.deletion_requested_at IS NOT NULL)
            AND ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
            AND NOT EXISTS (
              SELECT 1 FROM user_blocks ub WHERE ub.blocker_user_id = $5 AND ub.blocked_user_id = sf.user_id
@@ -262,6 +268,9 @@ findsRouter.get('/nearby', async (req, res, next) => {
        JOIN users u ON u.id = sf.user_id
        LEFT JOIN shell_species ss ON ss.id = sf.species_id
        WHERE NOT sf.is_private
+         -- An account pending deletion leaves the community straight away,
+         -- even though the real purge waits out the grace period.
+         AND NOT EXISTS (SELECT 1 FROM users du WHERE du.id = sf.user_id AND du.deletion_requested_at IS NOT NULL)
          AND ST_DWithin(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
          AND NOT EXISTS (
            SELECT 1 FROM user_blocks ub WHERE ub.blocker_user_id = $5 AND ub.blocked_user_id = sf.user_id

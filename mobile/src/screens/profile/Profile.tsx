@@ -37,6 +37,8 @@ import {
   Profile as ProfileData,
   PhotoContentType,
   BlockedUser,
+  requestDeleteAccount,
+  cancelDeleteAccount,
 } from '../../lib/api';
 
 function initialsFrom(name: string): string {
@@ -83,6 +85,9 @@ export function Profile({ navigation }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
   const { signOut, changePassword } = useAuth();
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null);
+  const [deletionScheduledFor, setDeletionScheduledFor] = useState<string | null>(null);
   const statColor = { text: t.text, accentDeep: t.accentDeep };
   const [finds, setFinds] = useState<Find[]>([]);
   const [beaches, setBeaches] = useState<SavedLocation[]>([]);
@@ -417,6 +422,15 @@ export function Profile({ navigation }: Props) {
         >
           <Text style={[styles.sheetRowText, { color: t.accentDeep }]}>Log out</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
+          onPress={() => {
+            setSettingsOpen(false);
+            setDeleteConfirmVisible(true);
+          }}
+        >
+          <Text style={[styles.sheetRowText, { color: t.accentDeep }]}>Delete my account</Text>
+        </TouchableOpacity>
       </SlideUpSheet>
 
       <ConfirmDialog
@@ -444,6 +458,27 @@ export function Profile({ navigation }: Props) {
         ))}
       </SlideUpSheet>
       <ScrollView>
+        {profile?.deletionRequestedAt && (
+          <View style={[styles.deletionBanner, { backgroundColor: t.surfaceInset, borderColor: t.accentDeep }]}>
+            <Text style={[styles.deletionBannerTitle, { color: t.accentDeep }]}>Account scheduled for deletion</Text>
+            <Text style={[styles.deletionBannerText, { color: t.muted }]}>
+              {profile.deletionScheduledFor
+                ? `Everything will be permanently removed on ${new Date(profile.deletionScheduledFor).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}. Your finds are already hidden from the community.`
+                : 'Your finds are already hidden from the community.'}
+            </Text>
+            <Btn
+              label="Restore my account"
+              onPress={async () => {
+                try {
+                  await cancelDeleteAccount();
+                  setProfile(await getProfile());
+                } catch (e) {
+                  setDeleteErrorMsg(e instanceof Error ? e.message : 'Please try again.');
+                }
+              }}
+            />
+          </View>
+        )}
         <View style={[styles.userRow, { borderBottomColor: t.border }]}>
           <View style={[styles.avatar, { backgroundColor: t.navBg, borderColor: t.surfaceCardHi }, t.shadowRaised]}>
             {profile?.avatarUrl ? (
@@ -672,6 +707,38 @@ export function Profile({ navigation }: Props) {
       />
 
       <ConfirmDialog
+        visible={deleteConfirmVisible}
+        title="Delete your account?"
+        message={`This removes your finds, photos, saved beaches, and profile. Your finds disappear from the community straight away.\n\nYou have 14 days to change your mind — just log back in and tap Restore. After that it's permanent.`}
+        buttons={[
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete account',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                const status = await requestDeleteAccount();
+                setDeletionScheduledFor(status.deletionScheduledFor);
+                // Sign out so the account isn't left sitting logged in mid-deletion.
+                await signOut();
+              } catch (e) {
+                setDeleteErrorMsg(e instanceof Error ? e.message : 'Please try again.');
+              }
+            },
+          },
+        ]}
+        onClose={() => setDeleteConfirmVisible(false)}
+      />
+
+      <ConfirmDialog
+        visible={!!deleteErrorMsg}
+        title="Couldn't delete your account"
+        message={deleteErrorMsg ?? undefined}
+        buttons={[{ text: 'OK' }]}
+        onClose={() => setDeleteErrorMsg(null)}
+      />
+
+      <ConfirmDialog
         visible={logoutConfirmVisible}
         title="Log out?"
         buttons={[
@@ -685,6 +752,16 @@ export function Profile({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  deletionBanner: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 10,
+  },
+  deletionBannerTitle: { fontSize: 15, fontFamily: fonts.bodySemiBold },
+  deletionBannerText: { fontSize: 13, lineHeight: 19 },
   screen: { flex: 1 },
   header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 14 },

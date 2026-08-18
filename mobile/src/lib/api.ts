@@ -446,6 +446,16 @@ export interface Profile {
   shellingSinceYear: number;
   avatarUrl: string | null;
   restrictShellingToDaylight: boolean;
+  // Non-null while an account deletion is pending. The app shows a restore
+  // banner during the grace period; after that the account is gone for good.
+  deletionRequestedAt: string | null;
+  deletionScheduledFor: string | null;
+}
+
+export interface DeletionStatus {
+  deletionRequestedAt: string | null;
+  deletionScheduledFor: string | null;
+  graceDays?: number;
 }
 
 export interface UpdateProfileInput {
@@ -457,6 +467,19 @@ export interface UpdateProfileInput {
 
 export function getProfile(): Promise<Profile> {
   return apiFetch<Profile>('/api/profile');
+}
+
+/**
+ * Schedules the account for deletion. Not immediate: finds leave the community
+ * right away, and the account is permanently removed after the grace period
+ * unless cancelDeleteAccount() is called first.
+ */
+export function requestDeleteAccount(): Promise<DeletionStatus> {
+  return apiFetch<DeletionStatus>('/api/profile/delete', { method: 'POST' });
+}
+
+export function cancelDeleteAccount(): Promise<DeletionStatus> {
+  return apiFetch<DeletionStatus>('/api/profile/delete/cancel', { method: 'POST' });
 }
 
 export function updateProfile(input: UpdateProfileInput): Promise<Profile> {

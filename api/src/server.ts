@@ -3,6 +3,7 @@ import { app } from './app';
 import { env } from './config/env';
 import { checkBeachAlerts } from './services/beachAlerts';
 import { cleanExpiredCaches } from './services/cacheCleanup';
+import { purgeExpiredAccounts } from './services/accountDeletion';
 
 app.listen(env.port, () => {
   console.log(`Conchquest API listening on port ${env.port} (${env.nodeEnv})`);
@@ -20,4 +21,12 @@ cron.schedule('*/30 * * * *', () => {
 // any real usage window.
 cron.schedule('0 3 * * 0', () => {
   cleanExpiredCaches().catch((err) => console.error('Cache cleanup failed:', err));
+});
+
+// Daily, permanently remove accounts whose deletion grace period has run out.
+// Deliberately a scheduled job rather than something a request triggers: the
+// user's part finished when they tapped the button, and this must still happen
+// even if they never open the app again. 4am, well outside any usage window.
+cron.schedule('0 4 * * *', () => {
+  purgeExpiredAccounts().catch((err) => console.error('Account purge failed:', err));
 });
