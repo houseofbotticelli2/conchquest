@@ -9,6 +9,31 @@ Build numbers here are the **production/TestFlight** build number
 
 Nothing pending -- everything committed so far has shipped.
 
+## Build 7 — v0.1.0 (shipped 2026-08-18)
+
+- **Fixed: the app could hang or show a scary error on a weak signal.** If the
+  connection dropped mid-request -- switching between wifi and cellular, or
+  coming back to the app after a while -- you'd get a wall of developer text
+  ("The network connection was lost... Promise.swift:56") and a dead end. The
+  app now quietly retries once, which usually just works. If it still can't
+  reach us you get a plain "Couldn't reach Conchquest. Check your connection
+  and try again."
+- **Requests no longer hang forever.** A dead connection now gives up and
+  tells you, instead of leaving a screen spinning. Photo uploads get a much
+  longer allowance, since a few megabytes over beach signal takes a while.
+- **Behind the scenes:** the app now reaches our servers on our own address
+  (`api.conchquest.app`). No difference you can see -- it just means we can
+  move things around in future without an app update.
+
+### Also fixed on the server (already live -- no update needed)
+
+- **The Shellcast screen hanging on 2026-08-17.** Nothing to do with your
+  phone: the list of NOAA buoy stations was re-downloading on *every* request
+  because eight buoys had been retired and confused our "is this list stale?"
+  check. Those re-syncs piled up and jammed the database, which is why the
+  whole app went slow. Fixed, and the station list now cleans up retired
+  buoys on its own.
+
 ## Build 6 — v0.1.0 (shipped 2026-08-16)
 
 - **Redesigned for depth** — a tester said the app looked "flat." Every
