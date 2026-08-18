@@ -1,10 +1,10 @@
 {
   "name": "conchquest-api",
   "version": "0.1.0",
-  "description": "Conchquest backend API — environmental aggregation, shelling score, auth, and finds logging",
+  "description": "Conchquest backend API \u2014 environmental aggregation, shelling score, auth, and finds logging",
   "private": true,
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.12.0"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
