@@ -9,6 +9,18 @@ Build numbers here are the **production/TestFlight** build number
 
 Nothing pending -- everything committed so far has shipped.
 
+## Build 8 — v0.1.0 (shipped 2026-08-18)
+
+- **You can now delete your account from inside the app** — Profile →
+  Settings → Delete my account. It removes your finds, photos, saved
+  beaches, and profile.
+- **You get 14 days to change your mind.** Your finds leave the community
+  map straight away, but nothing is permanently erased until the window is
+  up. Log back in during those two weeks and a banner offers **Restore my
+  account**. After that it's gone for good, including from our backups.
+- If you can't get into the app for some reason, emailing
+  privacy@conchquest.app still works.
+
 ## Build 7 — v0.1.0 (shipped 2026-08-18)
 
 - **Fixed: the app could hang or show a scary error on a weak signal.** If the
