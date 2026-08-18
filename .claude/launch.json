@@ -4,20 +4,39 @@
     {
       "name": "conchquest-mobile",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "cd mobile && npx expo start --web --port 8082"],
+      "runtimeArgs": [
+        "-c",
+        "cd mobile && npx expo start --web --port 8082"
+      ],
       "port": 8082
     },
     {
       "name": "conchquest-admin",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "cd admin && npm run dev -- --port 5173"],
+      "runtimeArgs": [
+        "-c",
+        "cd admin && npm run dev -- --port 5173"
+      ],
       "port": 5173
     },
     {
       "name": "conchquest-web",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "cd web && npm run dev -- --port 4321"],
+      "runtimeArgs": [
+        "-c",
+        "cd web && npm run dev -- --port 4321"
+      ],
       "port": 4321
+    },
+    {
+      "name": "conchquest-todo",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd docs && python3 -m http.server 4390"
+      ],
+      "port": 4390,
+      "url": "http://localhost:4390"
     }
   ]
 }

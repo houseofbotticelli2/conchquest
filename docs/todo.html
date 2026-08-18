@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conchquest TODO</title>
+<style>
+  :root {
+    --bg: #F2ECE4; --card: #FBF8F3; --ink: #0F2A3D; --muted: #4A6274;
+    --rule: #C9B896; --rule-soft: #E7DED0; --accent: #B85862; --done: #2E7D6F;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0F2A3D; --card:#123243; --ink:#F2ECE4; --muted:#9DB3C2;
+            --rule:#2A4E60; --rule-soft:#1E4356; --accent:#E08A92; --done:#6FBFAE; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
+         line-height:1.55; padding:2rem 1rem 4rem; }
+  .wrap { max-width: 60rem; margin: 0 auto; }
+  h1 { font-size:1.6rem; margin:0 0 .25rem; letter-spacing:-.02em; }
+  .sub { color:var(--muted); font-size:.85rem; margin-bottom:1.5rem; }
+  .sub code { font-family:var(--mono); font-size:.9em; }
+
+  .controls { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center;
+              position:sticky; top:0; background:var(--bg); padding:.75rem 0;
+              border-bottom:1px solid var(--rule); margin-bottom:1.25rem; z-index:5; }
+  input[type=search] { flex:1 1 14rem; min-width:10rem; padding:.5rem .7rem; font:inherit;
+    font-size:.9rem; background:var(--card); color:var(--ink);
+    border:1px solid var(--rule); border-radius:6px; }
+  input[type=search]:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  button { font:inherit; font-size:.82rem; padding:.42rem .8rem; cursor:pointer;
+    background:var(--card); color:var(--muted);
+    border:1px solid var(--rule); border-radius:999px; }
+  button[aria-pressed="true"] { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+  h2.section { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em;
+    color:var(--muted); font-family:var(--mono); margin:2rem 0 .75rem;
+    padding-bottom:.4rem; border-bottom:1px solid var(--rule-soft); }
+  h2.section .n { opacity:.65; }
+
+  .item { background:var(--card); border:1px solid var(--rule-soft); border-radius:8px;
+    margin-bottom:.5rem; overflow:hidden; }
+  .item.done { opacity:.62; }
+  .row { display:flex; gap:.7rem; align-items:flex-start; padding:.7rem .9rem;
+    cursor:pointer; width:100%; text-align:left; background:none; border:none;
+    border-radius:0; color:inherit; font-size:inherit; }
+  .row:hover { background:rgba(127,127,127,.06); }
+  .mark { flex:none; width:1.05rem; height:1.05rem; margin-top:.18rem; border-radius:4px;
+    border:1.5px solid var(--rule); display:grid; place-items:center;
+    font-size:.7rem; line-height:1; }
+  .done .mark { background:var(--done); border-color:var(--done); color:#fff; }
+  .id { flex:none; font-family:var(--mono); font-size:.8rem; color:var(--accent); font-weight:600; }
+  .done .id { color:var(--done); }
+  .summary { flex:1; font-size:.92rem; }
+  .chev { flex:none; color:var(--muted); font-size:.7rem; margin-top:.3rem; transition:transform .15s; }
+  .item.open .chev { transform:rotate(90deg); }
+  .detail { display:none; padding:0 .9rem .9rem 3.1rem; font-size:.88rem; color:var(--muted); }
+  .item.open .detail { display:block; }
+  .detail code { font-family:var(--mono); font-size:.88em; background:var(--rule-soft);
+    color:var(--ink); padding:.08rem .3rem; border-radius:3px; }
+  .detail strong { color:var(--ink); }
+  .detail a { color:var(--accent); }
+  .empty { color:var(--muted); font-size:.9rem; padding:2rem 0; text-align:center; }
+  .err { background:var(--card); border-left:3px solid var(--accent);
+    padding:1rem 1.2rem; border-radius:0 6px 6px 0; }
+  .err code { display:block; font-family:var(--mono); font-size:.85rem;
+    background:var(--rule-soft); color:var(--ink); padding:.6rem .8rem;
+    border-radius:4px; margin-top:.6rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Conchquest TODO</h1>
+  <div class="sub">Reads <code>TODO.md</code> fresh on every load — this page is only a lens, never a copy. Edit the markdown; refresh here.</div>
+  <div id="app"><div class="empty">Loading…</div></div>
+</div>
+
+<script>
+// Deliberately no markdown library: this parses the one shape TODO.md actually
+// has (## section, ### category, - [ ] #NN text), so the page keeps working
+// offline and can't drift with a dependency.
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+// Inline markdown, applied only after escaping so no user text becomes markup.
+function inline(s) {
+  return esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+}
+
+// First sentence, for the collapsed row. Entries run to a paragraph each, which
+// is the actual reason the raw file is hard to scan.
+function firstSentence(text) {
+  const m = text.match(/^(.{0,150}?[.!?])(\s|$)/);
+  return m ? m[1] : (text.length > 150 ? text.slice(0, 150) + '…' : text);
+}
+
+function parse(md) {
+  const groups = [];
+  let status = 'Pending', category = null;
+  for (const line of md.split('\n')) {
+    let m;
+    if ((m = line.match(/^##\s+(.+)/)) && !line.startsWith('###')) { status = m[1].trim(); category = null; continue; }
+    if ((m = line.match(/^###\s+(.+)/))) {
+      category = m[1].trim();
+      groups.push({ status, category, items: [] });
+      continue;
+    }
+    if ((m = line.match(/^-\s+\[([ x])\]\s+(.*)$/))) {
+      if (!groups.length) groups.push({ status, category: category ?? '', items: [] });
+      const body = m[2];
+      const idm = body.match(/^(#\d+[a-z]?)\s+([\s\S]*)$/);
+      groups[groups.length - 1].items.push({
+        done: m[1] === 'x',
+        id: idm ? idm[1] : '',
+        text: idm ? idm[2] : body,
+      });
+    }
+  }
+  return groups.filter((g) => g.items.length);
+}
+
+let GROUPS = [], filter = 'open', query = '';
+
+function render() {
+  const app = document.getElementById('app');
+  const q = query.trim().toLowerCase();
+  let shown = 0;
+  let html = '';
+
+  for (const g of GROUPS) {
+    const items = g.items.filter((it) => {
+      if (filter === 'open' && it.done) return false;
+      if (filter === 'done' && !it.done) return false;
+      if (q && !(it.id + ' ' + it.text).toLowerCase().includes(q)) return false;
+      return true;
+    });
+    if (!items.length) continue;
+    shown += items.length;
+    html += `<h2 class="section">${esc(g.status)} · ${esc(g.category)} <span class="n">(${items.length})</span></h2>`;
+    for (const it of items) {
+      const rest = it.text.slice(firstSentence(it.text).length).trim();
+      html += `<div class="item${it.done ? ' done' : ''}">
+        <button class="row" aria-expanded="false">
+          <span class="mark">${it.done ? '✓' : ''}</span>
+          <span class="id">${esc(it.id)}</span>
+          <span class="summary">${inline(firstSentence(it.text))}</span>
+          <span class="chev">${rest ? '▶' : ''}</span>
+        </button>
+        ${rest ? `<div class="detail">${inline(rest)}</div>` : ''}
+      </div>`;
+    }
+  }
+  app.innerHTML = html || '<div class="empty">Nothing matches.</div>';
+
+  app.querySelectorAll('.row').forEach((row) => {
+    row.addEventListener('click', () => {
+      const item = row.parentElement;
+      const open = item.classList.toggle('open');
+      row.setAttribute('aria-expanded', String(open));
+    });
+  });
+  document.getElementById('count').textContent = shown + (shown === 1 ? ' item' : ' items');
+}
+
+function controls() {
+  const bar = document.createElement('div');
+  bar.className = 'controls';
+  bar.innerHTML = `
+    <input type="search" id="q" placeholder="Search id or text…" aria-label="Search">
+    <button data-f="open" aria-pressed="true">Open</button>
+    <button data-f="done" aria-pressed="false">Done</button>
+    <button data-f="all" aria-pressed="false">All</button>
+    <span id="count" style="color:var(--muted);font-size:.8rem;margin-left:auto"></span>`;
+  document.querySelector('.wrap').insertBefore(bar, document.getElementById('app'));
+  bar.querySelectorAll('button[data-f]').forEach((b) => b.addEventListener('click', () => {
+    filter = b.dataset.f;
+    bar.querySelectorAll('button[data-f]').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+    render();
+  }));
+  document.getElementById('q').addEventListener('input', (e) => { query = e.target.value; render(); });
+}
+
+fetch('TODO.md', { cache: 'no-store' })
+  .then((r) => { if (!r.ok) throw new Error(r.status + ' ' + r.statusText); return r.text(); })
+  .then((md) => { GROUPS = parse(md); controls(); render(); })
+  .catch((err) => {
+    // Almost always file:// -- browsers refuse to fetch a sibling file from
+    // there. Say so plainly and give the command, rather than "failed".
+    document.getElementById('app').innerHTML =
+      `<div class="err"><strong>Couldn't read TODO.md.</strong>
+       <p style="margin:.6rem 0 0;color:var(--muted);font-size:.9rem">
+       If the address bar says <code style="display:inline">file://</code>, that's the cause — browsers
+       block pages loaded from disk from reading neighbouring files. Serve the folder instead:</p>
+       <code>cd docs &amp;&amp; python3 -m http.server 4390</code>
+       <p style="margin:.6rem 0 0;color:var(--muted);font-size:.85rem">then open
+       http://localhost:4390/todo.html — (${esc(String(err.message))})</p></div>`;
+  });
+</script>
+</body>
+</html>
