@@ -61,7 +61,11 @@ export const env = {
   // Read it via getConditionsCacheTtlMinutes(), not directly.
   conditionsCacheTtlMinutesOverride: overrideNumber('CONDITIONS_CACHE_TTL_MINUTES'),
   strategyCacheTtlMinutes: optionalNumber('STRATEGY_CACHE_TTL_MINUTES', 1440),
-  noaaStationRefreshDays: optionalNumber('NOAA_STATION_REFRESH_DAYS', 30),
+  // Weekly, not monthly: a sync now prunes stations NDBC has retired, so this
+  // interval decides how long a dead buoy can keep being chosen as someone's
+  // nearest station and 404ing on every reading. Cheap to run -- one fetch
+  // and one bulk upsert.
+  noaaStationRefreshDays: optionalNumber('NOAA_STATION_REFRESH_DAYS', 7),
   bucketUrl: required('BUCKET_ENDPOINT'),
   bucketName: required('RAILWAY_BUCKET_NAME'),
   bucketAccessKeyId: required('ACCESS_KEY_ID'),
