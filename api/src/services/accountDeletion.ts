@@ -1,6 +1,7 @@
 import { pool } from '../config/db';
 import { env } from '../config/env';
 import { deleteUserPhotos } from './storage';
+import { logSystemAction } from './auditLog';
 
 // Long enough that someone who deleted in frustration (or by accident) can
 // come back, short enough that "delete my account" still means something.
@@ -43,6 +44,10 @@ export async function purgeAccount(userId: string): Promise<void> {
   await deleteSupabaseAuthUser(userId);
   // Cascades to shell_finds, saved_locations, content_reports, user_blocks.
   await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+  // Logged after the rows are gone, deliberately: the entry records that the
+  // deletion completed, and it must not depend on the account still existing.
+  await logSystemAction('Account purged after grace period', userId);
+
   try {
     await deleteUserPhotos(userId);
   } catch (err) {

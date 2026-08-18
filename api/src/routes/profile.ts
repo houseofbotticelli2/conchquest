@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { pool } from '../config/db';
 import { getDownloadUrl, isOwnUploadKey } from '../services/storage';
 import { DELETION_GRACE_DAYS, scheduledPurgeDate } from '../services/accountDeletion';
+import { logSystemAction } from '../services/auditLog';
 
 export const profileRouter = Router();
 
@@ -122,6 +123,7 @@ profileRouter.post('/delete', async (req, res, next) => {
       return;
     }
     const requestedAt = result.rows[0].deletion_requested_at;
+    await logSystemAction('Account deletion requested by user', req.user!.id);
     res.json({
       deletionRequestedAt: requestedAt.toISOString(),
       deletionScheduledFor: scheduledPurgeDate(requestedAt).toISOString(),
@@ -139,6 +141,7 @@ profileRouter.post('/delete/cancel', async (req, res, next) => {
       `UPDATE users SET deletion_requested_at = NULL, updated_at = now() WHERE id = $1`,
       [req.user!.id]
     );
+    await logSystemAction('Account deletion cancelled by user', req.user!.id);
     res.json({ deletionRequestedAt: null, deletionScheduledFor: null });
   } catch (err) {
     next(err);
