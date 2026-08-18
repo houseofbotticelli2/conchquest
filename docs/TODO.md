@@ -13,6 +13,18 @@ Task numbers are stable references, not priority order.
 
 ### Enhancements
 
+- [ ] #110 Finish photo thumbnails. **Groundwork already shipped** (2026-08-18): `shell_finds.thumb_key` column exists (nullable), `POST /api/finds` accepts and ownership-validates an optional `thumbKey`, every find response already returns `thumbUrl` (falling back to `photoUrl` when there is no thumbnail), and download URLs are now cached per key in `storage.ts`. What remains is generating the thumbnails and using them.
+  **The problem**: originals average 1.3MB and reach 2.9MB (the app compresses at `quality: 0.8` but never resizes, so an iPhone photo stays 4032x3024). Every list view -- `FindRow`, `MyShells`, `MapScreen`, `Profile`, the `Log` preview -- downloads the full original to render a ~64px image, and so does the *preview* on `FindDetail` before you tap it. That's why photos pop in slowly, one at a time.
+  **Originals must stay untouched.** `PhotoViewer` (`mobile/src/components/PhotoViewer.tsx`, opened by tapping the photo on FindDetail) is a real working zoom feature, and zooming into a shell's sculpture to confirm an ID is the point of the app. Do **not** resize on upload.
+  **Chosen approach: server-side with `sharp`**, not client-side `expo-image-manipulator`. `expo-image-manipulator` is not installed and is a native module (new build required), and client-side generation would only ever fix *future* photos -- the existing finds would stay slow forever. Server-side can backfill.
+  Steps:
+  1. `npm i sharp` in `api/`. Note it ships prebuilt binaries via a postinstall script -- the install-script surface discussed in #64, which we consciously chose not to block.
+  2. On `POST /api/finds`, after the row is inserted: fetch the just-uploaded object from the bucket, resize the long edge to ~600px, upload it under a second key from `createUploadUrl`-style naming, and set `thumb_key`. **Make failure non-fatal** -- if the resize throws, the find still saves with `thumb_key` null and callers fall back to the original. Image processing must not be able to fail a user's find.
+  3. One-off backfill script for existing finds (9 at time of writing) -- same resize path, iterate rows where `thumb_key IS NULL AND photo_key IS NOT NULL`.
+  4. Mobile: point the five list contexts and the FindDetail *preview* at `thumbUrl`; leave `PhotoViewer` on `photoUrl` so zoom keeps full resolution. Requires a new build (Build 9+) since it is a client change.
+  5. Consider the same for avatars later -- `users.avatar_key` has the identical problem, at smaller scale.
+  Expected effect: ~2.9MB -> ~60KB per list image, and with the URL caching already in place, repeat views hit the client cache instead of re-downloading.
+
 - [ ] #44 Build social feed (PRD MVP item)
 - [ ] #46 Build premium subscriptions via RevenueCat (PRD MVP item)
 - [ ] #71 Add social login (Google, Apple, Facebook) via Supabase Auth -- Sign in with Apple is mandatory once any other social login is offered and the app is on the App Store (guideline 4.8), not optional; needs provider setup in Apple Developer (Services ID), Google Cloud Console (OAuth client), and Facebook for Developers, wired into Supabase Auth's dashboard, plus expo-apple-authentication + an OAuth flow (expo-auth-session or similar) on the mobile side

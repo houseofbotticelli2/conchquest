@@ -76,10 +76,25 @@ export function isOwnUploadKey(key: string, userId: string, purpose: UploadPurpo
   return key.startsWith(`${FOLDER_BY_PURPOSE[purpose]}/${userId}/`);
 }
 
-export function getDownloadUrl(key: string): Promise<string> {
-  return getSignedUrl(client, new GetObjectCommand({ Bucket: env.bucketName, Key: key }), {
+// A freshly signed URL every time meant the app could never cache an image:
+// React Native keys its image cache by URI, so a new signature on every API
+// response guaranteed a cache miss and a full re-download of the same photo.
+// Reusing one URL per key until it nears expiry makes the client cache work.
+const downloadUrlCache = new Map<string, { url: string; expiresAt: number }>();
+// Regenerate with time to spare, so a URL handed out now can't expire while
+// the image is still loading.
+const DOWNLOAD_URL_REFRESH_MARGIN_MS = 10 * 60 * 1000;
+
+export async function getDownloadUrl(key: string): Promise<string> {
+  const cached = downloadUrlCache.get(key);
+  if (cached && cached.expiresAt - Date.now() > DOWNLOAD_URL_REFRESH_MARGIN_MS) {
+    return cached.url;
+  }
+  const url = await getSignedUrl(client, new GetObjectCommand({ Bucket: env.bucketName, Key: key }), {
     expiresIn: DOWNLOAD_URL_EXPIRES_SECONDS,
   });
+  downloadUrlCache.set(key, { url, expiresAt: Date.now() + DOWNLOAD_URL_EXPIRES_SECONDS * 1000 });
+  return url;
 }
 
 export async function deleteObject(key: string): Promise<void> {

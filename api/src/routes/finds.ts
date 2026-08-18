@@ -31,6 +31,7 @@ interface FindRow {
   condition: string | null;
   notes: string | null;
   photo_key: string | null;
+  thumb_key: string | null;
   is_private: boolean;
   created_at: Date;
   updated_at: Date;
@@ -48,6 +49,9 @@ async function toResponse(row: FindRow) {
     condition: row.condition,
     notes: row.notes,
     photoUrl: row.photo_key ? await getDownloadUrl(row.photo_key) : null,
+    // Small variant for lists. Falls back to the original for finds logged
+    // before thumbnails existed, so old finds keep rendering.
+    thumbUrl: row.thumb_key ? await getDownloadUrl(row.thumb_key) : row.photo_key ? await getDownloadUrl(row.photo_key) : null,
     isPrivate: row.is_private,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -71,6 +75,9 @@ async function toCommunityResponse(row: FindRow) {
     condition: row.condition,
     notes: row.notes,
     photoUrl: row.photo_key ? await getDownloadUrl(row.photo_key) : null,
+    // Small variant for lists. Falls back to the original for finds logged
+    // before thumbnails existed, so old finds keep rendering.
+    thumbUrl: row.thumb_key ? await getDownloadUrl(row.thumb_key) : row.photo_key ? await getDownloadUrl(row.photo_key) : null,
   };
 }
 
@@ -78,13 +85,13 @@ const SELECT_COLUMNS = `
   sf.id, sf.user_id, COALESCE(u.display_name, split_part(u.email, '@', 1)) AS logged_by,
   sf.species_id, ss.common_name AS species_name, ss.rarity AS species_rarity,
   ST_Y(sf.geog::geometry) AS lat, ST_X(sf.geog::geometry) AS lon,
-  sf.found_at, sf.condition, sf.notes, sf.photo_key, sf.is_private, sf.created_at, sf.updated_at
+  sf.found_at, sf.condition, sf.notes, sf.photo_key, sf.thumb_key, sf.is_private, sf.created_at, sf.updated_at
 `;
 const FROM_CLAUSE = `FROM shell_finds sf JOIN users u ON u.id = sf.user_id LEFT JOIN shell_species ss ON ss.id = sf.species_id`;
 
 findsRouter.post('/', async (req, res, next) => {
   try {
-    const { speciesId, lat, lon, foundAt, condition, notes, photoKey, isPrivate } = req.body ?? {};
+    const { speciesId, lat, lon, foundAt, condition, notes, photoKey, thumbKey, isPrivate } = req.body ?? {};
 
     if (typeof lat !== 'number' || typeof lon !== 'number' || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
       res.status(400).json({ error: 'lat and lon are required and must be valid coordinates' });
@@ -106,12 +113,19 @@ findsRouter.post('/', async (req, res, next) => {
       res.status(400).json({ error: 'photoKey does not belong to this user' });
       return;
     }
+    // Optional -- an older client won't send one -- but same ownership rule.
+    if (thumbKey !== undefined && thumbKey !== null) {
+      if (typeof thumbKey !== 'string' || !isOwnUploadKey(thumbKey, req.user!.id, 'find')) {
+        res.status(400).json({ error: 'thumbKey does not belong to this user' });
+        return;
+      }
+    }
 
     const inserted = await pool.query<{ id: string }>(
-      `INSERT INTO shell_finds (user_id, species_id, geog, found_at, condition, notes, photo_key, is_private)
-       VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, COALESCE($5, now()), $6, $7, $8, COALESCE($9, true))
+      `INSERT INTO shell_finds (user_id, species_id, geog, found_at, condition, notes, photo_key, thumb_key, is_private)
+       VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, COALESCE($5, now()), $6, $7, $8, $9, COALESCE($10, true))
        RETURNING id`,
-      [req.user!.id, speciesId ?? null, lon, lat, foundAt ?? null, condition ?? null, notes ?? null, photoKey ?? null, isPrivate ?? null]
+      [req.user!.id, speciesId ?? null, lon, lat, foundAt ?? null, condition ?? null, notes ?? null, photoKey ?? null, thumbKey ?? null, isPrivate ?? null]
     );
 
     const result = await pool.query<FindRow>(`SELECT ${SELECT_COLUMNS} ${FROM_CLAUSE} WHERE sf.id = $1`, [
@@ -179,6 +193,7 @@ interface NearbyFindRow {
   condition: string | null;
   notes: string | null;
   photo_key: string | null;
+  thumb_key: string | null;
   is_private: boolean;
   logged_by: string;
   distance_m: number;
@@ -261,7 +276,7 @@ findsRouter.get('/nearby', async (req, res, next) => {
       `SELECT
          sf.id, sf.user_id, sf.species_id, ss.common_name AS species_name, ss.rarity AS species_rarity,
          ST_Y(sf.geog::geometry) AS lat, ST_X(sf.geog::geometry) AS lon,
-         sf.found_at, sf.condition, sf.notes, sf.photo_key, sf.is_private,
+         sf.found_at, sf.condition, sf.notes, sf.photo_key, sf.thumb_key, sf.is_private,
          COALESCE(u.display_name, split_part(u.email, '@', 1)) AS logged_by,
          ST_Distance(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) AS distance_m
        FROM shell_finds sf
@@ -293,6 +308,9 @@ findsRouter.get('/nearby', async (req, res, next) => {
         condition: row.condition,
         notes: row.notes,
         photoUrl: row.photo_key ? await getDownloadUrl(row.photo_key) : null,
+    // Small variant for lists. Falls back to the original for finds logged
+    // before thumbnails existed, so old finds keep rendering.
+    thumbUrl: row.thumb_key ? await getDownloadUrl(row.thumb_key) : row.photo_key ? await getDownloadUrl(row.photo_key) : null,
         distanceFeet: Math.round(metersToFeet(row.distance_m)),
       }))
     );
