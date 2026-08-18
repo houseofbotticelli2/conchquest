@@ -1,0 +1,3 @@
+# Public marketing site -- crawling is welcome.
+User-agent: *
+Allow: /

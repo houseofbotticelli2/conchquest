@@ -1,0 +1,7 @@
+# The admin console should never appear in search results.
+# Note this is advisory only -- it keeps well-behaved crawlers out, it is not
+# access control. The real gate is Cloudflare Access (docs/TODO.md #86); until
+# that lands, index.html also carries a noindex meta tag, which is what
+# actually keeps the page out of results if a URL is discovered elsewhere.
+User-agent: *
+Disallow: /
