@@ -1,3 +1,5 @@
 # Public marketing site -- crawling is welcome.
 User-agent: *
 Allow: /
+
+Sitemap: https://www.conchquest.app/sitemap.xml
