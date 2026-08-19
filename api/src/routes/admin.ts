@@ -697,7 +697,7 @@ adminRouter.patch('/reports/:id', async (req, res, next) => {
     if (action === 'remove_find') {
       const findId = report.rows[0].find_id;
       if (findId) {
-        const find = await pool.query<{ photo_key: string | null }>('SELECT photo_key FROM shell_finds WHERE id = $1', [
+        const find = await pool.query<{ photo_key: string | null; thumb_key: string | null }>('SELECT photo_key, thumb_key FROM shell_finds WHERE id = $1', [
           findId,
         ]);
         // Deleting the find first cascades find_id -> NULL on this (and any
@@ -705,9 +705,12 @@ adminRouter.patch('/reports/:id', async (req, res, next) => {
         // the DB row is the part that matters, R2 cleanup is best-effort and
         // shouldn't fail the request if it hiccups.
         await pool.query('DELETE FROM shell_finds WHERE id = $1', [findId]);
-        if (find.rows[0]?.photo_key) {
+        // Both objects: a find's thumbnail would otherwise be orphaned until
+        // the weekly sweep noticed it.
+        for (const key of [find.rows[0]?.photo_key, find.rows[0]?.thumb_key]) {
+          if (!key) continue;
           try {
-            await deleteObject(find.rows[0].photo_key);
+            await deleteObject(key);
           } catch (err) {
             console.error(`Failed to delete R2 photo for removed find ${findId}:`, err);
           }

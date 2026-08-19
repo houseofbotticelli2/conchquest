@@ -356,6 +356,34 @@ findsRouter.get('/:id', async (req, res, next) => {
   }
 });
 
+findsRouter.delete('/:id', async (req, res, next) => {
+  try {
+    // Scoped to the owner in the WHERE clause rather than fetched-then-checked,
+    // so someone else's find is a 404 and not a 403 -- matching GET /:id, and
+    // avoiding confirming that an id exists to someone with no right to know.
+    const deleted = await pool.query<{ photo_key: string | null; thumb_key: string | null }>(
+      'DELETE FROM shell_finds WHERE id = $1 AND user_id = $2 RETURNING photo_key, thumb_key',
+      [req.params.id, req.user!.id]
+    );
+
+    if (deleted.rows.length === 0) {
+      res.status(404).json({ error: 'Find not found' });
+      return;
+    }
+
+    res.status(204).send();
+
+    // After responding: the row is gone, which is what the user asked for.
+    // Bucket cleanup failing would leave an orphan for the weekly sweep, which
+    // is a far better outcome than a 500 on a delete that already happened.
+    for (const key of [deleted.rows[0].photo_key, deleted.rows[0].thumb_key]) {
+      if (key) deleteObject(key).catch((err) => console.error(`Failed to delete object ${key} for find ${req.params.id}:`, err));
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
 findsRouter.patch('/:id', async (req, res, next) => {
   try {
     const { speciesId, condition, notes, photoKey, isPrivate } = req.body ?? {};
