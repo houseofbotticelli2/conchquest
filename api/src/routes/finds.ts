@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../config/db';
 import { getConfigNumber } from '../services/appConfig';
-import { getDownloadUrl, isOwnUploadKey } from '../services/storage';
+import { getDownloadUrl, isOwnUploadKey, deleteObject } from '../services/storage';
 import { generateThumbnail } from '../services/thumbnails';
 import { feetToMeters, metersToFeet } from '../utils/units';
 
@@ -373,17 +373,31 @@ findsRouter.patch('/:id', async (req, res, next) => {
       }
     }
 
+    // Read the keys we're about to overwrite, so a replaced photo's objects can
+    // be cleaned up and its stale thumbnail can't outlive it.
+    const existing = await pool.query<{ photo_key: string | null; thumb_key: string | null }>(
+      'SELECT photo_key, thumb_key FROM shell_finds WHERE id = $1 AND user_id = $2',
+      [req.params.id, req.user!.id]
+    );
+    const replacingPhoto =
+      typeof photoKey === 'string' && !!existing.rows[0] && existing.rows[0].photo_key !== photoKey;
+
     const result = await pool.query<{ id: string }>(
       `UPDATE shell_finds
        SET species_id = COALESCE($1, species_id),
            condition = COALESCE($2, condition),
            notes = COALESCE($3, notes),
            photo_key = COALESCE($4, photo_key),
+           -- A new photo invalidates the old thumbnail. Clearing it means
+           -- callers fall back to the (new) original for the moment it takes
+           -- to regenerate, rather than showing the previous photo -- which is
+           -- what would happen if this were left alone.
+           thumb_key = CASE WHEN $8::boolean THEN NULL ELSE thumb_key END,
            is_private = COALESCE($5, is_private),
            updated_at = now()
        WHERE id = $6 AND user_id = $7
        RETURNING id`,
-      [speciesId ?? null, condition ?? null, notes ?? null, photoKey ?? null, isPrivate ?? null, req.params.id, req.user!.id]
+      [speciesId ?? null, condition ?? null, notes ?? null, photoKey ?? null, isPrivate ?? null, req.params.id, req.user!.id, replacingPhoto]
     );
 
     if (result.rows.length === 0) {
@@ -396,6 +410,16 @@ findsRouter.patch('/:id', async (req, res, next) => {
     ]);
 
     res.json(await toResponse(updated.rows[0]));
+
+    if (replacingPhoto) {
+      // After responding, same as creation: the user's edit is saved and
+      // shouldn't wait on image work or bucket cleanup.
+      void generateThumbnail(result.rows[0].id, photoKey as string);
+      // The photo they replaced, and its thumbnail, are now unreferenced.
+      for (const key of [existing.rows[0].photo_key, existing.rows[0].thumb_key]) {
+        if (key) deleteObject(key).catch((err) => console.error(`Failed to delete replaced object ${key}:`, err));
+      }
+    }
   } catch (err) {
     next(err);
   }

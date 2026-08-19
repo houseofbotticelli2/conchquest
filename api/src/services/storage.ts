@@ -127,6 +127,22 @@ export function thumbKeyFor(photoKey: string): string {
   return `${stem}_thumb.jpg`;
 }
 
+/** Every object in the bucket, with what the orphan sweeper needs to judge it. */
+export async function listAllObjects(): Promise<{ key: string; size?: number; lastModified?: Date }[]> {
+  const out: { key: string; size?: number; lastModified?: Date }[] = [];
+  let continuationToken: string | undefined;
+  do {
+    const listing = await client.send(
+      new ListObjectsV2Command({ Bucket: env.bucketName, ContinuationToken: continuationToken })
+    );
+    for (const obj of listing.Contents ?? []) {
+      if (obj.Key) out.push({ key: obj.Key, size: obj.Size, lastModified: obj.LastModified });
+    }
+    continuationToken = listing.IsTruncated ? listing.NextContinuationToken : undefined;
+  } while (continuationToken);
+  return out;
+}
+
 export async function deleteObject(key: string): Promise<void> {
   await client.send(new DeleteObjectCommand({ Bucket: env.bucketName, Key: key }));
 }

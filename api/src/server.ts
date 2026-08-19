@@ -4,6 +4,7 @@ import { env } from './config/env';
 import { checkBeachAlerts } from './services/beachAlerts';
 import { cleanExpiredCaches } from './services/cacheCleanup';
 import { purgeExpiredAccounts } from './services/accountDeletion';
+import { sweepOrphanedObjects } from './services/orphanSweeper';
 
 app.listen(env.port, () => {
   console.log(`Conchquest API listening on port ${env.port} (${env.nodeEnv})`);
@@ -29,4 +30,12 @@ cron.schedule('0 3 * * 0', () => {
 // even if they never open the app again. 4am, well outside any usage window.
 cron.schedule('0 4 * * *', () => {
   purgeExpiredAccounts().catch((err) => console.error('Account purge failed:', err));
+});
+
+// Weekly, delete bucket objects nothing references -- photos replaced during
+// an edit before that was fixed at the source, and uploads for finds the user
+// abandoned. Only touches objects older than a day, since a fresh upload
+// legitimately has no row yet. Sunday 4:30am, after the cache cleanup.
+cron.schedule('30 4 * * 0', () => {
+  sweepOrphanedObjects().catch((err) => console.error('Orphan sweep failed:', err));
 });
