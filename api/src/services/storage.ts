@@ -97,6 +97,36 @@ export async function getDownloadUrl(key: string): Promise<string> {
   return url;
 }
 
+/**
+ * Reads an object's bytes directly, rather than through a presigned URL.
+ * Only for server-side work like thumbnail generation -- clients always get a
+ * presigned URL instead, so the bucket credentials never leave here.
+ */
+export async function getObjectBytes(key: string): Promise<Buffer> {
+  const res = await client.send(new GetObjectCommand({ Bucket: env.bucketName, Key: key }));
+  const body = res.Body as unknown as AsyncIterable<Uint8Array>;
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of body) chunks.push(chunk);
+  return Buffer.concat(chunks);
+}
+
+/** Uploads bytes we generated ourselves (thumbnails), not a client upload. */
+export async function putObject(key: string, body: Buffer, contentType: string): Promise<void> {
+  await client.send(new PutObjectCommand({ Bucket: env.bucketName, Key: key, Body: body, ContentType: contentType }));
+}
+
+/**
+ * The key a thumbnail lives at, derived from its original. Same
+ * `{folder}/{userId}/` prefix on purpose: deleteUserPhotos() removes by prefix,
+ * so thumbnails are swept up with everything else when an account is purged
+ * without needing to know they exist.
+ */
+export function thumbKeyFor(photoKey: string): string {
+  const dot = photoKey.lastIndexOf('.');
+  const stem = dot === -1 ? photoKey : photoKey.slice(0, dot);
+  return `${stem}_thumb.jpg`;
+}
+
 export async function deleteObject(key: string): Promise<void> {
   await client.send(new DeleteObjectCommand({ Bucket: env.bucketName, Key: key }));
 }

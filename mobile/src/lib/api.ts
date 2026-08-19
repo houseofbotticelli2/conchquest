@@ -212,6 +212,10 @@ export interface Find {
   condition: FindCondition | null;
   notes: string | null;
   photoUrl: string | null;
+  // Small variant for rows and the expanded card. The API falls back to the
+  // original when a find has no thumbnail yet, so this is never null when
+  // photoUrl isn't -- but keep the original for PhotoViewer's zoom.
+  thumbUrl: string | null;
   isPrivate: boolean;
   createdAt: string;
   updatedAt: string;
@@ -230,6 +234,10 @@ export interface CommunityFind {
   condition: FindCondition | null;
   notes: string | null;
   photoUrl: string | null;
+  // Small variant for rows and the expanded card. The API falls back to the
+  // original when a find has no thumbnail yet, so this is never null when
+  // photoUrl isn't -- but keep the original for PhotoViewer's zoom.
+  thumbUrl: string | null;
 }
 
 export type FindDetail = Find | CommunityFind;
@@ -337,6 +345,10 @@ export interface NearbyFind {
   condition: FindCondition | null;
   notes: string | null;
   photoUrl: string | null;
+  // Small variant for rows and the expanded card. The API falls back to the
+  // original when a find has no thumbnail yet, so this is never null when
+  // photoUrl isn't -- but keep the original for PhotoViewer's zoom.
+  thumbUrl: string | null;
   distanceFeet: number;
 }
 

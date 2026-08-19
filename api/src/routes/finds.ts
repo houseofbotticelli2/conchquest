@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { pool } from '../config/db';
 import { getConfigNumber } from '../services/appConfig';
 import { getDownloadUrl, isOwnUploadKey } from '../services/storage';
+import { generateThumbnail } from '../services/thumbnails';
 import { feetToMeters, metersToFeet } from '../utils/units';
 
 export const findsRouter = Router();
@@ -132,7 +133,13 @@ findsRouter.post('/', async (req, res, next) => {
       inserted.rows[0].id,
     ]);
 
-    res.status(201).json(await toResponse(result.rows[0]));
+    // Respond first, then build the thumbnail. The find is already saved, and
+    // making the user wait on image processing would put a resize on the
+    // critical path of logging a shell on a beach. Callers fall back to the
+    // original until thumb_key lands, so nothing is broken in between.
+    const created = await toResponse(result.rows[0]);
+    res.status(201).json(created);
+    if (photoKey) void generateThumbnail(result.rows[0].id, photoKey);
   } catch (err) {
     next(err);
   }

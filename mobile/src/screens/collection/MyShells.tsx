@@ -190,7 +190,7 @@ export function MyShells({ navigation }: Props) {
               badge={toBadgeType(f.speciesRarity)}
               notes={f.notes}
               isPrivate={f.isPrivate}
-              photoUrl={f.photoUrl}
+              photoUrl={f.thumbUrl ?? f.photoUrl}
               onPress={() => handleEdit(f)}
             />
           ))}

@@ -172,7 +172,7 @@ export function FindDetail({ navigation, route }: Props) {
                 ]}
               >
                 {find.photoUrl ? (
-                  <Image source={{ uri: find.photoUrl }} style={styles.photoSquareImg} />
+                  <Image source={{ uri: find.thumbUrl ?? find.photoUrl }} style={styles.photoSquareImg} />
                 ) : (
                   <Text style={{ fontSize: 22 }}>🐚</Text>
                 )}

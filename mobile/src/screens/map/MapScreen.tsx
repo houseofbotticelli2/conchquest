@@ -306,7 +306,7 @@ export function MapScreen({ navigation }: Props) {
                   condition={f.condition}
                   notes={f.notes}
                   badge={toBadgeType(f.speciesRarity)}
-                  photoUrl={f.photoUrl}
+                  photoUrl={f.thumbUrl ?? f.photoUrl}
                   onPress={() => navigation.navigate('FindDetail', { findId: f.id })}
                 />
               ))}
