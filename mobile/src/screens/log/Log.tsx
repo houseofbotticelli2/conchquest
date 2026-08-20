@@ -23,6 +23,7 @@ import { Field } from '../../components/Field';
 import { Btn } from '../../components/Btn';
 import { NavBar } from '../../components/NavBar';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { DestructiveLink } from '../../components/DestructiveLink';
 import { ShellingMap } from '../../components/ShellingMap';
 import { PhotoViewer } from '../../components/PhotoViewer';
 import { LogStackParamList } from '../../navigation/types';
@@ -239,7 +240,10 @@ export function Log({ navigation, route }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <NavBar
-        title=""
+        // Editing says what you're editing, matching BeachEdit. Logging keeps
+        // the bare bar: the right slot is already carrying the location, and a
+        // title would crowd it.
+        title={isEditMode ? 'Edit find' : ''}
         left="← Back"
         onLeft={handleBack}
         right={isEditMode ? undefined : deviceLocation ? 'Current location' : 'Sanibel'}
@@ -446,13 +450,16 @@ export function Log({ navigation, route }: Props) {
             <View style={styles.submitBtn}>
               <ActivityIndicator color={t.accent} />
             </View>
+          ) : isEditMode ? (
+            // Cancel + Save, same as BeachEdit -- editing is a thing you can
+            // back out of. Logging has no Cancel: there's nothing to revert to,
+            // and Back already abandons the draft.
+            <View style={[styles.actionRow, styles.submitBtn]}>
+              <Btn label="Cancel" variant="ghost" onPress={handleBack} style={styles.actionBtn} />
+              <Btn label="Save" onPress={handleSubmit} style={styles.actionBtn} />
+            </View>
           ) : (
-            <Btn
-              label={isEditMode ? 'Save' : 'Log find'}
-              onPress={handleSubmit}
-              disabled={!isEditMode && !photo}
-              style={styles.submitBtn}
-            />
+            <Btn label="Log find" onPress={handleSubmit} disabled={!photo} style={styles.submitBtn} />
           )}
         </View>
 
@@ -460,7 +467,7 @@ export function Log({ navigation, route }: Props) {
           // Destructive actions live on the edit page, not in the list, so a
           // stray tap while scrolling can't reach them (docs/TODO.md #112).
           <View style={styles.deleteRow}>
-            <Btn label="Delete this find" variant="ghost" onPress={() => setDeleteVisible(true)} />
+            <DestructiveLink label="Delete this find" onPress={() => setDeleteVisible(true)} />
           </View>
         )}
       </ScrollView>
@@ -538,7 +545,9 @@ export function Log({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   mapSection: { gap: 6 },
   mapHint: { fontFamily: fonts.body, fontSize: 11, lineHeight: 15, paddingHorizontal: 20 },
-  deleteRow: { marginTop: 18, alignItems: 'center' },
+  deleteRow: { marginTop: 4, alignItems: 'center' },
+  actionRow: { flexDirection: 'row', gap: 10 },
+  actionBtn: { flex: 1 },
   screen: { flex: 1 },
   scrollContent: { paddingBottom: 200 },
   photoBox: { height: 160, alignItems: 'center', justifyContent: 'center', gap: 6, borderBottomWidth: 1, overflow: 'hidden' },

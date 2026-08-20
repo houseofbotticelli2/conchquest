@@ -9,6 +9,7 @@ import { fonts } from '../../theme/tokens';
 import { Field } from '../../components/Field';
 import { Btn } from '../../components/Btn';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { DestructiveLink } from '../../components/DestructiveLink';
 import { ShellingMap } from '../../components/ShellingMap';
 import { updateSavedLocation, deleteSavedLocation } from '../../lib/api';
 import { reverseGeocodeCity } from '../../lib/location';
@@ -123,13 +124,20 @@ export function BeachEdit({ route, navigation }: Props) {
         </View>
 
         <View style={styles.section}>
-          {/* Favourites are plural and reversible, so this is a toggle rather
-              than the one-way "make this my home beach" it replaced. */}
-          <Btn
-            label={favorite ? '★ Remove from favorites' : '☆ Add to favorites'}
-            variant="secondary"
+          {/* A setting, not an action -- so it wears the alert stepper's card
+              rather than a button's border, which made it the loudest thing on
+              a screen whose actual point is Save. Favourites are plural and
+              reversible; the label stays put and the star carries the state,
+              so the row doesn't reflow under your thumb as you tap it. */}
+          <TouchableOpacity
             onPress={() => setFavorite((v: boolean) => !v)}
-          />
+            accessibilityRole="switch"
+            accessibilityState={{ checked: favorite }}
+            style={[styles.stepperRow, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}
+          >
+            <Text style={[styles.rowLabel, { color: t.text }]}>Favorite</Text>
+            <Ionicons name={favorite ? 'star' : 'star-outline'} size={22} color={favorite ? t.accent : t.muted} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.actions}>
@@ -144,7 +152,7 @@ export function BeachEdit({ route, navigation }: Props) {
         </View>
 
         <View style={styles.deleteRow}>
-          <Btn label="Remove this beach" variant="ghost" onPress={() => setDeleteVisible(true)} />
+          <DestructiveLink label="Remove this beach" onPress={() => setDeleteVisible(true)} />
         </View>
       </ScrollView>
 
@@ -194,7 +202,8 @@ const styles = StyleSheet.create({
     borderRadius: 12, borderWidth: 1, paddingVertical: 10, paddingHorizontal: 14,
   },
   alertText: { fontFamily: fonts.bodySemiBold, fontSize: 13 },
+  rowLabel: { fontFamily: fonts.bodySemiBold, fontSize: 13 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 8 },
   actionBtn: { flex: 1 },
-  deleteRow: { marginTop: 20, alignItems: 'center' },
+  deleteRow: { marginTop: 24, alignItems: 'center' },
 });
