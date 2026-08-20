@@ -245,10 +245,10 @@ export function Log({ navigation, route }: Props) {
         right={isEditMode ? undefined : deviceLocation ? 'Current location' : 'Sanibel'}
       />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
-        {/* The map and the photo are both always present -- they are not
-            alternatives. An earlier version shared one ternary chain, which
-            made the photo picker unreachable whenever a location existed and
-            left new finds impossible to log, since a photo is required. */}
+        {/* The map and the photo are independent, not alternatives. An earlier
+            version put them in one ternary chain, which made the photo picker
+            unreachable whenever a location existed -- and since a photo is
+            required, that left new finds impossible to log at all. */}
         {isEditMode || pinLocation || deviceLocation ? (
           <View style={styles.mapSection}>
             <Text style={[styles.mapHint, { color: t.muted }]}>
@@ -279,7 +279,11 @@ export function Log({ navigation, route }: Props) {
           </View>
         ) : null}
 
-        {photo ? (
+        {/* Create only. Editing already reaches the picker through the shell
+            thumbnail in the species row below (tap -> PhotoViewer -> Change
+            photo), so a second, larger control here would be two ways to do
+            one thing on the same screen. */}
+        {isEditMode ? null : photo ? (
           <TouchableOpacity style={[styles.photoBox, { borderBottomColor: t.border }]} onPress={() => setPhotoSourceOpen(true)}>
             <Image source={{ uri: photo.uri }} style={styles.photoPreview} />
             <TouchableOpacity style={styles.photoRemove} onPress={() => setPhoto(null)}>
@@ -294,9 +298,7 @@ export function Log({ navigation, route }: Props) {
             onPress={() => setPhotoSourceOpen(true)}
           >
             <Text style={{ fontSize: 28 }}>📷</Text>
-            <Text style={[styles.photoText, { color: t.muted }]}>
-              {isEditMode ? 'Tap to replace photo' : 'Tap to add photo (required)'}
-            </Text>
+            <Text style={[styles.photoText, { color: t.muted }]}>Tap to add photo (required)</Text>
           </TouchableOpacity>
         )}
 
