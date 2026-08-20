@@ -517,6 +517,9 @@ export function Profile({ navigation }: Props) {
             <Text style={[styles.emptyText, { color: t.muted }]}>No finds logged yet.</Text>
           )}
           {!loading &&
+            // Deliberately no `action` on either preview: Profile is a
+            // summary you read, not a place you act. Tap to expand and see
+            // it; edit from My Shells or My Beaches. (docs/TODO.md #112)
             finds.map((f) => (
               <ListRow
                 key={f.id}
