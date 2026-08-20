@@ -17,6 +17,10 @@ Task numbers are stable references, not priority order.
 
 ### Enhancements
 
+- [x] #115 Draggable find location, shipped 2026-08-19. Logging a shell showed **no map at all** and silently used `deviceLocation ?? DEFAULT_LOCATION` -- so with location off or still resolving, a find was recorded at Sanibel whether you were there or not. Editing showed a map but read-only, and the API's PATCH didn't accept coordinates, so a find logged in the wrong place could never be corrected. Now both modes show a draggable pin, and PATCH takes lat/lon (both or neither).
+  Two reasons this matters beyond convenience: people often log a find later from somewhere else, and **dragging the pin is how someone chooses how precisely to share a spot** now that the app no longer fuzzes locations on their behalf (#95). That is more honest than automated fuzzing -- the person decides, rather than the app quietly misreporting. The hint under the map says so.
+  The geography column can't be COALESCE'd like the other fields -- when the pin isn't moving, the expression has to evaluate to the current value rather than a NULL point -- hence the `CASE WHEN` guard. Verified against a live server: moving works, **editing notes leaves the location untouched**, and invalid coordinates 400.
+
 - [ ] #113 **Community names and public profiles.** Goal: tapping a shell on the map shows who found it, and tapping that person opens a profile with their public finds and a little about them. Half the plumbing exists -- community find responses already carry `loggedBy` and `loggedByUserId`, and FindDetail already renders "Logged by ...".
   **Use a new field, not `display_name`.** `display_name` is collected at signup as *your name*, in a context that never said it would be public. Promoting it to a community handle changes what people agreed to. Add an explicitly-chosen `community_name` and leave `display_name` private. Until someone picks one, show the neutral fallback (see #114, done) rather than inventing something from their account.
   **Three things to settle before writing code:**

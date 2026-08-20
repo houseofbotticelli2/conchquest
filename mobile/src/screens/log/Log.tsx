@@ -82,6 +82,12 @@ export function Log({ navigation, route }: Props) {
   const [photoSourceOpen, setPhotoSourceOpen] = useState(false);
   const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
   const [deviceLocation, setDeviceLocation] = useState<{ lat: number; lon: number } | null>(null);
+  // Where the find actually happened, which is not always where you're standing
+  // when you log it. Dragging the pin is also how someone decides how precisely
+  // to share a spot, now that the app doesn't fuzz locations for them (#95).
+  const [pinLocation, setPinLocation] = useState<{ lat: number; lon: number } | null>(
+    editingFind ? editingFind.location : null
+  );
   const [speciesBoxHeight, setSpeciesBoxHeight] = useState(60);
 
   function handleSpeciesBoxLayout(e: LayoutChangeEvent) {
@@ -193,16 +199,22 @@ export function Log({ navigation, route }: Props) {
       }
 
       if (isEditMode) {
+        // Only send coordinates when the pin actually moved, so an edit that
+        // just fixes a typo can't nudge the location.
+        const pinMoved =
+          !!pinLocation &&
+          (pinLocation.lat !== editingFind!.location.lat || pinLocation.lon !== editingFind!.location.lon);
         await updateFind(editingFind!.id, {
           speciesId: selectedSpecies?.id,
           condition,
           notes: notes || undefined,
           photoKey,
           isPrivate,
+          ...(pinMoved ? { lat: pinLocation!.lat, lon: pinLocation!.lon } : {}),
         });
         navigation.getParent()?.goBack();
       } else {
-        const location = deviceLocation ?? DEFAULT_LOCATION;
+        const location = pinLocation ?? deviceLocation ?? DEFAULT_LOCATION;
         await createFind({
           lat: location.lat,
           lon: location.lon,
@@ -233,13 +245,23 @@ export function Log({ navigation, route }: Props) {
         right={isEditMode ? undefined : deviceLocation ? 'Current location' : 'Sanibel'}
       />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
-        {isEditMode ? (
+        {isEditMode || pinLocation || deviceLocation ? (
+          <View style={styles.mapSection}>
+            <Text style={[styles.mapHint, { color: t.muted }]}>
+              Drag the pin to where you found it — handy if you're logging later, or if
+              you'd rather not share the exact spot.
+            </Text>
           <View style={[styles.mapBox, { borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
             <ShellingMap
-              latitude={editingFind!.location.lat}
-              longitude={editingFind!.location.lon}
+              latitude={(pinLocation ?? deviceLocation ?? DEFAULT_LOCATION).lat}
+              longitude={(pinLocation ?? deviceLocation ?? DEFAULT_LOCATION).lon}
               latitudeDelta={0.01}
               longitudeDelta={0.01}
+              // Remount once the device location resolves, so the map picks it
+              // up as its initial region instead of sitting on the fallback --
+              // but not on every later drag, which would fight the user.
+              centerKey={pinLocation ? 'placed' : deviceLocation ? 'located' : 'pending'}
+              onCenterMarkerDragEnd={(loc) => setPinLocation({ lat: loc.lat, lon: loc.lon })}
               fallback={
                 <Svg viewBox="0 0 290 88" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
                   <Rect width={290} height={88} fill="#B8C8D0" opacity={0.7} />
@@ -249,6 +271,7 @@ export function Log({ navigation, route }: Props) {
                 </Svg>
               }
             />
+          </View>
           </View>
         ) : photo ? (
           <TouchableOpacity style={[styles.photoBox, { borderBottomColor: t.border }]} onPress={() => setPhotoSourceOpen(true)}>
@@ -503,6 +526,8 @@ export function Log({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
+  mapSection: { gap: 6 },
+  mapHint: { fontFamily: fonts.body, fontSize: 11, lineHeight: 15, paddingHorizontal: 20 },
   deleteRow: { marginTop: 18, alignItems: 'center' },
   screen: { flex: 1 },
   scrollContent: { paddingBottom: 200 },

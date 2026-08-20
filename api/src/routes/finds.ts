@@ -390,7 +390,16 @@ findsRouter.delete('/:id', async (req, res, next) => {
 
 findsRouter.patch('/:id', async (req, res, next) => {
   try {
-    const { speciesId, condition, notes, photoKey, isPrivate } = req.body ?? {};
+    const { speciesId, condition, notes, photoKey, isPrivate, lat, lon } = req.body ?? {};
+
+    // People often log a find later, from somewhere else -- and moving the pin
+    // is also how someone chooses how precisely to share a spot, now that the
+    // app no longer fuzzes locations on their behalf (#95).
+    const movingPin = lat !== undefined || lon !== undefined;
+    if (movingPin && (typeof lat !== 'number' || typeof lon !== 'number' || lat < -90 || lat > 90 || lon < -180 || lon > 180)) {
+      res.status(400).json({ error: 'lat and lon must both be valid coordinates' });
+      return;
+    }
 
     if (condition !== undefined && condition !== null && !VALID_CONDITIONS.includes(condition)) {
       res.status(400).json({ error: `condition must be one of: ${VALID_CONDITIONS.join(', ')}` });
@@ -417,6 +426,12 @@ findsRouter.patch('/:id', async (req, res, next) => {
     const result = await pool.query<{ id: string }>(
       `UPDATE shell_finds
        SET species_id = COALESCE($1, species_id),
+           -- Can't be COALESCE'd like the others: when the pin isn't moving,
+           -- this has to evaluate to the column's current value rather than a
+           -- NULL point.
+           geog = CASE WHEN $9::boolean
+                       THEN ST_SetSRID(ST_MakePoint($10, $11), 4326)::geography
+                       ELSE geog END,
            condition = COALESCE($2, condition),
            notes = COALESCE($3, notes),
            photo_key = COALESCE($4, photo_key),
@@ -429,7 +444,7 @@ findsRouter.patch('/:id', async (req, res, next) => {
            updated_at = now()
        WHERE id = $6 AND user_id = $7
        RETURNING id`,
-      [speciesId ?? null, condition ?? null, notes ?? null, photoKey ?? null, isPrivate ?? null, req.params.id, req.user!.id, replacingPhoto]
+      [speciesId ?? null, condition ?? null, notes ?? null, photoKey ?? null, isPrivate ?? null, req.params.id, req.user!.id, replacingPhoto, movingPin, lon ?? null, lat ?? null]
     );
 
     if (result.rows.length === 0) {

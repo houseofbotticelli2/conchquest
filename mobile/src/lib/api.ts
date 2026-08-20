@@ -258,6 +258,9 @@ export interface UpdateFindInput {
   notes?: string;
   photoKey?: string;
   isPrivate?: boolean;
+  // Sent together or not at all -- the API rejects one without the other.
+  lat?: number;
+  lon?: number;
 }
 
 export function createFind(input: CreateFindInput): Promise<Find> {
