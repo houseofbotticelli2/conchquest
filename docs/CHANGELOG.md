@@ -9,6 +9,29 @@ Build numbers here are the **production/TestFlight** build number
 
 Nothing pending -- everything committed so far has shipped.
 
+## Build 9 — v0.1.0 (shipped 2026-08-19)
+
+- **Photos load much faster.** Lists were downloading the full-size original
+  of every photo just to show a thumbnail — often 1–3 MB each, which is why
+  they appeared slowly, one at a time. Lists now use a small version (about
+  16× smaller) and only fetch the full photo when you tap to zoom. Your
+  originals are untouched, so pinch-to-zoom detail is exactly as it was.
+- **My Shells and My Beaches now work the same way.** Tap any shell or beach
+  to expand it in place and see the details; tap again to close. Only one
+  opens at a time. Editing is now its own screen, reached with the **Edit**
+  button inside the expanded item — so you can browse without any risk of
+  changing something by accident.
+- **You can delete a find.** It's on the edit screen, with a confirmation.
+  The photo goes with it.
+- **Beaches show their Shelling Score in the list.** At a glance you can see
+  which of your saved beaches is worth the trip today.
+- **Zoom into your own shells from anywhere.** Tapping a photo in My Shells
+  or on your Profile now opens the full-size zoomable view — previously that
+  only worked from the Map.
+- **Fixed: map pins were different colours** depending on which screen you
+  were on. The "this is the place" pin is now red everywhere. (Find pins on
+  the community map are still colour-coded by rarity — that's deliberate.)
+
 ## Build 8 — v0.1.0 (shipped 2026-08-18)
 
 - **You can now delete your account from inside the app** — Profile →
