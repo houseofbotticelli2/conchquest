@@ -98,7 +98,7 @@ interface MemberBeachRow {
   id: string;
   name: string;
   city: string | null;
-  is_home: boolean;
+  is_favorite: boolean;
   alert_threshold_score: number | null;
   created_at: Date;
 }
@@ -133,10 +133,10 @@ adminRouter.get('/users/:id', async (req, res, next) => {
         [targetId]
       ),
       pool.query<MemberBeachRow>(
-        `SELECT id, name, city, is_home, alert_threshold_score, created_at
+        `SELECT id, name, city, is_favorite, alert_threshold_score, created_at
          FROM saved_locations
          WHERE user_id = $1
-         ORDER BY is_home DESC, created_at DESC`,
+         ORDER BY is_favorite DESC, created_at DESC`,
         [targetId]
       ),
       pool.query<{ total_finds_count: string; rare_finds_count: string; species_count: string }>(
@@ -185,7 +185,7 @@ adminRouter.get('/users/:id', async (req, res, next) => {
         id: row.id,
         name: row.name,
         city: row.city,
-        isHome: row.is_home,
+        isFavorite: row.is_favorite,
         alertThresholdScore: row.alert_threshold_score,
         createdAt: row.created_at,
       })),
@@ -523,7 +523,7 @@ interface LeaderboardRow {
   finds_count: string;
   rare_finds_count: string;
   species_count: string;
-  home_beach_name: string | null;
+  favorite_beach_name: string | null;
 }
 
 adminRouter.get('/leaderboard', async (req, res, next) => {
@@ -534,7 +534,10 @@ adminRouter.get('/leaderboard', async (req, res, next) => {
               count(sf.id) AS finds_count,
               count(sf.id) FILTER (WHERE ss.rarity IN ('rare', 'very_rare')) AS rare_finds_count,
               count(DISTINCT sf.species_id) AS species_count,
-              (SELECT sl.name FROM saved_locations sl WHERE sl.user_id = u.id AND sl.is_home LIMIT 1) AS home_beach_name
+              -- Favourites are plural now, so pick deterministically rather than
+              -- letting the planner hand back an arbitrary row.
+              (SELECT sl.name FROM saved_locations sl WHERE sl.user_id = u.id AND sl.is_favorite
+               ORDER BY sl.created_at DESC LIMIT 1) AS favorite_beach_name
        FROM users u
        LEFT JOIN shell_finds sf ON sf.user_id = u.id
        LEFT JOIN shell_species ss ON ss.id = sf.species_id
@@ -551,7 +554,7 @@ adminRouter.get('/leaderboard', async (req, res, next) => {
         findsCount: Number(row.finds_count),
         rareFindsCount: Number(row.rare_finds_count),
         speciesCount: Number(row.species_count),
-        homeBeachName: row.home_beach_name,
+        favoriteBeachName: row.favorite_beach_name,
       }))
     );
   } catch (err) {

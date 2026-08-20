@@ -44,6 +44,7 @@ export function BeachEdit({ route, navigation }: Props) {
   const [alert, setAlert] = useState(beach.alertThresholdScore ?? beach.score);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [favorite, setFavorite] = useState(beach.isFavorite);
   const [deleteVisible, setDeleteVisible] = useState(false);
 
   function adjustAlert(delta: number) {
@@ -62,6 +63,7 @@ export function BeachEdit({ route, navigation }: Props) {
       await updateSavedLocation(beach.id, {
         name: name.trim(),
         alertThresholdScore: alert,
+        isFavorite: favorite,
         lat: location.lat,
         lon: location.lon,
         city,
@@ -120,22 +122,15 @@ export function BeachEdit({ route, navigation }: Props) {
           </View>
         </View>
 
-        {!beach.isHome && (
-          <View style={styles.section}>
-            <Btn
-              label="Make this my home beach"
-              variant="secondary"
-              onPress={async () => {
-                try {
-                  await updateSavedLocation(beach.id, { isHome: true });
-                  navigation.goBack();
-                } catch (e) {
-                  setErrorMsg(e instanceof Error ? e.message : 'Please try again.');
-                }
-              }}
-            />
-          </View>
-        )}
+        <View style={styles.section}>
+          {/* Favourites are plural and reversible, so this is a toggle rather
+              than the one-way "make this my home beach" it replaced. */}
+          <Btn
+            label={favorite ? '★ Remove from favorites' : '☆ Add to favorites'}
+            variant="secondary"
+            onPress={() => setFavorite((v: boolean) => !v)}
+          />
+        </View>
 
         <View style={styles.actions}>
           {saving ? (

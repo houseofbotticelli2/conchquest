@@ -400,7 +400,7 @@ export interface SavedLocation {
   city: string | null;
   notes: string | null;
   alertThresholdScore: number | null;
-  isHome: boolean;
+  isFavorite: boolean;
   createdAt: string;
   score: number;
   confidence: 'low' | 'medium' | 'high';
@@ -421,7 +421,7 @@ export interface UpdateSavedLocationInput {
   city?: string;
   notes?: string;
   alertThresholdScore?: number;
-  isHome?: boolean;
+  isFavorite?: boolean;
   lat?: number;
   lon?: number;
 }

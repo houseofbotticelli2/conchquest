@@ -218,7 +218,7 @@ export interface LeaderboardEntry {
   findsCount: number;
   rareFindsCount: number;
   speciesCount: number;
-  homeBeachName: string | null;
+  favoriteBeachName: string | null;
 }
 
 export function listLeaderboard(): Promise<LeaderboardEntry[]> {

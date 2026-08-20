@@ -13,7 +13,7 @@ interface SavedLocationRow {
   city: string | null;
   notes: string | null;
   alert_threshold_score: number | null;
-  is_home: boolean;
+  is_favorite: boolean;
   created_at: Date;
 }
 
@@ -36,7 +36,7 @@ async function toResponse(row: SavedLocationRow, restrictShellingToDaylight: boo
     city: row.city,
     notes: row.notes,
     alertThresholdScore: row.alert_threshold_score,
-    isHome: row.is_home,
+    isFavorite: row.is_favorite,
     createdAt: row.created_at,
     score: result.score,
     confidence: result.confidence,
@@ -46,7 +46,7 @@ async function toResponse(row: SavedLocationRow, restrictShellingToDaylight: boo
 
 const SELECT_COLUMNS = `
   id, name, ST_Y(geog::geometry) AS lat, ST_X(geog::geometry) AS lon,
-  city, notes, alert_threshold_score, is_home, created_at
+  city, notes, alert_threshold_score, is_favorite, created_at
 `;
 
 savedLocationsRouter.get('/', async (req, res, next) => {
@@ -69,7 +69,7 @@ savedLocationsRouter.get('/', async (req, res, next) => {
     // displayed, which is expensive on any conditions_cache miss.
     const result = await pool.query<SavedLocationRow>(
       `SELECT ${SELECT_COLUMNS} FROM saved_locations WHERE user_id = $1
-       ORDER BY is_home DESC, created_at DESC
+       ORDER BY is_favorite DESC, created_at DESC
        ${limit !== null ? 'LIMIT $2' : ''}`,
       limit !== null ? [req.user!.id, limit] : [req.user!.id]
     );
@@ -101,7 +101,7 @@ savedLocationsRouter.post('/', async (req, res, next) => {
     const isFirst = existingCount.rows[0].count === '0';
 
     const result = await pool.query<SavedLocationRow>(
-      `INSERT INTO saved_locations (user_id, name, geog, city, notes, alert_threshold_score, is_home)
+      `INSERT INTO saved_locations (user_id, name, geog, city, notes, alert_threshold_score, is_favorite)
        VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, $5, $6, $7, $8)
        RETURNING ${SELECT_COLUMNS}`,
       [req.user!.id, name.trim(), lon, lat, city?.trim() || null, notes ?? null, alertThresholdScore ?? null, isFirst]
@@ -116,7 +116,7 @@ savedLocationsRouter.post('/', async (req, res, next) => {
 savedLocationsRouter.patch('/:id', async (req, res, next) => {
   const client = await pool.connect();
   try {
-    const { name, city, notes, alertThresholdScore, isHome, lat, lon } = req.body ?? {};
+    const { name, city, notes, alertThresholdScore, isFavorite, lat, lon } = req.body ?? {};
 
     const hasLat = lat !== undefined;
     const hasLon = lon !== undefined;
@@ -131,9 +131,6 @@ savedLocationsRouter.patch('/:id', async (req, res, next) => {
 
     await client.query('BEGIN');
 
-    if (isHome === true) {
-      await client.query(`UPDATE saved_locations SET is_home = false WHERE user_id = $1`, [req.user!.id]);
-    }
 
     // geog can't be COALESCE'd against a possibly-null parameter the way the
     // other columns are -- when lat/lon aren't provided, this expression
@@ -144,7 +141,7 @@ savedLocationsRouter.patch('/:id', async (req, res, next) => {
            city = COALESCE($2, city),
            notes = COALESCE($3, notes),
            alert_threshold_score = COALESCE($4, alert_threshold_score),
-           is_home = COALESCE($5, is_home),
+           is_favorite = COALESCE($5, is_favorite),
            geog = CASE WHEN $6::double precision IS NOT NULL
                        THEN ST_SetSRID(ST_MakePoint($7, $6), 4326)::geography
                        ELSE geog END
@@ -155,7 +152,7 @@ savedLocationsRouter.patch('/:id', async (req, res, next) => {
         city ?? null,
         notes ?? null,
         alertThresholdScore ?? null,
-        isHome ?? null,
+        isFavorite ?? null,
         hasLat ? lat : null,
         hasLat ? lon : null,
         req.params.id,

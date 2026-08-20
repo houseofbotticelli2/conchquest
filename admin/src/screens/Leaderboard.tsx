@@ -70,7 +70,7 @@ export function Leaderboard() {
                   <span>
                     <span className="lb-name">{nameOf(entry)}</span>
                     <br />
-                    <span className="lb-beach">{entry.homeBeachName || '—'}</span>
+                    <span className="lb-beach">{entry.favoriteBeachName || '—'}</span>
                   </span>
                   <span className="lb-stat">
                     <b>{entry.findsCount}</b>

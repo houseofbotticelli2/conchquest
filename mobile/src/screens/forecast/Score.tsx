@@ -150,9 +150,9 @@ export function Score({ navigation, route }: Props) {
             >
               <View style={styles.pickerRowNameLine}>
                 <Text style={[styles.pickerRowName, { color: t.text }]}>{b.name}</Text>
-                {b.isHome && (
+                {b.isFavorite && (
                   <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>
-                    HOME
+                    ★
                   </Text>
                 )}
               </View>

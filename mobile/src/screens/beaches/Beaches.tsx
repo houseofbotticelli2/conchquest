@@ -32,11 +32,10 @@ const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867, label: 'Sanibel Island' 
 const ALERT_STEP = 1;
 const DEFAULT_NEW_ALERT = 50;
 
-const FILTERS: { label: string; home?: boolean; hasAlert?: boolean }[] = [
+const FILTERS: { label: string; favorite?: boolean; hasAlert?: boolean }[] = [
   { label: 'All' },
-  { label: 'Home', home: true },
+  { label: 'Favorite', favorite: true },
   { label: 'Has alert', hasAlert: true },
-  { label: 'No alert', hasAlert: false },
 ];
 
 export function Beaches({ navigation }: Props) {
@@ -87,7 +86,7 @@ export function Beaches({ navigation }: Props) {
     const query = search.trim().toLowerCase();
     return beaches.filter((b) => {
       if (query && !b.name.toLowerCase().includes(query)) return false;
-      if (filter.home && !b.isHome) return false;
+      if (filter.favorite && !b.isFavorite) return false;
       if (filter.hasAlert === true && b.alertThresholdScore == null) return false;
       if (filter.hasAlert === false && b.alertThresholdScore != null) return false;
       return true;
@@ -135,8 +134,8 @@ export function Beaches({ navigation }: Props) {
         city: newCity.trim(),
         alertThresholdScore: newAlertEnabled ? newAlert : undefined,
       });
-      if (newIsHome && !created.isHome) {
-        await updateSavedLocation(created.id, { isHome: true });
+      if (newIsHome && !created.isFavorite) {
+        await updateSavedLocation(created.id, { isFavorite: true });
       }
       setNewName('');
       setNewCity('');
@@ -272,24 +271,26 @@ export function Beaches({ navigation }: Props) {
               score={b.score}
               name={b.name}
               sub={b.city ?? undefined}
-              meta={b.alertThresholdScore != null ? `🔔 Alert at score ${b.alertThresholdScore}+` : '🔕 No alert set'}
               expanded={expandedId === b.id}
               onPress={() => setExpandedId((id) => (id === b.id ? null : b.id))}
               chips={
-                b.isHome ? (
-                  <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>
-                    HOME
+                // The alert threshold sits where the HOME pill used to. Favourite
+                // status is no longer flagged per row -- you can filter on it,
+                // which is faster than scanning for a badge.
+                b.alertThresholdScore != null ? (
+                  <Text style={[styles.alertChip, { backgroundColor: t.surfaceInset, color: t.sea, borderColor: t.borderSoftAlpha }]}>
+                    🔔 {b.alertThresholdScore}+
                   </Text>
                 ) : undefined
               }
               action={<Btn label="Edit" variant="secondary" onPress={() => navigation.navigate('BeachEdit', { beach: b })} />}
             >
               <Text style={[styles.expandedDetail, { color: t.muted }]}>
-                Shelling score {b.score} · confidence {b.confidence}
+                Shelling score {b.score} · Confidence {b.confidence}
               </Text>
               {b.alertThresholdScore != null && (
                 <Text style={[styles.expandedDetail, { color: t.muted }]}>
-                  You'll be notified when this beach reaches {b.alertThresholdScore}.
+                  You'll be notified when this beach reaches a shellcast of {b.alertThresholdScore}.
                 </Text>
               )}
               {!!b.notes && <Text style={[styles.expandedDetail, { color: t.muted }]}>{b.notes}</Text>}
@@ -316,6 +317,10 @@ export function Beaches({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  alertChip: {
+    fontFamily: fonts.data, fontSize: 10, letterSpacing: 0.3, borderRadius: 20,
+    paddingVertical: 2, paddingHorizontal: 8, borderWidth: 1, overflow: 'hidden',
+  },
   expandedDetail: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
   screen: { flex: 1 },
   header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },

@@ -558,9 +558,9 @@ export function Profile({ navigation }: Props) {
                 sub={b.city ?? undefined}
                 meta={b.alertThresholdScore != null ? `🔔 Alert at ${b.alertThresholdScore}+` : undefined}
                 chips={
-                  b.isHome ? (
+                  b.isFavorite ? (
                     <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>
-                      HOME
+                      ★
                     </Text>
                   ) : undefined
                 }

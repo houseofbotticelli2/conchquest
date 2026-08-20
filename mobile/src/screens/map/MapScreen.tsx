@@ -324,8 +324,8 @@ export function MapScreen({ navigation }: Props) {
           <TouchableOpacity key={b.id} style={[styles.pickerRow, { borderTopColor: t.borderSoft }]} onPress={() => selectBeach(b)}>
             <View style={styles.pickerRowNameLine}>
               <Text style={[styles.pickerRowName, { color: t.text }]}>{b.name}</Text>
-              {b.isHome && (
-                <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>HOME</Text>
+              {b.isFavorite && (
+                <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>★</Text>
               )}
             </View>
             <Text style={[styles.pickerRowScore, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
