@@ -561,20 +561,25 @@ export function Profile({ navigation }: Props) {
                 score={b.score}
                 name={b.name}
                 sub={b.city ?? undefined}
-                meta={b.alertThresholdScore != null ? `🔔 Alert at ${b.alertThresholdScore}+` : undefined}
+                expanded={expandedBeachId === b.id}
+                onPress={() => setExpandedBeachId((id) => (id === b.id ? null : b.id))}
                 chips={
-                  b.isFavorite ? (
-                    <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>
-                      ★
+                  b.alertThresholdScore != null ? (
+                    <Text style={[styles.alertChip, { backgroundColor: t.surfaceInset, color: t.sea, borderColor: t.borderSoftAlpha }]}>
+                      🔔 {b.alertThresholdScore}+
                     </Text>
                   ) : undefined
                 }
-                expanded={expandedBeachId === b.id}
-                onPress={() => setExpandedBeachId((id) => (id === b.id ? null : b.id))}
               >
                 <Text style={[styles.expandedDetail, { color: t.muted }]}>
-                  Shelling score {b.score} · confidence {b.confidence}
+                  Shelling score {b.score} · Confidence {b.confidence}
                 </Text>
+                {b.alertThresholdScore != null && (
+                  <Text style={[styles.expandedDetail, { color: t.muted }]}>
+                    You'll be notified when this beach reaches a shellcast of {b.alertThresholdScore}.
+                  </Text>
+                )}
+                {!!b.notes && <Text style={[styles.expandedDetail, { color: t.muted }]}>{b.notes}</Text>}
               </ListRow>
             ))}
         </View>
@@ -774,6 +779,10 @@ export function Profile({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  alertChip: {
+    fontFamily: fonts.data, fontSize: 10, letterSpacing: 0.3, borderRadius: 20,
+    paddingVertical: 2, paddingHorizontal: 8, borderWidth: 1, overflow: 'hidden',
+  },
   expandedPhoto: { width: '100%', aspectRatio: 1, borderRadius: 10 },
   expandedDetail: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
   deletionBanner: {
@@ -822,16 +831,6 @@ const styles = StyleSheet.create({
   beachRowScoreLabel: { fontFamily: fonts.data, fontSize: 8, letterSpacing: 0.3 },
   beachRowName: { fontFamily: fonts.bodySemiBold, fontSize: 13 },
   beachRowScore: { fontFamily: fonts.displayBold, fontSize: 18 , ...tabularNums },
-  homeBadge: {
-    fontFamily: fonts.data,
-    fontSize: 9,
-    letterSpacing: 0.4,
-    borderRadius: 10,
-    paddingVertical: 2,
-    paddingHorizontal: 7,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
   editSection: { gap: 6, marginBottom: 14 },
   editLabel: { fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4 },
   editInput: { fontFamily: fonts.body, fontSize: 13, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12 },
