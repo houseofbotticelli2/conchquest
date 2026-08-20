@@ -245,35 +245,41 @@ export function Log({ navigation, route }: Props) {
         right={isEditMode ? undefined : deviceLocation ? 'Current location' : 'Sanibel'}
       />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
+        {/* The map and the photo are both always present -- they are not
+            alternatives. An earlier version shared one ternary chain, which
+            made the photo picker unreachable whenever a location existed and
+            left new finds impossible to log, since a photo is required. */}
         {isEditMode || pinLocation || deviceLocation ? (
           <View style={styles.mapSection}>
             <Text style={[styles.mapHint, { color: t.muted }]}>
               Drag the pin to where you found it — handy if you're logging later, or if
               you'd rather not share the exact spot.
             </Text>
-          <View style={[styles.mapBox, { borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
-            <ShellingMap
-              latitude={(pinLocation ?? deviceLocation ?? DEFAULT_LOCATION).lat}
-              longitude={(pinLocation ?? deviceLocation ?? DEFAULT_LOCATION).lon}
-              latitudeDelta={0.01}
-              longitudeDelta={0.01}
-              // Remount once the device location resolves, so the map picks it
-              // up as its initial region instead of sitting on the fallback --
-              // but not on every later drag, which would fight the user.
-              centerKey={pinLocation ? 'placed' : deviceLocation ? 'located' : 'pending'}
-              onCenterMarkerDragEnd={(loc) => setPinLocation({ lat: loc.lat, lon: loc.lon })}
-              fallback={
-                <Svg viewBox="0 0 290 88" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
-                  <Rect width={290} height={88} fill="#B8C8D0" opacity={0.7} />
-                  <Rect x={20} y={10} width={250} height={63} rx={6} fill="#C8D8C0" opacity={0.5} />
-                  <Circle cx={145} cy={43} r={11} fill={t.accentDeep} opacity={0.9} />
-                  <Circle cx={145} cy={43} r={20} fill={t.accentDeep} opacity={0.15} />
-                </Svg>
-              }
-            />
+            <View style={[styles.mapBox, { borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
+              <ShellingMap
+                latitude={(pinLocation ?? deviceLocation ?? DEFAULT_LOCATION).lat}
+                longitude={(pinLocation ?? deviceLocation ?? DEFAULT_LOCATION).lon}
+                latitudeDelta={0.01}
+                longitudeDelta={0.01}
+                // Remount once the device location resolves, so the map picks it
+                // up as its initial region instead of sitting on the fallback --
+                // but not on every later drag, which would fight the user.
+                centerKey={pinLocation ? 'placed' : deviceLocation ? 'located' : 'pending'}
+                onCenterMarkerDragEnd={(loc) => setPinLocation({ lat: loc.lat, lon: loc.lon })}
+                fallback={
+                  <Svg viewBox="0 0 290 88" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+                    <Rect width={290} height={88} fill="#B8C8D0" opacity={0.7} />
+                    <Rect x={20} y={10} width={250} height={63} rx={6} fill="#C8D8C0" opacity={0.5} />
+                    <Circle cx={145} cy={43} r={11} fill={t.accentDeep} opacity={0.9} />
+                    <Circle cx={145} cy={43} r={20} fill={t.accentDeep} opacity={0.15} />
+                  </Svg>
+                }
+              />
+            </View>
           </View>
-          </View>
-        ) : photo ? (
+        ) : null}
+
+        {photo ? (
           <TouchableOpacity style={[styles.photoBox, { borderBottomColor: t.border }]} onPress={() => setPhotoSourceOpen(true)}>
             <Image source={{ uri: photo.uri }} style={styles.photoPreview} />
             <TouchableOpacity style={styles.photoRemove} onPress={() => setPhoto(null)}>
@@ -288,7 +294,9 @@ export function Log({ navigation, route }: Props) {
             onPress={() => setPhotoSourceOpen(true)}
           >
             <Text style={{ fontSize: 28 }}>📷</Text>
-            <Text style={[styles.photoText, { color: t.muted }]}>Tap to add photo (required)</Text>
+            <Text style={[styles.photoText, { color: t.muted }]}>
+              {isEditMode ? 'Tap to replace photo' : 'Tap to add photo (required)'}
+            </Text>
           </TouchableOpacity>
         )}
 
