@@ -56,8 +56,18 @@ function toBadgeType(rarity: NearbyFind['speciesRarity']): BadgeType {
   return 'common';
 }
 
+/**
+ * Rarity ramp for community find pins: gold -> teal -> plum.
+ *
+ * Rare is deliberately *not* the coral the Rare badge uses (#B85862), and not
+ * the rose it used to be (#C4536F). Both sit close enough to the location pin's
+ * red (#D32F2F) that at pin size on a satellite map you cannot tell "a rare
+ * shell was found here" from "this is the spot you're placing" -- which became a
+ * real risk once every location pin was made red. A badge sitting next to text
+ * has no such problem, so the badge keeps its coral.
+ */
 function markerColorForRarity(rarity: NearbyFind['speciesRarity']): string {
-  if (rarity === 'rare' || rarity === 'very_rare') return '#C4536F';
+  if (rarity === 'rare' || rarity === 'very_rare') return '#7B4B8A';
   if (rarity === 'uncommon') return '#4A8B8C';
   return '#D9B36C';
 }
