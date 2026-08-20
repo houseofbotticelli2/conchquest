@@ -303,7 +303,6 @@ export function MapScreen({ navigation }: Props) {
                   bg={t.surfaceInset}
                   name={f.speciesName ?? 'Unidentified shell'}
                   meta={formatFindDate(f.foundAt)}
-                  sub={f.condition ?? undefined}
                   chips={<Badge type={toBadgeType(f.speciesRarity)} />}
                   photoUrl={f.thumbUrl ?? f.photoUrl}
                   // Community finds aren't yours to expand and edit -- a pin

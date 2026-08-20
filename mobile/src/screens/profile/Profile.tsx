@@ -526,7 +526,7 @@ export function Profile({ navigation }: Props) {
                 bg={t.surfaceInset}
                 photoUrl={f.thumbUrl ?? f.photoUrl}
                 name={f.speciesName ?? 'Unidentified shell'}
-                meta={`${formatFindDate(f.foundAt)}${f.condition ? ` · ${f.condition}` : ''}`}
+                meta={formatFindDate(f.foundAt)}
                 chips={<Badge type={toBadgeType(f.speciesRarity)} />}
                 expanded={expandedFindId === f.id}
                 onPress={() => setExpandedFindId((id) => (id === f.id ? null : f.id))}
@@ -535,6 +535,11 @@ export function Profile({ navigation }: Props) {
                   <TouchableOpacity onPress={() => setZoomUri(f.photoUrl)} accessibilityRole="imagebutton">
                     <Image source={{ uri: f.thumbUrl ?? f.photoUrl ?? undefined }} style={styles.expandedPhoto} />
                   </TouchableOpacity>
+                )}
+                {!!f.condition && (
+                  <Text style={[styles.expandedDetail, { color: t.muted }]}>
+                    Condition: {f.condition.charAt(0).toUpperCase() + f.condition.slice(1)}
+                  </Text>
                 )}
                 {!!f.notes && <Text style={[styles.expandedDetail, { color: t.muted }]}>Note: {f.notes}</Text>}
               </ListRow>
