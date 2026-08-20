@@ -5,6 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fonts } from '../theme/tokens';
 
+// The one colour for a location pin, anywhere in the app.
+export const LOCATION_PIN_COLOR = '#D32F2F';
+
 export interface ShellingMapMarker {
   id: string;
   lat: number;
@@ -144,7 +147,12 @@ export function ShellingMap({
             // dark color when not draggable (Score/Map's read-only beach
             // view), since red there would clash with the reddish
             // rare-find markers already on those maps.
-            pinColor={onCenterMarkerDragEnd ? '#D32F2F' : '#1a2e35'}
+            // One colour for "this is the place", draggable or not. It used to
+            // be red only while draggable and dark navy otherwise, which read as
+            // two different kinds of pin to testers when it is the same thing --
+            // and the navy was hard to pick out against satellite imagery, which
+            // is why the draggable one was made red in the first place.
+            pinColor={LOCATION_PIN_COLOR}
             draggable={!!onCenterMarkerDragEnd}
             onDragEnd={(e) => handleCenterMarkerDragEnd(e.nativeEvent.coordinate)}
           />
