@@ -83,7 +83,11 @@ async function toCommunityResponse(row: FindRow) {
 }
 
 const SELECT_COLUMNS = `
-  sf.id, sf.user_id, COALESCE(u.display_name, split_part(u.email, '@', 1)) AS logged_by,
+  sf.id, sf.user_id,
+  -- Never fall back to the email's local part: that published a fragment of
+  -- someone's address to strangers on every public find, and it was never a
+  -- name they chose to show. A neutral label until they pick one (#113).
+  COALESCE(u.display_name, 'A sheller') AS logged_by,
   sf.species_id, ss.common_name AS species_name, ss.rarity AS species_rarity,
   ST_Y(sf.geog::geometry) AS lat, ST_X(sf.geog::geometry) AS lon,
   sf.found_at, sf.condition, sf.notes, sf.photo_key, sf.thumb_key, sf.is_private, sf.created_at, sf.updated_at
@@ -284,7 +288,7 @@ findsRouter.get('/nearby', async (req, res, next) => {
          sf.id, sf.user_id, sf.species_id, ss.common_name AS species_name, ss.rarity AS species_rarity,
          ST_Y(sf.geog::geometry) AS lat, ST_X(sf.geog::geometry) AS lon,
          sf.found_at, sf.condition, sf.notes, sf.photo_key, sf.thumb_key, sf.is_private,
-         COALESCE(u.display_name, split_part(u.email, '@', 1)) AS logged_by,
+         COALESCE(u.display_name, 'A sheller') AS logged_by,
          ST_Distance(sf.geog, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) AS distance_m
        FROM shell_finds sf
        JOIN users u ON u.id = sf.user_id
