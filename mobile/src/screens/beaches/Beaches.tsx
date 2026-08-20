@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -77,9 +78,15 @@ export function Beaches({ navigation }: Props) {
     }
   }, []);
 
-  useEffect(() => {
-    fetchBeaches();
-  }, [fetchBeaches]);
+  // On focus, not just on mount. Editing used to happen inline on this screen,
+  // so local state was enough; now it happens on BeachEdit, and returning here
+  // doesn't remount anything -- so a saved change wouldn't appear until the app
+  // was restarted. Every other list screen already refetches on focus.
+  useFocusEffect(
+    useCallback(() => {
+      fetchBeaches();
+    }, [fetchBeaches])
+  );
 
   const visibleBeaches = useMemo(() => {
     const filter = FILTERS[activeFilter];
