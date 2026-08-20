@@ -9,6 +9,20 @@ Build numbers here are the **production/TestFlight** build number
 
 Nothing pending -- everything committed so far has shipped.
 
+## Build 11 — v0.1.0 (shipped 2026-08-20)
+
+- **You can now place the pin when logging a shell.** Drag it to where you
+  actually found it — useful if you're logging from the car park, from home
+  that evening, or from a photo you took earlier.
+- **You can also move it afterwards.** Editing a find now lets you correct the
+  location, which previously wasn't possible at all once it was logged.
+- **This is also how you control how precise you are.** If you'd rather not
+  share the exact spot on a public find, drop the pin nearby instead. Nothing
+  is fuzzed behind your back — where you put the pin is what other people see.
+- **Fixed: a find could be logged in the wrong place without telling you.**
+  If location services were off or hadn't resolved yet, the shell was quietly
+  recorded at Sanibel. Now you always see the map and can put the pin right.
+
 ## Build 10 — v0.1.0 (shipped 2026-08-19)
 
 - **Favorite beaches, plural.** "Home beach" only ever let you pick one —
