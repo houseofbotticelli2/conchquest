@@ -536,7 +536,7 @@ export function Profile({ navigation }: Props) {
                     <Image source={{ uri: f.thumbUrl ?? f.photoUrl ?? undefined }} style={styles.expandedPhoto} />
                   </TouchableOpacity>
                 )}
-                {!!f.notes && <Text style={[styles.expandedDetail, { color: t.muted }]}>{f.notes}</Text>}
+                {!!f.notes && <Text style={[styles.expandedDetail, { color: t.muted }]}>Note: {f.notes}</Text>}
               </ListRow>
             ))}
         </View>

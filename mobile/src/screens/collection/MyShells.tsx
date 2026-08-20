@@ -218,7 +218,7 @@ export function MyShells({ navigation }: Props) {
                   Condition: {f.condition.charAt(0).toUpperCase() + f.condition.slice(1)}
                 </Text>
               )}
-              {!!f.notes && <Text style={[styles.detail, { color: t.muted }]}>{f.notes}</Text>}
+              {!!f.notes && <Text style={[styles.detail, { color: t.muted }]}>Note: {f.notes}</Text>}
             </ListRow>
           ))}
       </ScrollView>
