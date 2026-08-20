@@ -182,6 +182,26 @@ export const fonts = {
 // jitter. Android needs RN 0.71+ for this -- current Expo SDK is fine.
 export const tabularNums = { fontVariant: ['tabular-nums' as const] };
 
+/**
+ * Map pin colours.
+ *
+ * These live here, not in ShellingMap, because ShellingMap has a .web.tsx
+ * variant: importing constants from it resolved to the web build on web, where
+ * they don't exist, and crashed the app at module scope. Colours are data, not
+ * a component -- platform-specific files should not be anyone's source for them.
+ *
+ * Rare is deliberately far from LOCATION_PIN_COLOR: at pin size on satellite
+ * imagery a reddish rare pin is indistinguishable from "this is the spot you're
+ * placing".
+ */
+export const LOCATION_PIN_COLOR = '#D32F2F';
+
+export const FIND_PIN_COLORS = {
+  rare: '#7B4B8A',
+  uncommon: '#4A8B8C',
+  common: '#D9B36C',
+} as const;
+
 export function scoreColor(score: number, t: ThemeTokens): string {
   if (score >= 70) return '#A9B9A0';
   if (score >= 40) return '#D9B36C';

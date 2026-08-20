@@ -88,7 +88,11 @@ export function ListRow({
       {expanded && (
         <View style={styles.expansion}>
           {children}
-          {!!action && <View style={styles.actionRow}>{action}</View>}
+          {!!action && (
+            <View style={styles.actionRow}>
+              <View style={styles.actionSlot}>{action}</View>
+            </View>
+          )}
         </View>
       )}
     </View>
@@ -111,5 +115,9 @@ const styles = StyleSheet.create({
   sub: { fontFamily: fonts.data, fontSize: 11 },
   chips: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   expansion: { paddingBottom: 12, paddingLeft: 48, gap: 10 },
+  // Btn is width:100% by design (it's normally a form's primary action), so
+  // the row constrains it -- an expansion's Edit is a modest secondary
+  // action, not a full-width call to action.
   actionRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
+  actionSlot: { minWidth: 120, maxWidth: 160 },
 });

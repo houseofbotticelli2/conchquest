@@ -3,24 +3,7 @@ import { StyleSheet, ViewStyle, StyleProp, TouchableOpacity, TouchableWithoutFee
 import MapView, { Marker, Region, LatLng } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fonts } from '../theme/tokens';
-
-// The one colour for a location pin, anywhere in the app.
-export const LOCATION_PIN_COLOR = '#D32F2F';
-
-/**
- * Community find pins, by rarity: gold -> teal -> plum.
- *
- * Rare is deliberately not near LOCATION_PIN_COLOR -- at pin size on satellite
- * imagery a reddish rare pin is indistinguishable from "this is the spot you're
- * placing". Exported so the Help legend and the map read from one list; a
- * legend that can drift from the map is worse than no legend.
- */
-export const FIND_PIN_COLORS = {
-  rare: '#7B4B8A',
-  uncommon: '#4A8B8C',
-  common: '#D9B36C',
-} as const;
+import { fonts, LOCATION_PIN_COLOR } from '../theme/tokens';
 
 export interface ShellingMapMarker {
   id: string;
