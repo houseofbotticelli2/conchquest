@@ -159,7 +159,7 @@ export function Profile({ navigation }: Props) {
 
         const [findsResult, beachesResult, statsResult] = await Promise.all([
           listMyFinds(recentFindsLimit).catch(() => []),
-          listSavedLocations(recentBeachesLimit).catch(() => []),
+          listSavedLocations(recentBeachesLimit, 'recent').catch(() => []),
           getFindStats().catch(() => ({ totalFinds: 0, rareFinds: 0, speciesCount: 0 })),
           fetchProfile(),
         ]);

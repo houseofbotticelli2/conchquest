@@ -51,6 +51,13 @@ const SELECT_COLUMNS = `
 
 savedLocationsRouter.get('/', async (req, res, next) => {
   try {
+    // My Beaches wants favourites grouped at the top; Profile's "Recent
+    // beaches" wants what it says. That difference only matters because the
+    // limit is applied in SQL -- sorting client-side would already have
+    // received the wrong rows. Favourites-first stays the default so existing
+    // callers are unaffected.
+    const sort = req.query.sort === 'recent' ? 'recent' : 'default';
+
     const rawLimit = req.query.limit;
     let limit: number | null = null;
     if (rawLimit !== undefined) {
@@ -69,7 +76,7 @@ savedLocationsRouter.get('/', async (req, res, next) => {
     // displayed, which is expensive on any conditions_cache miss.
     const result = await pool.query<SavedLocationRow>(
       `SELECT ${SELECT_COLUMNS} FROM saved_locations WHERE user_id = $1
-       ORDER BY is_favorite DESC, created_at DESC
+       ORDER BY ${sort === 'recent' ? '' : 'is_favorite DESC,'} created_at DESC
        ${limit !== null ? 'LIMIT $2' : ''}`,
       limit !== null ? [req.user!.id, limit] : [req.user!.id]
     );

@@ -426,8 +426,17 @@ export interface UpdateSavedLocationInput {
   lon?: number;
 }
 
-export function listSavedLocations(limit?: number): Promise<SavedLocation[]> {
-  const query = limit !== undefined ? `?limit=${limit}` : '';
+/**
+ * Defaults to favourites-first, which is what My Beaches wants. Pass
+ * sort='recent' for genuinely most-recently-added -- Profile's "Recent
+ * beaches" needs that, and it has to be asked for server-side because the
+ * limit is applied in SQL.
+ */
+export function listSavedLocations(limit?: number, sort?: 'recent'): Promise<SavedLocation[]> {
+  const params = new URLSearchParams();
+  if (limit !== undefined) params.set('limit', String(limit));
+  if (sort) params.set('sort', sort);
+  const query = params.toString() ? `?${params}` : '';
   return apiFetch<SavedLocation[]>(`/api/saved-locations${query}`);
 }
 
