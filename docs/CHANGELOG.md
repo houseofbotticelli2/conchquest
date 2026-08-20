@@ -9,6 +9,26 @@ Build numbers here are the **production/TestFlight** build number
 
 Nothing pending -- everything committed so far has shipped.
 
+## Build 10 — v0.1.0 (shipped 2026-08-19)
+
+- **Favorite beaches, plural.** "Home beach" only ever let you pick one —
+  setting a new one quietly unset the last. Now you can favorite as many
+  beaches as you like, and the filters are **All · Favorite · Has alert**.
+  Your old home beach carried over as your first favorite.
+- **The alert threshold now shows on the beach row** (top right, e.g.
+  "🔔 70+"), where the HOME badge used to sit. Favorite status isn't marked
+  per-row any more — filtering on it is quicker than hunting for a badge.
+- **Shells look the same everywhere.** A find shows its photo, species and
+  date in every list; condition and notes moved into the expanded view, so
+  My Shells, your Profile and the Map all match.
+- **Profile's beaches now match the My Beaches screen** rather than having
+  their own layout.
+- **Fixed: "Recent beaches" on Profile wasn't recent.** Favorites were being
+  listed first, so with a few favorites you'd never see a recently added
+  beach. It now means what it says.
+- Small wording fixes: "Condition:" and "Note:" labels on a shell,
+  "Confidence" capitalised, and alerts now read "…reaches a shellcast of 70".
+
 ## Build 9 — v0.1.0 (shipped 2026-08-19)
 
 - **Photos load much faster.** Lists were downloading the full-size original
