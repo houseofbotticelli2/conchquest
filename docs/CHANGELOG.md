@@ -9,6 +9,26 @@ Build numbers here are the **production/TestFlight** build number
 
 Nothing pending -- everything committed so far has shipped.
 
+## Build 12 — v0.1.0 (shipped 2026-08-20)
+
+- **Fixed: you couldn't log a shell at all in Build 11.** Adding the draggable
+  pin accidentally hid the "Tap to add photo" control, and since a photo is
+  required, there was no way to finish a new find. Please delete Build 11 and
+  use this one. Editing an existing find was unaffected.
+- **Fixed: favoriting a beach didn't show up until you restarted the app.**
+  Saving worked — the list just wasn't reloading when you came back to it.
+- **The edit screens now match each other.** Editing a beach and editing a
+  shell both say what you're editing at the top, both offer **Cancel** and
+  **Save**, and both put **Delete**/**Remove** at the bottom as a quiet link
+  rather than a big button — an action you rarely want shouldn't be the
+  loudest thing on screen.
+- **"Add to favorites" is now a simple Favorite row** with a star, matching
+  the alert row above it. Same tap, less shouting.
+- **Rare finds are plum on the map** instead of purple-ish blue, which was too
+  close to the blue "your location" dot to tell apart.
+- **The map pin colours are explained in Help** (Profile → ? icon), so you
+  don't have to guess what a colour means.
+
 ## Build 11 — v0.1.0 (shipped 2026-08-20)
 
 - **You can now place the pin when logging a shell.** Drag it to where you
