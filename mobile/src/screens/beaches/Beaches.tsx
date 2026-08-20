@@ -53,7 +53,7 @@ export function Beaches({ navigation }: Props) {
   const [newLocation, setNewLocation] = useState<DeviceLocation | null>(null);
   const [newAlertEnabled, setNewAlertEnabled] = useState(false);
   const [newAlert, setNewAlert] = useState(DEFAULT_NEW_ALERT);
-  const [newIsHome, setNewIsHome] = useState(false);
+  const [newIsFavorite, setNewIsHome] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Accordion: one open at a time, so the Edit button inside an expansion
@@ -134,7 +134,7 @@ export function Beaches({ navigation }: Props) {
         city: newCity.trim(),
         alertThresholdScore: newAlertEnabled ? newAlert : undefined,
       });
-      if (newIsHome && !created.isFavorite) {
+      if (newIsFavorite && !created.isFavorite) {
         await updateSavedLocation(created.id, { isFavorite: true });
       }
       setNewName('');
@@ -216,8 +216,8 @@ export function Beaches({ navigation }: Props) {
             )}
 
             <TouchableOpacity style={styles.homeToggleRow} onPress={() => setNewIsHome((v) => !v)} hitSlop={8}>
-              <Ionicons name={newIsHome ? 'checkbox' : 'square-outline'} size={20} color={t.text} />
-              <Text style={[styles.homeToggleText, { color: t.text }]}>Set as home beach</Text>
+              <Ionicons name={newIsFavorite ? 'checkbox' : 'square-outline'} size={20} color={t.text} />
+              <Text style={[styles.homeToggleText, { color: t.text }]}>Add to favorites</Text>
             </TouchableOpacity>
 
             {saving ? (

@@ -25,8 +25,8 @@ export function Beach({ navigation }: Props) {
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}>
-        <Text style={[styles.title, { color: t.text }]}>Your home beach</Text>
-        <Text style={[styles.subtitle, { color: t.body }]}>Set a default location. Change it anytime.</Text>
+        <Text style={[styles.title, { color: t.text }]}>Your first beach</Text>
+        <Text style={[styles.subtitle, { color: t.body }]}>Pick somewhere to start. You can save as many beaches as you like later.</Text>
 
         <View style={[styles.searchBox, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
           <Text style={{ color: t.muted }}>🔍</Text>
