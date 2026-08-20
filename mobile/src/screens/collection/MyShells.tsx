@@ -1,13 +1,15 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect, CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
-import { FindRow } from '../../components/FindRow';
-import { Field } from '../../components/Field';
+import { ListRow } from '../../components/ListRow';
+import { Badge } from '../../components/Badge';
+import { Btn } from '../../components/Btn';
+import { PhotoViewer } from '../../components/PhotoViewer';
 import { BadgeType } from '../../components/Badge';
 import { DateRangeSheet } from '../../components/DateRangeSheet';
 import { CollectionStackParamList } from '../../navigation/types';
@@ -62,6 +64,10 @@ export function MyShells({ navigation }: Props) {
   const [activeFilter, setActiveFilter] = useState(0);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const [dateSheetOpen, setDateSheetOpen] = useState(false);
+  // Accordion: only one find is ever open, so an Edit button is
+  // unambiguously about the item above it.
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [zoomUri, setZoomUri] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -180,21 +186,44 @@ export function MyShells({ navigation }: Props) {
         )}
         {!loading &&
           visibleFinds.map((f) => (
-            <FindRow
+            <ListRow
               key={f.id}
-              icon="🐚"
               bg={t.surfaceInset}
-              name={f.speciesName ?? 'Unidentified shell'}
-              sub=""
-              dateSuffix={formatFindDate(f.foundAt)}
-              badge={toBadgeType(f.speciesRarity)}
-              notes={f.notes}
-              isPrivate={f.isPrivate}
               photoUrl={f.thumbUrl ?? f.photoUrl}
-              onPress={() => handleEdit(f)}
-            />
+              name={f.speciesName ?? 'Unidentified shell'}
+              meta={formatFindDate(f.foundAt)}
+              expanded={expandedId === f.id}
+              onPress={() => setExpandedId((id) => (id === f.id ? null : f.id))}
+              chips={
+                <>
+                  <Badge type={toBadgeType(f.speciesRarity)} />
+                  <Text style={[styles.chip, { backgroundColor: t.surfaceCardHi, color: t.muted, borderColor: t.borderSoftAlpha }]}>
+                    {f.isPrivate ? 'Private' : 'Public'}
+                  </Text>
+                </>
+              }
+              action={<Btn label="Edit" variant="secondary" onPress={() => handleEdit(f)} />}
+            >
+              {(f.thumbUrl ?? f.photoUrl) && (
+                <TouchableOpacity
+                  onPress={() => setZoomUri(f.photoUrl)}
+                  accessibilityRole="imagebutton"
+                  accessibilityLabel="View photo full size"
+                >
+                  <Image source={{ uri: f.thumbUrl ?? f.photoUrl ?? undefined }} style={styles.expandedPhoto} />
+                </TouchableOpacity>
+              )}
+              {!!f.condition && (
+                <Text style={[styles.detail, { color: t.muted }]}>
+                  Condition: {f.condition.charAt(0).toUpperCase() + f.condition.slice(1)}
+                </Text>
+              )}
+              {!!f.notes && <Text style={[styles.detail, { color: t.muted }]}>{f.notes}</Text>}
+            </ListRow>
           ))}
       </ScrollView>
+
+      <PhotoViewer uri={zoomUri} visible={!!zoomUri} onRequestClose={() => setZoomUri(null)} />
 
       <DateRangeSheet
         visible={dateSheetOpen}
@@ -216,6 +245,12 @@ export function MyShells({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  expandedPhoto: { width: '100%', aspectRatio: 1, borderRadius: 10 },
+  detail: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
+  chip: {
+    fontFamily: fonts.data, fontSize: 9, letterSpacing: 0.4, borderRadius: 20,
+    paddingVertical: 2, paddingHorizontal: 8, borderWidth: 1, overflow: 'hidden',
+  },
   screen: { flex: 1 },
   header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   title: { fontFamily: fonts.display, fontSize: 19 },

@@ -8,14 +8,16 @@ import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
 import { enableBeachAlerts, disableBeachAlerts } from '../../lib/notifications';
 import { useTheme } from '../../theme/ThemeProvider';
-import { fonts, scoreColor, tabularNums } from '../../theme/tokens';
+import { fonts, tabularNums } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
 import { Field } from '../../components/Field';
-import { FindRow } from '../../components/FindRow';
+import { ListRow } from '../../components/ListRow';
+import { Badge } from '../../components/Badge';
 import { Btn } from '../../components/Btn';
 import { BadgeType } from '../../components/Badge';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { PhotoViewer } from '../../components/PhotoViewer';
 import { ProfileStackParamList } from '../../navigation/types';
 import { useAuth } from '../../auth/AuthProvider';
 import { WEB_APP_URL } from '../../lib/supabase';
@@ -85,9 +87,11 @@ export function Profile({ navigation }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
   const { signOut, changePassword } = useAuth();
+  const [expandedFindId, setExpandedFindId] = useState<string | null>(null);
+  const [expandedBeachId, setExpandedBeachId] = useState<string | null>(null);
+  const [zoomUri, setZoomUri] = useState<string | null>(null);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null);
-  const [deletionScheduledFor, setDeletionScheduledFor] = useState<string | null>(null);
   const statColor = { text: t.text, accentDeep: t.accentDeep };
   const [finds, setFinds] = useState<Find[]>([]);
   const [beaches, setBeaches] = useState<SavedLocation[]>([]);
@@ -514,15 +518,23 @@ export function Profile({ navigation }: Props) {
           )}
           {!loading &&
             finds.map((f) => (
-              <FindRow
+              <ListRow
                 key={f.id}
-                icon="🐚"
                 bg={t.surfaceInset}
-                name={f.speciesName ?? 'Unidentified shell'}
-                sub={`${formatFindDate(f.foundAt)}${f.condition ? ` · ${f.condition}` : ''}`}
-                badge={toBadgeType(f.speciesRarity)}
                 photoUrl={f.thumbUrl ?? f.photoUrl}
-              />
+                name={f.speciesName ?? 'Unidentified shell'}
+                meta={`${formatFindDate(f.foundAt)}${f.condition ? ` · ${f.condition}` : ''}`}
+                chips={<Badge type={toBadgeType(f.speciesRarity)} />}
+                expanded={expandedFindId === f.id}
+                onPress={() => setExpandedFindId((id) => (id === f.id ? null : f.id))}
+              >
+                {(f.thumbUrl ?? f.photoUrl) && (
+                  <TouchableOpacity onPress={() => setZoomUri(f.photoUrl)} accessibilityRole="imagebutton">
+                    <Image source={{ uri: f.thumbUrl ?? f.photoUrl ?? undefined }} style={styles.expandedPhoto} />
+                  </TouchableOpacity>
+                )}
+                {!!f.notes && <Text style={[styles.expandedDetail, { color: t.muted }]}>{f.notes}</Text>}
+              </ListRow>
             ))}
         </View>
 
@@ -536,25 +548,26 @@ export function Profile({ navigation }: Props) {
           )}
           {!loading &&
             beaches.map((b) => (
-              <View key={b.id} style={[styles.beachRow, { backgroundColor: t.surfaceCard, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
-                <View style={styles.beachRowBody}>
-                  <View style={styles.beachRowNameLine}>
-                    <Text style={[styles.beachRowName, { color: t.text }]}>{b.name}</Text>
-                    {b.isHome && (
-                      <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>
-                        HOME
-                      </Text>
-                    )}
-                  </View>
-                  <Text style={[styles.beachRowAlert, { color: t.muted }]}>
-                    {b.alertThresholdScore != null ? `Alert at ${b.alertThresholdScore}+` : 'No alert set'}
-                  </Text>
-                </View>
-                <View style={styles.beachRowScoreWrap}>
-                  <Text style={[styles.beachRowScore, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
-                  <Text style={[styles.beachRowScoreLabel, { color: t.muted }]}>SHELLING SCORE</Text>
-                </View>
-              </View>
+              <ListRow
+                key={b.id}
+                score={b.score}
+                name={b.name}
+                sub={b.city ?? undefined}
+                meta={b.alertThresholdScore != null ? `🔔 Alert at ${b.alertThresholdScore}+` : undefined}
+                chips={
+                  b.isHome ? (
+                    <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>
+                      HOME
+                    </Text>
+                  ) : undefined
+                }
+                expanded={expandedBeachId === b.id}
+                onPress={() => setExpandedBeachId((id) => (id === b.id ? null : b.id))}
+              >
+                <Text style={[styles.expandedDetail, { color: t.muted }]}>
+                  Shelling score {b.score} · confidence {b.confidence}
+                </Text>
+              </ListRow>
             ))}
         </View>
       </ScrollView>
@@ -706,6 +719,8 @@ export function Profile({ navigation }: Props) {
         }}
       />
 
+      <PhotoViewer uri={zoomUri} visible={!!zoomUri} onRequestClose={() => setZoomUri(null)} />
+
       <ConfirmDialog
         visible={deleteConfirmVisible}
         title="Delete your account?"
@@ -717,8 +732,7 @@ export function Profile({ navigation }: Props) {
             style: 'destructive',
             onPress: async () => {
               try {
-                const status = await requestDeleteAccount();
-                setDeletionScheduledFor(status.deletionScheduledFor);
+                await requestDeleteAccount();
                 // Sign out so the account isn't left sitting logged in mid-deletion.
                 await signOut();
               } catch (e) {
@@ -752,6 +766,8 @@ export function Profile({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  expandedPhoto: { width: '100%', aspectRatio: 1, borderRadius: 10 },
+  expandedDetail: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
   deletionBanner: {
     marginHorizontal: 20,
     marginTop: 16,

@@ -494,6 +494,11 @@ export function cancelDeleteAccount(): Promise<DeletionStatus> {
   return apiFetch<DeletionStatus>('/api/profile/delete/cancel', { method: 'POST' });
 }
 
+/** Permanent -- the row and both bucket objects go. Confirm before calling. */
+export async function deleteFind(id: string): Promise<void> {
+  await apiFetch<void>(`/api/finds/${id}`, { method: 'DELETE' });
+}
+
 export function updateProfile(input: UpdateProfileInput): Promise<Profile> {
   return apiFetch<Profile>('/api/profile', { method: 'PATCH', body: JSON.stringify(input) });
 }

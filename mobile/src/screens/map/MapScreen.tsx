@@ -9,7 +9,8 @@ import Svg, { Rect, Circle, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
-import { FindRow } from '../../components/FindRow';
+import { ListRow } from '../../components/ListRow';
+import { Badge } from '../../components/Badge';
 import { BadgeType } from '../../components/Badge';
 import { ShellingMap } from '../../components/ShellingMap';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
@@ -296,17 +297,17 @@ export function MapScreen({ navigation }: Props) {
             {!loading &&
               nearbyResult.mode === 'individual' &&
               visibleFinds.map((f) => (
-                <FindRow
+                <ListRow
                   key={f.id}
                   icon="🐚"
                   bg={t.surfaceInset}
                   name={f.speciesName ?? 'Unidentified shell'}
-                  sub=""
-                  dateSuffix={formatFindDate(f.foundAt)}
-                  condition={f.condition}
-                  notes={f.notes}
-                  badge={toBadgeType(f.speciesRarity)}
+                  meta={formatFindDate(f.foundAt)}
+                  sub={f.condition ?? undefined}
+                  chips={<Badge type={toBadgeType(f.speciesRarity)} />}
                   photoUrl={f.thumbUrl ?? f.photoUrl}
+                  // Community finds aren't yours to expand and edit -- a pin
+                  // isn't in a list either, so this keeps its own screen.
                   onPress={() => navigation.navigate('FindDetail', { findId: f.id })}
                 />
               ))}

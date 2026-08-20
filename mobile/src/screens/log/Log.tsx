@@ -37,6 +37,7 @@ import {
   FindCondition,
   PhotoContentType,
   Species,
+  deleteFind,
 } from '../../lib/api';
 import { getCurrentLocation } from '../../lib/location';
 
@@ -58,6 +59,8 @@ export function Log({ navigation, route }: Props) {
   const { theme: t } = useTheme();
   const editingFind = route.params?.find ?? null;
   const isEditMode = editingFind !== null;
+  const [deleteVisible, setDeleteVisible] = useState(false);
+  const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null);
 
   const [condition, setCondition] = useState<FindCondition>(editingFind?.condition ?? 'good');
   const [notes, setNotes] = useState(editingFind?.notes ?? '');
@@ -412,14 +415,52 @@ export function Log({ navigation, route }: Props) {
             </View>
           ) : (
             <Btn
-              label={isEditMode ? 'Update' : 'Save'}
+              label={isEditMode ? 'Save' : 'Log find'}
               onPress={handleSubmit}
               disabled={!isEditMode && !photo}
               style={styles.submitBtn}
             />
           )}
         </View>
+
+        {isEditMode && (
+          // Destructive actions live on the edit page, not in the list, so a
+          // stray tap while scrolling can't reach them (docs/TODO.md #112).
+          <View style={styles.deleteRow}>
+            <Btn label="Delete this find" variant="ghost" onPress={() => setDeleteVisible(true)} />
+          </View>
+        )}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={deleteVisible}
+        title="Delete this find?"
+        message="The photo and everything logged with it are removed. This can't be undone."
+        buttons={[
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteFind(editingFind!.id);
+                navigation.getParent()?.goBack();
+              } catch (e) {
+                setDeleteErrorMsg(e instanceof Error ? e.message : 'Please try again.');
+              }
+            },
+          },
+        ]}
+        onClose={() => setDeleteVisible(false)}
+      />
+
+      <ConfirmDialog
+        visible={!!deleteErrorMsg}
+        title="Couldn't delete this find"
+        message={deleteErrorMsg ?? undefined}
+        buttons={[{ text: 'OK' }]}
+        onClose={() => setDeleteErrorMsg(null)}
+      />
 
       <ConfirmDialog
         visible={discardVisible}
@@ -462,6 +503,7 @@ export function Log({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
+  deleteRow: { marginTop: 18, alignItems: 'center' },
   screen: { flex: 1 },
   scrollContent: { paddingBottom: 200 },
   photoBox: { height: 160, alignItems: 'center', justifyContent: 'center', gap: 6, borderBottomWidth: 1, overflow: 'hidden' },

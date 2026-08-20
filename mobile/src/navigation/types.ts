@@ -1,5 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { ShellingScoreResult, MultiDayScoreEntry, Find } from '../lib/api';
+import type { ShellingScoreResult, MultiDayScoreEntry, Find, SavedLocation } from '../lib/api';
 
 export type OnboardingStackParamList = {
   Welcome: undefined;
@@ -27,6 +27,7 @@ export type ProfileStackParamList = {
 
 export type BeachesStackParamList = {
   Beaches: undefined;
+  BeachEdit: { beach: SavedLocation };
 };
 
 export type LogStackParamList = {

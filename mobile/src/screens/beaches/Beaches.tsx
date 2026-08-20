@@ -4,13 +4,14 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
-import { fonts, scoreColor, tabularNums } from '../../theme/tokens';
+import { fonts, tabularNums } from '../../theme/tokens';
 import { Btn } from '../../components/Btn';
+import { ListRow } from '../../components/ListRow';
 import { Field } from '../../components/Field';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { ShellingMap } from '../../components/ShellingMap';
 import { BeachesStackParamList } from '../../navigation/types';
-import { listSavedLocations, createSavedLocation, updateSavedLocation, deleteSavedLocation, SavedLocation } from '../../lib/api';
+import { listSavedLocations, createSavedLocation, updateSavedLocation, SavedLocation } from '../../lib/api';
 import { getCurrentLocation, reverseGeocodeCity, DeviceLocation } from '../../lib/location';
 
 // Shown in place of the draggable map on web, where react-native-maps has no
@@ -38,7 +39,7 @@ const FILTERS: { label: string; home?: boolean; hasAlert?: boolean }[] = [
   { label: 'No alert', hasAlert: false },
 ];
 
-export function Beaches(_props: Props) {
+export function Beaches({ navigation }: Props) {
   const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
   const [beaches, setBeaches] = useState<SavedLocation[]>([]);
@@ -56,33 +57,14 @@ export function Beaches(_props: Props) {
   const [newIsHome, setNewIsHome] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState('');
-  const [editAlert, setEditAlert] = useState(0);
-  const [editLocation, setEditLocation] = useState<DeviceLocation | null>(null);
-  const [editCity, setEditCity] = useState('');
-  const [savingEdit, setSavingEdit] = useState(false);
+  // Accordion: one open at a time, so the Edit button inside an expansion
+  // is unambiguously about the beach above it.
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [addErrorMsg, setAddErrorMsg] = useState<string | null>(null);
   const [saveErrorMsg, setSaveErrorMsg] = useState<string | null>(null);
-  const [removeTarget, setRemoveTarget] = useState<SavedLocation | null>(null);
 
   const scrollRef = useRef<ScrollView>(null);
-  const cardOffsetsRef = useRef<Record<string, number>>({});
 
-  // Scroll the tapped beach's card to the top of the visible area once its
-  // edit panel expands -- otherwise the panel (name, city, map, alert,
-  // actions) is usually taller than what's visible and starts mid-scroll.
-  // Deferred a tick so this measures the panel's *expanded* layout, not
-  // where the card was before it grew.
-  useEffect(() => {
-    if (!editingId) return;
-    const y = cardOffsetsRef.current[editingId];
-    if (y === undefined) return;
-    const timeout = setTimeout(() => {
-      scrollRef.current?.scrollTo({ y: Math.max(0, y - 12), animated: true });
-    }, 50);
-    return () => clearTimeout(timeout);
-  }, [editingId]);
 
   const fetchBeaches = useCallback(async () => {
     setLoading(true);
@@ -167,61 +149,11 @@ export function Beaches(_props: Props) {
     }
   }
 
-  async function handleSetHome(id: string) {
-    await updateSavedLocation(id, { isHome: true });
-    fetchBeaches();
-  }
 
-  function adjustDraftAlert(delta: number) {
-    setEditAlert((prev) => Math.max(0, Math.min(100, prev + delta)));
-  }
 
-  function startEditing(beach: SavedLocation) {
-    setEditingId(beach.id);
-    setEditName(beach.name);
-    setEditAlert(beach.alertThresholdScore ?? beach.score);
-    setEditLocation(beach.location);
-    setEditCity(beach.city ?? '');
-  }
 
-  function cancelEditing() {
-    setEditingId(null);
-  }
 
-  function handleEditLocationDragEnd(loc: DeviceLocation) {
-    setEditLocation(loc);
-    reverseGeocodeCity(loc).then((city) => {
-      if (city) setEditCity(city);
-    });
-  }
 
-  async function handleDoneEditing(id: string) {
-    if (!editName.trim()) return;
-    setSavingEdit(true);
-    try {
-      await updateSavedLocation(id, {
-        name: editName.trim(),
-        alertThresholdScore: editAlert,
-        ...(editLocation ? { lat: editLocation.lat, lon: editLocation.lon, city: editCity } : {}),
-      });
-      await fetchBeaches();
-      setEditingId(null);
-    } catch (e) {
-      setSaveErrorMsg(e instanceof Error ? e.message : 'Please try again.');
-    } finally {
-      setSavingEdit(false);
-    }
-  }
-
-  function confirmRemove(beach: SavedLocation) {
-    setRemoveTarget(beach);
-  }
-
-  async function handleConfirmedRemove() {
-    if (!removeTarget) return;
-    await deleteSavedLocation(removeTarget.id);
-    fetchBeaches();
-  }
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
@@ -335,131 +267,33 @@ export function Beaches(_props: Props) {
         {!loading &&
           !error &&
           visibleBeaches.map((b) => (
-            <View
+            <ListRow
               key={b.id}
-              onLayout={(e) => {
-                cardOffsetsRef.current[b.id] = e.nativeEvent.layout.y;
-              }}
-              style={[
-                styles.beachCard,
-                { backgroundColor: b.isHome ? t.surfaceCardHi : t.surfaceCard, borderColor: b.isHome ? t.accent : t.borderSoftAlpha, borderWidth: b.isHome ? 1.5 : 1 },
-                // Home beach is elevated, not just outlined -- it should
-                // read as the one card sitting above the rest.
-                b.isHome ? t.shadowFloating : t.shadowRaised,
-              ]}
+              score={b.score}
+              name={b.name}
+              sub={b.city ?? undefined}
+              meta={b.alertThresholdScore != null ? `🔔 Alert at score ${b.alertThresholdScore}+` : '🔕 No alert set'}
+              expanded={expandedId === b.id}
+              onPress={() => setExpandedId((id) => (id === b.id ? null : b.id))}
+              chips={
+                b.isHome ? (
+                  <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>
+                    HOME
+                  </Text>
+                ) : undefined
+              }
+              action={<Btn label="Edit" variant="secondary" onPress={() => navigation.navigate('BeachEdit', { beach: b })} />}
             >
-              {editingId === b.id ? (
-                <View style={styles.beachTop}>
-                  <View style={styles.beachTopRow}>
-                    <View style={styles.nameColumn}>
-                      <View style={styles.nameRow}>
-                        <Text style={[styles.beachName, { color: t.text }]}>{b.name}</Text>
-                        {b.isHome && (
-                          <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>
-                            HOME
-                          </Text>
-                        )}
-                      </View>
-                      <Text style={[styles.cardAlertText, { color: t.sea }]}>
-                        {b.alertThresholdScore != null ? `🔔 Alert at score ${b.alertThresholdScore}+` : '🔕 No alert set'}
-                      </Text>
-                    </View>
-                    <View style={styles.scoreWrap}>
-                      <Text style={[styles.scoreVal, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
-                      <Text style={[styles.scoreLabel, { color: t.muted }]}>SHELLING SCORE</Text>
-                    </View>
-                  </View>
-                </View>
-              ) : (
-                <TouchableOpacity style={styles.beachTop} onPress={() => startEditing(b)} activeOpacity={0.7}>
-                  <View style={styles.beachTopRow}>
-                    <View style={styles.nameColumn}>
-                      <View style={styles.nameRow}>
-                        <Text style={[styles.beachName, { color: t.text }]}>{b.name}</Text>
-                        {b.isHome && (
-                          <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>
-                            HOME
-                          </Text>
-                        )}
-                      </View>
-                      <Text style={[styles.cardAlertText, { color: t.sea }]}>
-                        {b.alertThresholdScore != null ? `🔔 Alert at score ${b.alertThresholdScore}+` : '🔕 No alert set'}
-                      </Text>
-                    </View>
-                    <View style={styles.scoreWrap}>
-                      <Text style={[styles.scoreVal, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
-                      <Text style={[styles.scoreLabel, { color: t.muted }]}>SHELLING SCORE</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
+              <Text style={[styles.expandedDetail, { color: t.muted }]}>
+                Shelling score {b.score} · confidence {b.confidence}
+              </Text>
+              {b.alertThresholdScore != null && (
+                <Text style={[styles.expandedDetail, { color: t.muted }]}>
+                  You'll be notified when this beach reaches {b.alertThresholdScore}.
+                </Text>
               )}
-
-              {editingId === b.id ? (
-                <View style={[styles.editPanel, { backgroundColor: t.surfaceInset, borderTopColor: t.borderSoftAlpha }]}>
-                  <View style={styles.editSection}>
-                    <Text style={[styles.editLabel, { color: t.muted }]}>NAME</Text>
-                    <Field
-                      value={editName}
-                      onChangeText={setEditName}
-                      style={styles.nameInput}
-                    />
-                  </View>
-
-                  <View style={styles.editSection}>
-                    <Text style={[styles.editLabel, { color: t.muted }]}>CITY</Text>
-                    <Text style={[styles.readOnlyValue, { color: t.text }]}>{editCity || DEFAULT_LOCATION.label}</Text>
-                  </View>
-
-                  <View style={styles.editSection}>
-                    <Text style={[styles.editLabel, { color: t.muted }]}>LOCATION (DRAG PIN TO ADJUST)</Text>
-                    <View style={[styles.mapBox, { borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
-                      <ShellingMap
-                        latitude={(editLocation ?? b.location).lat}
-                        longitude={(editLocation ?? b.location).lon}
-                        onCenterMarkerDragEnd={handleEditLocationDragEnd}
-                        fallback={<MapUnavailableOnWeb color={t.muted} />}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.editSection}>
-                    <Text style={[styles.editLabel, { color: t.muted }]}>ALERT THRESHOLD</Text>
-                    <View style={[styles.alertStepperRow, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
-                      <TouchableOpacity onPress={() => adjustDraftAlert(-ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
-                        <Ionicons name="arrow-down-circle-outline" size={26} color={t.text} />
-                      </TouchableOpacity>
-                      <Text style={[styles.alertText, { color: t.sea }]}>🔔 Alert at score {editAlert}+</Text>
-                      <TouchableOpacity onPress={() => adjustDraftAlert(ALERT_STEP)} style={styles.stepperBtn} hitSlop={8}>
-                        <Ionicons name="arrow-up-circle-outline" size={26} color={t.text} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
-                  <View style={styles.editActionsRow}>
-                    {!b.isHome && (
-                      <TouchableOpacity onPress={() => handleSetHome(b.id)} hitSlop={8}>
-                        <Text style={[styles.editText, { color: t.muted }]}>SET HOME</Text>
-                      </TouchableOpacity>
-                    )}
-                    <TouchableOpacity onPress={() => confirmRemove(b)} hitSlop={8}>
-                      <Text style={[styles.editText, { color: t.accentDeep }]}>REMOVE</Text>
-                    </TouchableOpacity>
-                    {savingEdit ? (
-                      <ActivityIndicator color={t.accent} style={{ marginLeft: 'auto' }} />
-                    ) : (
-                      <View style={{ flexDirection: 'row', gap: 16, marginLeft: 'auto' }}>
-                        <TouchableOpacity onPress={cancelEditing} hitSlop={8}>
-                          <Text style={[styles.editText, { color: t.muted }]}>CANCEL</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleDoneEditing(b.id)} hitSlop={8}>
-                          <Text style={[styles.editText, { color: t.accent }]}>DONE</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              ) : null}
-            </View>
+              {!!b.notes && <Text style={[styles.expandedDetail, { color: t.muted }]}>{b.notes}</Text>}
+            </ListRow>
           ))}
       </ScrollView>
 
@@ -477,20 +311,12 @@ export function Beaches(_props: Props) {
         buttons={[{ text: 'OK' }]}
         onClose={() => setSaveErrorMsg(null)}
       />
-      <ConfirmDialog
-        visible={!!removeTarget}
-        title={removeTarget ? `Remove ${removeTarget.name}?` : ''}
-        buttons={[
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Remove', style: 'destructive', onPress: handleConfirmedRemove },
-        ]}
-        onClose={() => setRemoveTarget(null)}
-      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  expandedDetail: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
   screen: { flex: 1 },
   header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   title: { fontFamily: fonts.display, fontSize: 19 },
