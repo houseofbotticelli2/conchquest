@@ -10,6 +10,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
 import { ListRow } from '../../components/ListRow';
+import { FIND_PIN_COLORS } from '../../components/ShellingMap';
 import { Badge } from '../../components/Badge';
 import { BadgeType } from '../../components/Badge';
 import { ShellingMap } from '../../components/ShellingMap';
@@ -67,9 +68,9 @@ function toBadgeType(rarity: NearbyFind['speciesRarity']): BadgeType {
  * has no such problem, so the badge keeps its coral.
  */
 function markerColorForRarity(rarity: NearbyFind['speciesRarity']): string {
-  if (rarity === 'rare' || rarity === 'very_rare') return '#7B4B8A';
-  if (rarity === 'uncommon') return '#4A8B8C';
-  return '#D9B36C';
+  if (rarity === 'rare' || rarity === 'very_rare') return FIND_PIN_COLORS.rare;
+  if (rarity === 'uncommon') return FIND_PIN_COLORS.uncommon;
+  return FIND_PIN_COLORS.common;
 }
 
 function formatFindDate(iso: string): string {

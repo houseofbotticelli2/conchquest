@@ -18,6 +18,7 @@ import { BadgeType } from '../../components/Badge';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { PhotoViewer } from '../../components/PhotoViewer';
+import { LOCATION_PIN_COLOR, FIND_PIN_COLORS } from '../../components/ShellingMap';
 import { ProfileStackParamList } from '../../navigation/types';
 import { useAuth } from '../../auth/AuthProvider';
 import { WEB_APP_URL } from '../../lib/supabase';
@@ -65,6 +66,15 @@ function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
   return rarity === 'very_rare' ? 'rare' : rarity ?? 'common';
 }
 
+// Reads from the same constants the map renders with, so the legend cannot
+// describe colours the map isn't actually using.
+const PIN_LEGEND = [
+  { color: LOCATION_PIN_COLOR, label: 'A place', detail: "A beach, or the spot you're setting for a find" },
+  { color: FIND_PIN_COLORS.rare, label: 'Rare find', detail: 'Someone logged a rare or very rare shell here' },
+  { color: FIND_PIN_COLORS.uncommon, label: 'Uncommon find', detail: 'An uncommon shell' },
+  { color: FIND_PIN_COLORS.common, label: 'Common find', detail: 'Everything else' },
+];
+
 const HELP_ITEMS = [
   {
     icon: '🌊',
@@ -79,7 +89,7 @@ const HELP_ITEMS = [
   },
   { icon: '🧭', title: 'Map', body: "See your position, browse shells the community has logged nearby, use the pin to pick a saved beach, and report or block a find that doesn't belong." },
   { icon: '🐚', title: 'My Shells', body: 'Log a new find with its species, condition, photo, and whether the location is shown publicly. Tap the book icon to browse the shell species library.' },
-  { icon: '🏖️', title: 'My Beaches', body: 'Save your favorite beaches, mark a home beach, and get notified when one hits a Shelling Score you set.' },
+  { icon: '🏖️', title: 'My Beaches', body: 'Save the beaches you shell, star the ones you return to, and get notified when one hits a Shelling Score you set.' },
   { icon: '👤', title: 'Profile', body: 'Your recent finds, stats, and settings.' },
 ];
 
@@ -460,6 +470,25 @@ export function Profile({ navigation }: Props) {
             </View>
           </View>
         ))}
+
+        <View style={styles.helpRow}>
+          <Text style={{ fontSize: 20 }}>📍</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.helpTitle, { color: t.text }]}>Map pins</Text>
+            <Text style={[styles.helpBody, { color: t.muted }]}>What the colours mean:</Text>
+            {PIN_LEGEND.map((pin) => (
+              <View key={pin.label} style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: pin.color }]} />
+                <Text style={[styles.helpBullet, { color: t.muted, marginTop: 0 }]}>
+                  <Text style={{ color: t.text }}>{pin.label}</Text> — {pin.detail}
+                </Text>
+              </View>
+            ))}
+            <Text style={[styles.helpBullet, { color: t.muted }]}>
+              A numbered bubble means several finds are grouped together — zoom in to separate them.
+            </Text>
+          </View>
+        </View>
       </SlideUpSheet>
       <ScrollView>
         {profile?.deletionRequestedAt && (
@@ -779,6 +808,8 @@ export function Profile({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
+  legendDot: { width: 12, height: 12, borderRadius: 6 },
   alertChip: {
     fontFamily: fonts.data, fontSize: 10, letterSpacing: 0.3, borderRadius: 20,
     paddingVertical: 2, paddingHorizontal: 8, borderWidth: 1, overflow: 'hidden',
