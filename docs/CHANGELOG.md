@@ -9,6 +9,31 @@ Build numbers here are the **production/TestFlight** build number
 
 Nothing pending -- everything committed so far has shipped.
 
+## Build 13 — v0.1.0 (shipped 2026-08-20)
+
+- **Fixed: the Help sheet ran off the top of the screen.** It grew to fit its
+  content with nowhere to scroll, so the longest section was unreachable —
+  under the notch on a phone. Sheets now stop short of the top and scroll.
+- **Fixed: Settings had no dividers between its rows.** Ten items in one
+  undifferentiated stack, with "Log out" sitting flush against "Delete my
+  account". Every sheet row is now separated.
+- **Fixed: a shell's date on your Profile didn't match My Shells.** Profile was
+  leaving the year off, so the same find read "Jul 21" in one place and
+  "Jul 21, 2026" in the other. Same date all along, written two ways.
+- **The beach picker in the header is now a button.** It was a bare pin with
+  nothing to say it was tappable; it now sits in a ring matching the **+** on
+  My Shells, and it's easier to hit.
+- **The picker also shows each beach's city** under its name.
+- **Help explains Shellcast the way it explains map pins** — each part you can
+  tap gets its own colour and a plain description.
+- **Every screen's header is now the same height**, and stops changing height
+  depending on whether a beach has a city listed.
+- **Beach scores are now an outlined box** rather than a white tile, so the
+  score itself is the only colour in it.
+- Various small consistency fixes: alert chips and notices sit on the page
+  rather than looking like input fields, map frames all share one corner
+  radius, and rows darken when pressed instead of fading.
+
 ## Build 12 — v0.1.0 (shipped 2026-08-20)
 
 - **Fixed: you couldn't log a shell at all in Build 11.** Adding the draggable
