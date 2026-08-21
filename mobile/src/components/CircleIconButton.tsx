@@ -11,11 +11,15 @@ import { useTheme } from '../theme/ThemeProvider';
  * in My Shells and My Beaches -- an open circle, not a filled chip -- so the
  * header actions across the app read as one family.
  *
- * Sized to sit alongside that 26pt glyph rather than tower over it. The ring
- * itself is under the 44pt touch minimum, so the hitSlop below does the real
+ * The numbers below are measured off that glyph, not derived from its font
+ * size: add-circle-outline at fontSize 26 draws a circle only 22 across with
+ * a ~2 stroke, because 26 is the em box and the artwork sits inside it. Sizing
+ * the ring to 26 made it visibly bigger and thinner than the button beside it.
+ *
+ * The ring is well under the 44pt touch minimum, so the hitSlop does the real
  * work -- it's in the top corner, which is awkward to hit accurately.
  */
-const SIZE = 28;
+const SIZE = 22;
 
 export function CircleIconButton({
   icon,
@@ -45,16 +49,12 @@ const styles = StyleSheet.create({
     width: SIZE,
     height: SIZE,
     borderRadius: SIZE / 2,
-    // Ionicons outline glyphs stroke at 32/512 em, so the add-circle-outline
-    // beside this one (rendered at 26) draws a ~1.6pt ring. Matching that
-    // exactly is the whole point -- a hair thinner and the two headers look
-    // like two different families.
-    borderWidth: 1.6,
+    borderWidth: 2,
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
   // Compresses rather than fades, matching Btn.
   pressed: { opacity: 0.92, transform: [{ scale: 0.94 }] },
-  icon: { fontSize: 14 },
+  icon: { fontSize: 12 },
 });
