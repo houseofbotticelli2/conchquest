@@ -31,6 +31,20 @@ Recessed means "you can type here." Read-only value rows are not inputs.
 Species name, condition, location-sharing status, and dates are values —
 they belong on the surface, not cut into it.
 
+The rule the app had already settled on without writing down, found while
+aligning the two edit screens — it holds on every screen, so keep it:
+
+| Treatment | Means | Examples |
+|---|---|---|
+| `surfaceInset` (tan, cut in) | **type here** | beach name, find notes, search boxes |
+| `surfaceCardHi` (white, raised) | **pick a value** | alert stepper, species row, location sharing, favourite toggle |
+
+Things that are neither — they only *look* like inputs because they're
+boxed — must be raised. The 2026-08-20 audit found six: notice and error
+blocks on Signup, Reset password and Log a find, Profile's deletion banner,
+and the hourly tiles on Conditions detail. A box around read-only text is
+not a reason to recess it.
+
 ## C3 — Does any element share its container's tone?
 
 An inset field inside an inset panel disappears. Check parent/child pairs:
@@ -63,6 +77,20 @@ element and were treated differently. Map frames were raised in Log and
 Find Detail but flat in Beaches. Grep for the element across screens before
 declaring it done.
 
+**Geometry counts, not just tone.** The 2026-08-20 audit found map frames
+correctly raised on all five screens but with three different
+`borderRadius` values (8, 10, 12). Same for the beach-picker ring, which was
+sized from the neighbouring glyph's *font size* rather than its drawn circle
+and came out 27% too wide. Radius, size and stroke drift as easily as colour
+and are harder to notice one screen at a time.
+
+**A shared component can invite the drift it was meant to end.** `ListRow`
+took a `bg` prop for its leading slot, and all three find call sites passed
+`surfaceInset` while beaches used the raised default — so the same slot had
+two tones, which is exactly the `FindRow`/`Library` mistake above,
+reintroduced by the component built to fix it. If a visual property should
+be consistent, the component must own it and expose no prop for it.
+
 ## C7 — Does exactly one thing stand out?
 
 If every chip has a shadow, none of them reads as selected. If every card
@@ -79,6 +107,22 @@ borderColor: t.border[,}]           → borderSoftAlpha (when paired with a shad
 backgroundColor: t.surfaceAlt       → surfaceInset (wells) or surfaceCardHi (chips)
 ```
 
+The chips half of that last line is the one that gets missed — it cost five
+findings in the 2026-08-20 audit (`alertChip` on Beaches and Profile,
+`homeBadge` on Shellcast and Map, `factorPts` on Score breakdown). Chips sit
+*on* the page; only wells and tracks are cut into it:
+
+```
+grep -rn 'Chip\|Badge\|Pill' src/ | grep surfaceInset     # should be empty
+```
+
+And a contradiction worth its own grep — recessed and lifted at once, which
+Library's species icon was doing:
+
+```
+grep -rn 'surfaceInset.*shadowRaised' src/               # should be empty
+```
+
 ## C9 — Does inline styling fight a component that now owns it?
 
 When a shared component takes ownership of a visual property, call sites
@@ -93,6 +137,15 @@ new font weights across 15 files.
 - Cards and buttons: pressed state — shadow drops, surface darkens slightly
 - Anything tappable that looks like a static row is a bug in the other
   direction: read-only content must not look editable
+
+`TouchableOpacity` fades the whole element, which is not the same thing and
+reads as the content vanishing rather than the surface being pushed. For
+anything card- or row-sized, use `Pressable` and darken the surface —
+`Btn`, `ListRow`, `CircleIconButton` and `DestructiveLink` all do.
+
+Icon-only taps in headers and sheet rows are still `TouchableOpacity`. That
+is a deliberate stopping point, not a clean bill of health: a fade is
+tolerable on a 22pt glyph and wrong on a row.
 
 ---
 
@@ -117,7 +170,32 @@ because C5 misses live there.
 | My Shells | list, filters, date sheet, empty |
 | Library | list, search, filters |
 | Species detail | hero icon, facts card, about card |
-| My Beaches | list, add form, inline edit panel, filters, search, remove dialog |
-| Log a find | create mode, edit mode, photo empty/filled, species search + results, condition chips, discard dialog |
+| My Beaches | list, expanded row, filters, search, add form |
+| Edit beach | form, favourite toggle on/off, remove dialog, save error |
+| Log a find | create mode, edit mode, photo empty/filled, species search + results, condition chips, discard dialog, delete dialog |
 | Log confirm | — |
-| Profile | header, stats strip, finds list, beaches list, settings sheet, edit profile sheet, change password sheet, blocked users sheet, help sheet |
+| Profile | header, stats strip, finds list, beaches list, deletion banner, settings sheet, edit profile sheet, change password sheet, blocked users sheet, help sheet |
+
+Shared components carry their own treatment, so a change here lands on every
+screen above — check them directly rather than through a screen:
+
+| Component | Owns |
+|---|---|
+| `Card` | resting vs `hi` hero card |
+| `Field` | recessed by default, `raised` for form-only screens, focus state |
+| `ListRow` | leading slot tone, pressed state, expansion, action slot |
+| `ScreenHeader` | header height, title size, action alignment and right inset |
+| `SlideUpSheet` | sheet surface, height cap, scrolling |
+| `Btn` / `CircleIconButton` / `DestructiveLink` | pressed states, action weight |
+
+## Audit log
+
+Running this end to end is worth dating, since "we checked" decays.
+
+- **2026-08-20** — full pass, 10 criteria. C8 and C9 clean; C1 clean. Seven
+  findings, all fixed: recessed chips (5 sites), `ListRow`'s two-tone leading
+  slot, Library's inset-plus-raised icon, three map-frame radii, six recessed
+  read-only blocks, four equal cards on Conditions detail, and `ListRow`
+  lacking a pressed state. **C5 was not audited** — sheets, empty, loading,
+  error and non-owner states were skipped, and the checklist says that is
+  exactly where misses live. Start there next time.

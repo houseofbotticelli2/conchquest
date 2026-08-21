@@ -92,7 +92,7 @@ export function Library({ navigation }: Props) {
               style={[styles.row, { borderBottomColor: t.borderSoft }]}
               onPress={() => navigation.navigate('Species', { speciesId: s.id })}
             >
-              <View style={[styles.icon, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
+              <View style={[styles.icon, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
                 <Text style={{ fontSize: 20 }}>🐚</Text>
               </View>
               <View style={styles.body}>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts, scoreColor, tabularNums } from '../theme/tokens';
 
@@ -20,7 +20,6 @@ interface ListRowProps {
   score?: number | null;
   /** Fallback glyph when there's no photo (and no score). */
   icon?: string;
-  bg?: string;
 
   name: string;
   /** Secondary line -- a find's location, a beach's city and distance. */
@@ -44,24 +43,31 @@ interface ListRowProps {
 }
 
 export function ListRow({
-  photoUrl, score, icon, bg, name, sub, meta, chips, expanded, onPress, children, action,
+  photoUrl, score, icon, name, sub, meta, chips, expanded, onPress, children, action,
 }: ListRowProps) {
   const { theme: t } = useTheme();
   const hasScore = typeof score === 'number';
 
   return (
     <View style={[styles.wrap, { borderBottomColor: t.borderSoft }]}>
-      <TouchableOpacity
+      {/* Pressable, not TouchableOpacity: the row should darken under the
+          thumb rather than fade out, matching Btn. A whole row fading reads
+          as the content disappearing. */}
+      <Pressable
         onPress={onPress}
         disabled={!onPress}
         accessibilityRole="button"
         accessibilityState={{ expanded: !!expanded }}
-        style={styles.row}
+        style={({ pressed }) => [styles.row, pressed && { backgroundColor: t.surfaceInset }]}
       >
         <View
           style={[
             styles.lead,
-            { backgroundColor: hasScore ? t.surfaceCardHi : bg ?? t.surfaceCardHi, borderColor: t.borderSoftAlpha },
+            // One tone for every leading slot. Callers used to pass an inset
+            // background for the no-photo case, so a find's fallback well was
+            // recessed while a beach's score well was raised -- the same
+            // element, two tones, which is the mistake C6 exists to catch.
+            { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha },
             t.shadowRaised,
           ]}
         >
@@ -83,7 +89,7 @@ export function ListRow({
         </View>
 
         {!!chips && <View style={styles.chips}>{chips}</View>}
-      </TouchableOpacity>
+      </Pressable>
 
       {expanded && (
         <View style={styles.expansion}>
@@ -101,7 +107,7 @@ export function ListRow({
 
 const styles = StyleSheet.create({
   wrap: { borderBottomWidth: 1 },
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 9 },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 9, borderRadius: 8 },
   lead: {
     width: 38, height: 38, borderRadius: 10, overflow: 'hidden', borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',

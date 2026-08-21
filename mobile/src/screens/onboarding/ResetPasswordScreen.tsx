@@ -61,7 +61,7 @@ export function ResetPasswordScreen() {
             </Text>
 
             {error && (
-              <Text style={[styles.notice, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceInset }]}>
+              <Text style={[styles.notice, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceCardHi }]}>
                 {error}
               </Text>
             )}

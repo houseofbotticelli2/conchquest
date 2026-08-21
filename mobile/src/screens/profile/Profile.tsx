@@ -492,7 +492,7 @@ export function Profile({ navigation }: Props) {
       </SlideUpSheet>
       <ScrollView>
         {profile?.deletionRequestedAt && (
-          <View style={[styles.deletionBanner, { backgroundColor: t.surfaceInset, borderColor: t.accentDeep }]}>
+          <View style={[styles.deletionBanner, { backgroundColor: t.surfaceCardHi, borderColor: t.accentDeep }]}>
             <Text style={[styles.deletionBannerTitle, { color: t.accentDeep }]}>Account scheduled for deletion</Text>
             <Text style={[styles.deletionBannerText, { color: t.muted }]}>
               {profile.deletionScheduledFor
@@ -552,7 +552,6 @@ export function Profile({ navigation }: Props) {
             finds.map((f) => (
               <ListRow
                 key={f.id}
-                bg={t.surfaceInset}
                 photoUrl={f.thumbUrl ?? f.photoUrl}
                 name={f.speciesName ?? 'Unidentified shell'}
                 meta={formatFindDate(f.foundAt)}
@@ -594,7 +593,7 @@ export function Profile({ navigation }: Props) {
                 onPress={() => setExpandedBeachId((id) => (id === b.id ? null : b.id))}
                 chips={
                   b.alertThresholdScore != null ? (
-                    <Text style={[styles.alertChip, { backgroundColor: t.surfaceInset, color: t.sea, borderColor: t.borderSoftAlpha }]}>
+                    <Text style={[styles.alertChip, { backgroundColor: t.surfaceCardHi, color: t.sea, borderColor: t.borderSoftAlpha }]}>
                       🔔 {b.alertThresholdScore}+
                     </Text>
                   ) : undefined

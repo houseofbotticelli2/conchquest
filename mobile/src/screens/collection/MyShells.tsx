@@ -189,7 +189,6 @@ export function MyShells({ navigation }: Props) {
           visibleFinds.map((f) => (
             <ListRow
               key={f.id}
-              bg={t.surfaceInset}
               photoUrl={f.thumbUrl ?? f.photoUrl}
               name={f.speciesName ?? 'Unidentified shell'}
               meta={formatFindDate(f.foundAt)}

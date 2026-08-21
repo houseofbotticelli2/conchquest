@@ -31,7 +31,7 @@ export function Detail({ navigation, route }: Props) {
               >
                 <View style={styles.factorHeader}>
                   <Text style={[styles.factorLabel, { color: t.text }]}>{f.label}</Text>
-                  <Text style={[styles.factorPts, { color, backgroundColor: t.surfaceInset }]}>{f.points} pts</Text>
+                  <Text style={[styles.factorPts, { color, backgroundColor: t.surfaceCardHi }]}>{f.points} pts</Text>
                 </View>
                 <View style={[styles.barTrack, { backgroundColor: t.surfaceInset }]}>
                   <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: color }]} />

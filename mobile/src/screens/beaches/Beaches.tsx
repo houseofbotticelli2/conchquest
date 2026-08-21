@@ -286,7 +286,7 @@ export function Beaches({ navigation }: Props) {
                 // status is no longer flagged per row -- you can filter on it,
                 // which is faster than scanning for a badge.
                 b.alertThresholdScore != null ? (
-                  <Text style={[styles.alertChip, { backgroundColor: t.surfaceInset, color: t.sea, borderColor: t.borderSoftAlpha }]}>
+                  <Text style={[styles.alertChip, { backgroundColor: t.surfaceCardHi, color: t.sea, borderColor: t.borderSoftAlpha }]}>
                     🔔 {b.alertThresholdScore}+
                   </Text>
                 ) : undefined
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   addInput: { fontFamily: fonts.body, fontSize: 13, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12 },
   addSection: { gap: 6, marginTop: 12 },
   readOnlyValue: { fontFamily: fonts.body, fontSize: 13, paddingVertical: 8 },
-  mapBox: { height: 280, borderRadius: 8, overflow: 'hidden', borderWidth: 1 },
+  mapBox: { height: 280, borderRadius: 10, overflow: 'hidden', borderWidth: 1 },
   homeToggleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
   homeToggleText: { fontFamily: fonts.body, fontSize: 13 },
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12, marginBottom: 10 },

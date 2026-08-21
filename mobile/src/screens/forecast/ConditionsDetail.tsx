@@ -62,7 +62,7 @@ export function ConditionsDetail({ navigation, route }: Props) {
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <NavBar title={`Conditions ${dayLabel}`} left="← Back" onLeft={() => navigation.goBack()} right={beachLabel} />
       <ScrollView contentContainerStyle={styles.content}>
-        <Card style={styles.headerCard}>
+        <Card hi style={styles.headerCard}>
           <Text style={[styles.temp, { color: t.text }]}>
             {weather.tempF != null ? `${Math.round(weather.tempF)}°F` : '--°F'}
             {weather.conditions ? ` · ${weather.conditions}` : ''}
@@ -101,7 +101,7 @@ export function ConditionsDetail({ navigation, route }: Props) {
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hourlyRow}>
               {hourly.map((block) => (
-                <View key={block.time} style={[styles.hourlyBlock, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
+                <View key={block.time} style={[styles.hourlyBlock, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }]}>
                   <Text style={[styles.hourlyTime, { color: t.muted }]}>{formatTime(block.time)}</Text>
                   <Text style={[styles.hourlyTemp, { color: t.text }]}>
                     {block.tempF != null ? `${Math.round(block.tempF)}°` : '--'}

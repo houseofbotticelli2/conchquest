@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   section: { gap: 6 },
   label: { fontFamily: fonts.data, fontSize: 10, letterSpacing: 1 },
   readOnly: { fontFamily: fonts.body, fontSize: 14 },
-  mapBox: { height: 180, borderRadius: 12, overflow: 'hidden', borderWidth: 1 },
+  mapBox: { height: 180, borderRadius: 10, overflow: 'hidden', borderWidth: 1 },
   stepperRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     borderRadius: 12, borderWidth: 1, paddingVertical: 10, paddingHorizontal: 14,

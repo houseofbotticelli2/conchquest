@@ -102,17 +102,17 @@ export function Signup({ navigation, route }: Props) {
         )}
 
         {confirmationNotice && (
-          <Text style={[styles.notice, { color: t.sea, borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceInset }]}>
+          <Text style={[styles.notice, { color: t.sea, borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceCardHi }]}>
             Check your email to confirm your account, then log in below.
           </Text>
         )}
         {resetNotice && (
-          <Text style={[styles.notice, { color: t.sea, borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceInset }]}>
+          <Text style={[styles.notice, { color: t.sea, borderColor: t.borderSoftAlpha, backgroundColor: t.surfaceCardHi }]}>
             Check your email for a link to reset your password.
           </Text>
         )}
         {error && (
-          <Text style={[styles.notice, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceInset }]}>
+          <Text style={[styles.notice, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceCardHi }]}>
             {error}
           </Text>
         )}

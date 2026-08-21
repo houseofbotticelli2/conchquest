@@ -308,7 +308,6 @@ export function MapScreen({ navigation }: Props) {
                 <ListRow
                   key={f.id}
                   icon="🐚"
-                  bg={t.surfaceInset}
                   name={f.speciesName ?? 'Unidentified shell'}
                   meta={formatFindDate(f.foundAt)}
                   chips={<Badge type={toBadgeType(f.speciesRarity)} />}
@@ -332,7 +331,7 @@ export function MapScreen({ navigation }: Props) {
             <View style={styles.pickerRowNameLine}>
               <Text style={[styles.pickerRowName, { color: t.text }]}>{b.name}</Text>
               {b.isFavorite && (
-                <Text style={[styles.homeBadge, { backgroundColor: t.surfaceInset, color: t.text, borderColor: t.borderSoftAlpha }]}>★</Text>
+                <Text style={[styles.homeBadge, { backgroundColor: t.surfaceCardHi, color: t.text, borderColor: t.borderSoftAlpha }]}>★</Text>
               )}
             </View>
             <Text style={[styles.pickerRowScore, { color: scoreColor(b.score, t) }]}>{b.score}</Text>

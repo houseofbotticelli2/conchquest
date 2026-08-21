@@ -308,7 +308,7 @@ export function Log({ navigation, route }: Props) {
 
         <View style={styles.content}>
           {error && (
-            <Text style={[styles.errorText, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceInset }]}>
+            <Text style={[styles.errorText, { color: t.accentDeep, borderColor: t.accentDeep, backgroundColor: t.surfaceCardHi }]}>
               {error}
             </Text>
           )}
