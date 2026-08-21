@@ -63,12 +63,15 @@ export function ListRow({
         <View
           style={[
             styles.lead,
-            // One tone for every leading slot. Callers used to pass an inset
-            // background for the no-photo case, so a find's fallback well was
-            // recessed while a beach's score well was raised -- the same
-            // element, two tones, which is the mistake C6 exists to catch.
-            { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha },
-            t.shadowRaised,
+            // The slot's treatment follows its *content*, not its screen -- a
+            // score is type that needs a frame, a photo is an image that fills
+            // one. Both are consistent everywhere they appear, which is what
+            // C6 asks; what it forbids is the same content looking different
+            // on different screens, which is what the old per-caller `bg`
+            // override was doing.
+            hasScore
+              ? { borderColor: t.border, borderWidth: 2 }
+              : [{ backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha, borderWidth: 1 }, t.shadowRaised],
           ]}
         >
           {photoUrl ? (
@@ -108,8 +111,10 @@ export function ListRow({
 const styles = StyleSheet.create({
   wrap: { borderBottomWidth: 1 },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 9, borderRadius: 8 },
+  // borderWidth is set per-branch above, not here -- a transparent score box
+  // needs a heavier line than a card that already has a shadow doing the work.
   lead: {
-    width: 38, height: 38, borderRadius: 10, overflow: 'hidden', borderWidth: 1,
+    width: 38, height: 38, borderRadius: 10, overflow: 'hidden',
     alignItems: 'center', justifyContent: 'center',
   },
   photo: { width: '100%', height: '100%' },
