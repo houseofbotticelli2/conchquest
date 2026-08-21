@@ -143,13 +143,16 @@ export function Score({ navigation, route }: Props) {
           )}
           {beaches.map((b) => (
             <SheetRow key={b.id} onPress={() => selectBeach(b)}>
-              <View style={styles.pickerRowNameLine}>
-                <Text style={[styles.pickerRowName, { color: t.text }]}>{b.name}</Text>
-                {b.isFavorite && (
-                  <Text style={[styles.homeBadge, { backgroundColor: t.surfaceCardHi, color: t.text, borderColor: t.borderSoftAlpha }]}>
-                    ★
-                  </Text>
-                )}
+              <View style={styles.pickerRowText}>
+                <View style={styles.pickerRowNameLine}>
+                  <Text style={[styles.pickerRowName, { color: t.text }]}>{b.name}</Text>
+                  {b.isFavorite && (
+                    <Text style={[styles.homeBadge, { backgroundColor: t.surfaceCardHi, color: t.text, borderColor: t.borderSoftAlpha }]}>
+                      ★
+                    </Text>
+                  )}
+                </View>
+                {!!b.city && <Text style={[styles.pickerRowCity, { color: t.muted }]}>{b.city}</Text>}
               </View>
               <Text style={[styles.pickerRowScore, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
             </SheetRow>
@@ -413,6 +416,10 @@ const styles = StyleSheet.create({
   emptyPicker: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 12 },
   pickerRowNameLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   pickerRowName: { fontFamily: fonts.bodySemiBold, fontSize: 14 },
+  // flex so the score stays pinned right once the name column has two lines.
+  pickerRowText: { flex: 1 },
+  // Same secondary line as everywhere else: data font, 11, muted.
+  pickerRowCity: { fontFamily: fonts.data, fontSize: 11, marginTop: 1 },
   pickerRowScore: { fontFamily: fonts.displayBold, fontSize: 18 },
   homeBadge: {
     fontFamily: fonts.data,
