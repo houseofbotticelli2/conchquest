@@ -12,9 +12,8 @@ import type { ThemeTokens } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
 import { Field } from '../../components/Field';
 import { ListRow } from '../../components/ListRow';
-import { Badge } from '../../components/Badge';
+import { Badge, toBadgeType } from '../../components/Badge';
 import { Btn } from '../../components/Btn';
-import { BadgeType } from '../../components/Badge';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { SheetRow } from '../../components/SheetRow';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -59,10 +58,6 @@ const DEFAULT_RECENT_FINDS_LIMIT = 7;
 const DEFAULT_RECENT_BEACHES_LIMIT = 3;
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
-
-function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
-  return rarity === 'very_rare' ? 'rare' : rarity ?? 'common';
-}
 
 // Reads from the same constants the map renders with, so the legend cannot
 // describe colours the map isn't actually using.

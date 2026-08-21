@@ -3,15 +3,11 @@ import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Activi
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
-import { Badge, BadgeType } from '../../components/Badge';
+import { Badge, toBadgeType } from '../../components/Badge';
 import { Field } from '../../components/Field';
 import { NavBar } from '../../components/NavBar';
 import { CollectionStackParamList } from '../../navigation/types';
 import { listSpecies, Species } from '../../lib/api';
-
-function toBadgeType(rarity: Species['rarity']): BadgeType {
-  return rarity === 'very_rare' ? 'rare' : rarity;
-}
 
 type Props = NativeStackScreenProps<CollectionStackParamList, 'Library'>;
 

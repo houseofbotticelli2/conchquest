@@ -6,21 +6,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { ListRow } from '../../components/ListRow';
-import { Badge } from '../../components/Badge';
+import { Badge, toBadgeType } from '../../components/Badge';
 import { Btn } from '../../components/Btn';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { PhotoViewer } from '../../components/PhotoViewer';
-import { BadgeType } from '../../components/Badge';
 import { DateRangeSheet } from '../../components/DateRangeSheet';
 import { CollectionStackParamList } from '../../navigation/types';
 import { listMyFinds, Find } from '../../lib/api';
 import { formatFindDate } from '../../lib/findFormat';
 
 type Props = NativeStackScreenProps<CollectionStackParamList, 'MyShells'>;
-
-function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
-  return rarity === 'very_rare' ? 'rare' : rarity ?? 'common';
-}
 
 const FILTERS: { label: string; rarity?: 'rare'; recent?: boolean; private?: boolean }[] = [
   { label: 'All' },

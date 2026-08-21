@@ -4,7 +4,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Card } from '../../components/Card';
 import { Eyebrow } from '../../components/Eyebrow';
-import { Badge, BadgeType } from '../../components/Badge';
+import { Badge, toBadgeType } from '../../components/Badge';
 import { NavBar } from '../../components/NavBar';
 import { Btn } from '../../components/Btn';
 import { getSpecies, Species as SpeciesData } from '../../lib/api';
@@ -16,10 +16,6 @@ import { getSpecies, Species as SpeciesData } from '../../lib/api';
 interface Props {
   navigation: { goBack: () => void };
   route: { params?: { speciesId?: string } };
-}
-
-function toBadgeType(rarity: SpeciesData['rarity']): BadgeType {
-  return rarity === 'very_rare' ? 'rare' : rarity;
 }
 
 export function Species({ navigation, route }: Props) {

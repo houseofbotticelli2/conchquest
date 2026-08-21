@@ -7,7 +7,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
 import { Field } from '../../components/Field';
-import { Badge, BadgeType } from '../../components/Badge';
+import { Badge, toBadgeType } from '../../components/Badge';
 import { ShellingMap } from '../../components/ShellingMap';
 import { PhotoViewer } from '../../components/PhotoViewer';
 import { NavBar } from '../../components/NavBar';
@@ -34,12 +34,6 @@ const REPORT_REASONS: { value: ReportReason; label: string }[] = [
   { value: 'spam', label: 'Spam' },
   { value: 'other', label: 'Other' },
 ];
-
-function toBadgeType(rarity: FindDetailData['speciesRarity']): BadgeType {
-  if (rarity === 'rare' || rarity === 'very_rare') return 'rare';
-  if (rarity === 'uncommon') return 'uncommon';
-  return 'common';
-}
 
 export function FindDetail({ navigation, route }: Props) {
   const { theme: t } = useTheme();

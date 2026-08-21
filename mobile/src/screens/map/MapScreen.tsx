@@ -10,8 +10,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor, FIND_PIN_COLORS } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
 import { ListRow } from '../../components/ListRow';
-import { Badge } from '../../components/Badge';
-import { BadgeType } from '../../components/Badge';
+import { Badge, toBadgeType } from '../../components/Badge';
 import { ShellingMap } from '../../components/ShellingMap';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { SheetRow } from '../../components/SheetRow';
@@ -53,12 +52,6 @@ function endOfDay(d: Date): Date {
 // Falls back to Sanibel Island if location permission is denied and no
 // beach is nearby/selected.
 const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867, label: 'Sanibel Island' };
-
-function toBadgeType(rarity: NearbyFind['speciesRarity']): BadgeType {
-  if (rarity === 'rare' || rarity === 'very_rare') return 'rare';
-  if (rarity === 'uncommon') return 'uncommon';
-  return 'common';
-}
 
 /**
  * Rarity ramp for community find pins: gold -> teal -> plum.
