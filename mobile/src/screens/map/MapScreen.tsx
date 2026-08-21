@@ -21,6 +21,7 @@ import { DateRangeSheet } from '../../components/DateRangeSheet';
 import { MapStackParamList } from '../../navigation/types';
 import { useAuth } from '../../auth/AuthProvider';
 import { listNearbyFinds, NearbyFind, NearbyFindsResult } from '../../lib/api';
+import { formatFindDate } from '../../lib/findFormat';
 import { useBeachContext } from '../../hooks/useBeachContext';
 
 type Props = NativeStackScreenProps<MapStackParamList, 'Map'>;
@@ -73,10 +74,6 @@ function markerColorForRarity(rarity: NearbyFind['speciesRarity']): string {
   if (rarity === 'rare' || rarity === 'very_rare') return FIND_PIN_COLORS.rare;
   if (rarity === 'uncommon') return FIND_PIN_COLORS.uncommon;
   return FIND_PIN_COLORS.common;
-}
-
-function formatFindDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function isToday(iso: string): boolean {

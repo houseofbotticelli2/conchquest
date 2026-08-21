@@ -14,12 +14,9 @@ import { BadgeType } from '../../components/Badge';
 import { DateRangeSheet } from '../../components/DateRangeSheet';
 import { CollectionStackParamList } from '../../navigation/types';
 import { listMyFinds, Find } from '../../lib/api';
+import { formatFindDate } from '../../lib/findFormat';
 
 type Props = NativeStackScreenProps<CollectionStackParamList, 'MyShells'>;
-
-function formatFindDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
 
 function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
   return rarity === 'very_rare' ? 'rare' : rarity ?? 'common';

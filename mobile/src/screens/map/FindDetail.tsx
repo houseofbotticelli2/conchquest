@@ -16,6 +16,7 @@ import { SheetRow } from '../../components/SheetRow';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { MapStackParamList } from '../../navigation/types';
 import { getFind, FindDetail as FindDetailData, FindCondition, ReportReason, reportFind, blockUser } from '../../lib/api';
+import { formatFindDate } from '../../lib/findFormat';
 
 type Props = NativeStackScreenProps<MapStackParamList, 'FindDetail'>;
 
@@ -38,10 +39,6 @@ function toBadgeType(rarity: FindDetailData['speciesRarity']): BadgeType {
   if (rarity === 'rare' || rarity === 'very_rare') return 'rare';
   if (rarity === 'uncommon') return 'uncommon';
   return 'common';
-}
-
-function formatFindDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export function FindDetail({ navigation, route }: Props) {

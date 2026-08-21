@@ -23,6 +23,7 @@ import { PhotoViewer } from '../../components/PhotoViewer';
 import { ProfileStackParamList } from '../../navigation/types';
 import { useAuth } from '../../auth/AuthProvider';
 import { WEB_APP_URL } from '../../lib/supabase';
+import { formatFindDate } from '../../lib/findFormat';
 import {
   listMyFinds,
   listSavedLocations,
@@ -58,10 +59,6 @@ const DEFAULT_RECENT_FINDS_LIMIT = 7;
 const DEFAULT_RECENT_BEACHES_LIMIT = 3;
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
-
-function formatFindDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
   return rarity === 'very_rare' ? 'rare' : rarity ?? 'common';
