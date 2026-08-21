@@ -235,9 +235,16 @@ export function MapScreen({ navigation }: Props) {
           style={[styles.header, { paddingTop: insets.top + 12 }]}
           onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
         >
-          <View>
+          {/* The sub-line is always rendered, blank when there's no city.
+              Rendering it conditionally made the header 55 tall with a city
+              and 47 without, so the same screen changed height depending on
+              whether one resolved -- and Shellcast and Map disagreed with the
+              rest of the app whenever it didn't. */}
+          <View style={styles.titleBlock}>
             <Text style={[styles.title, { color: t.text }]}>{titleLabel}</Text>
-            {subLabel && <Text style={[styles.titleSub, { color: t.muted }]}>{subLabel}</Text>}
+            <Text style={[styles.titleSub, { color: t.muted }]} numberOfLines={1}>
+              {subLabel || ' '}
+            </Text>
           </View>
           <CircleIconButton icon="📍" onPress={() => setPickerOpen(true)} accessibilityLabel="Choose a beach" />
         </View>
@@ -450,7 +457,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: { fontFamily: fonts.display, fontSize: 18 },
-  titleSub: { fontFamily: fonts.data, fontSize: 11 },
+  // Explicit lineHeight + minHeight so this line occupies the same space
+  // whether it holds a city or nothing. A whitespace-only Text collapses,
+  // and natural metrics differ by half a pixel between the two, so neither
+  // a placeholder space nor the default line box is enough on its own.
+  titleSub: { fontFamily: fonts.data, fontSize: 11, lineHeight: 14, minHeight: 14 },
+  titleBlock: { justifyContent: 'center' },
   // Positioned absolutely (relative to `screen`) rather than sitting inline
   // in the scrollable content, so it can grow from a pinned 270px box into a
   // fullscreen overlay without remounting the underlying MapView.

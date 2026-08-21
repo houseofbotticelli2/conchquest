@@ -127,9 +127,16 @@ export function Score({ navigation, route }: Props) {
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <ScrollView>
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-          <View>
+          {/* The sub-line is always rendered, blank when there's no city.
+              Rendering it conditionally made the header 55 tall with a city
+              and 47 without, so the same screen changed height depending on
+              whether one resolved -- and Shellcast and Map disagreed with the
+              rest of the app whenever it didn't. */}
+          <View style={styles.titleBlock}>
             <Text style={[styles.place, { color: t.text }]}>{titleLabel}</Text>
-            {subLabel && <Text style={[styles.placeSub, { color: t.muted }]}>{subLabel}</Text>}
+            <Text style={[styles.placeSub, { color: t.muted }]} numberOfLines={1}>
+              {subLabel || ' '}
+            </Text>
           </View>
           <CircleIconButton icon="📍" onPress={() => setPickerOpen(true)} accessibilityLabel="Choose a beach" />
         </View>
@@ -358,7 +365,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   place: { fontFamily: fonts.display, fontSize: 18 },
-  placeSub: { fontFamily: fonts.data, fontSize: 11 },
+  // Explicit lineHeight + minHeight so this line occupies the same space
+  // whether it holds a city or nothing. A whitespace-only Text collapses,
+  // and natural metrics differ by half a pixel between the two, so neither
+  // a placeholder space nor the default line box is enough on its own.
+  placeSub: { fontFamily: fonts.data, fontSize: 11, lineHeight: 14, minHeight: 14 },
+  titleBlock: { justifyContent: 'center' },
   centerBox: { paddingVertical: 60, alignItems: 'center', paddingHorizontal: 24 },
   errorText: { fontFamily: fonts.body, fontSize: 14, textAlign: 'center' },
   dayStripWrap: { marginTop: 2, marginBottom: 4 },
