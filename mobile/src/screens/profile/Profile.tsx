@@ -7,7 +7,8 @@ import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
 import { enableBeachAlerts, disableBeachAlerts } from '../../lib/notifications';
 import { useTheme } from '../../theme/ThemeProvider';
-import { fonts, tabularNums, LOCATION_PIN_COLOR, FIND_PIN_COLORS } from '../../theme/tokens';
+import { fonts, tabularNums, scoreColor, LOCATION_PIN_COLOR, FIND_PIN_COLORS } from '../../theme/tokens';
+import type { ThemeTokens } from '../../theme/tokens';
 import { Eyebrow } from '../../components/Eyebrow';
 import { Field } from '../../components/Field';
 import { ListRow } from '../../components/ListRow';
@@ -68,30 +69,57 @@ function toBadgeType(rarity: Find['speciesRarity']): BadgeType {
 
 // Reads from the same constants the map renders with, so the legend cannot
 // describe colours the map isn't actually using.
-const PIN_LEGEND = [
-  { color: LOCATION_PIN_COLOR, label: 'A place', detail: "A beach, or the spot you're setting for a find" },
-  { color: FIND_PIN_COLORS.rare, label: 'Rare find', detail: 'Someone logged a rare or very rare shell here' },
-  { color: FIND_PIN_COLORS.uncommon, label: 'Uncommon find', detail: 'An uncommon shell' },
-  { color: FIND_PIN_COLORS.common, label: 'Common find', detail: 'Everything else' },
-];
-
-const HELP_ITEMS = [
-  {
-    icon: '🌊',
-    title: 'Shellcast',
-    body: 'Get a Shelling Score for a beach based on tide, wind, waves, and moon phase. Tap for more:',
-    bullets: [
-      'The score circle — full factor breakdown',
-      '"Best Window" — the shelling strategy',
-      '"Conditions" — humidity, UV, and the hourly forecast',
-      'The day strip — plan a few days ahead with the multi-day forecast',
-    ],
-  },
-  { icon: '🧭', title: 'Map', body: "See your position, browse shells the community has logged nearby, use the pin to pick a saved beach, and report or block a find that doesn't belong." },
-  { icon: '🐚', title: 'My Shells', body: 'Log a new find with its species, condition, photo, and whether the location is shown publicly. Tap the book icon to browse the shell species library.' },
-  { icon: '🏖️', title: 'My Beaches', body: 'Save the beaches you shell, star the ones you return to, and get notified when one hits a Shelling Score you set.' },
-  { icon: '👤', title: 'Profile', body: 'Your recent finds, stats, and settings.' },
-];
+/**
+ * Help content. A function of the theme rather than a module constant so a
+ * legend swatch can be a real token -- the Shellcast swatches are the colours
+ * those elements actually wear on the Shellcast screen, not a decorative
+ * palette invented for this sheet.
+ */
+function helpSections(t: ThemeTokens) {
+  return [
+    {
+      icon: '🌊',
+      title: 'Shellcast',
+      body: 'A Shelling Score for a beach, from tide, wind, waves and moon phase. Each part opens for more:',
+      legend: [
+        // The ring is drawn in the score colour; mid-range is the gold you
+        // see most often.
+        { color: scoreColor(55, t), label: 'The score circle', detail: 'every factor, and what it contributed' },
+        { color: t.sea, label: 'Best window', detail: 'when to go, and why that stretch' },
+        { color: t.accentDeep, label: 'Conditions', detail: 'humidity, UV and the hourly forecast' },
+        { color: t.text, label: 'The day strip', detail: 'the next few days, so you can plan ahead' },
+      ],
+    },
+    {
+      icon: '🧭',
+      title: 'Map',
+      body: "See where you are, browse shells the community has logged nearby, use the pin to jump to a saved beach, and report or block a find that doesn't belong.",
+    },
+    {
+      icon: '📍',
+      title: 'Map pins',
+      body: 'What the colours mean:',
+      legend: [
+        { color: LOCATION_PIN_COLOR, label: 'A place', detail: "a beach, or the spot you're setting for a find" },
+        { color: FIND_PIN_COLORS.rare, label: 'Rare find', detail: 'someone logged a rare or very rare shell here' },
+        { color: FIND_PIN_COLORS.uncommon, label: 'Uncommon find', detail: 'an uncommon shell' },
+        { color: FIND_PIN_COLORS.common, label: 'Common find', detail: 'everything else' },
+      ],
+      note: 'A numbered bubble means several finds are grouped together — zoom in to separate them.',
+    },
+    {
+      icon: '🐚',
+      title: 'My Shells',
+      body: 'Log a find with its species, condition and photo, and choose whether its location is public. The book icon opens the species library.',
+    },
+    {
+      icon: '🏖️',
+      title: 'My Beaches',
+      body: 'Save the beaches you shell, star the ones you come back to, and get told when one hits a score you pick.',
+    },
+    { icon: '👤', title: 'Profile', body: 'Your recent finds, your stats, and settings.' },
+  ];
+}
 
 export function Profile({ navigation }: Props) {
   const { theme: t } = useTheme();
@@ -427,39 +455,27 @@ export function Profile({ navigation }: Props) {
       />
 
       <SlideUpSheet visible={helpOpen} onClose={() => setHelpOpen(false)} title="How Conchquest works">
-        {HELP_ITEMS.map((item) => (
-          <View key={item.title} style={styles.helpRow}>
-            <Text style={{ fontSize: 20 }}>{item.icon}</Text>
+        {/* One path for every section, legend or not. The pin legend used to
+            be a second hand-written copy of this block, which is how it ended
+            up as the only section with readable sub-items. */}
+        {helpSections(t).map((section) => (
+          <View key={section.title} style={styles.helpRow}>
+            <Text style={{ fontSize: 20 }}>{section.icon}</Text>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.helpTitle, { color: t.text }]}>{item.title}</Text>
-              <Text style={[styles.helpBody, { color: t.muted }]}>{item.body}</Text>
-              {item.bullets?.map((bullet) => (
-                <Text key={bullet} style={[styles.helpBullet, { color: t.muted }]}>
-                  {'•'} {bullet}
-                </Text>
+              <Text style={[styles.helpTitle, { color: t.text }]}>{section.title}</Text>
+              <Text style={[styles.helpBody, { color: t.muted }]}>{section.body}</Text>
+              {section.legend?.map((entry) => (
+                <View key={entry.label} style={styles.legendRow}>
+                  <View style={[styles.legendDot, { backgroundColor: entry.color }]} />
+                  <Text style={[styles.helpBullet, { color: t.muted, marginTop: 0 }]}>
+                    <Text style={{ color: t.text }}>{entry.label}</Text> — {entry.detail}
+                  </Text>
+                </View>
               ))}
+              {!!section.note && <Text style={[styles.helpBullet, { color: t.muted }]}>{section.note}</Text>}
             </View>
           </View>
         ))}
-
-        <View style={styles.helpRow}>
-          <Text style={{ fontSize: 20 }}>📍</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.helpTitle, { color: t.text }]}>Map pins</Text>
-            <Text style={[styles.helpBody, { color: t.muted }]}>What the colours mean:</Text>
-            {PIN_LEGEND.map((pin) => (
-              <View key={pin.label} style={styles.legendRow}>
-                <View style={[styles.legendDot, { backgroundColor: pin.color }]} />
-                <Text style={[styles.helpBullet, { color: t.muted, marginTop: 0 }]}>
-                  <Text style={{ color: t.text }}>{pin.label}</Text> — {pin.detail}
-                </Text>
-              </View>
-            ))}
-            <Text style={[styles.helpBullet, { color: t.muted }]}>
-              A numbered bubble means several finds are grouped together — zoom in to separate them.
-            </Text>
-          </View>
-        </View>
       </SlideUpSheet>
       <ScrollView>
         {profile?.deletionRequestedAt && (
