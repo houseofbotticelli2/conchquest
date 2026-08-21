@@ -8,12 +8,9 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { NavBar } from '../../components/NavBar';
 import { ForecastStackParamList } from '../../navigation/types';
 import { getHourlyTrend, HourlyBlock } from '../../lib/api';
+import { formatTime } from '../../lib/forecastFormat';
 
 type Props = NativeStackScreenProps<ForecastStackParamList, 'ConditionsDetail'>;
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
 
 // Sea-green reads as "good" across the app, so it must not be used for a
 // UV level that means "cover up." Mirrors scoreColor's green/gold/coral
