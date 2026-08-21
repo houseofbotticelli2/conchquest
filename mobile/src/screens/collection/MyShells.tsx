@@ -2,13 +2,13 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect, CommonActions } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts } from '../../theme/tokens';
 import { ListRow } from '../../components/ListRow';
 import { Badge } from '../../components/Badge';
 import { Btn } from '../../components/Btn';
+import { ScreenHeader } from '../../components/ScreenHeader';
 import { PhotoViewer } from '../../components/PhotoViewer';
 import { BadgeType } from '../../components/Badge';
 import { DateRangeSheet } from '../../components/DateRangeSheet';
@@ -57,7 +57,6 @@ function endOfDay(d: Date): Date {
 
 export function MyShells({ navigation }: Props) {
   const { theme: t } = useTheme();
-  const insets = useSafeAreaInsets();
   const [finds, setFinds] = useState<Find[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -117,17 +116,19 @@ export function MyShells({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={[styles.title, { color: t.text }]}>My Shells</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity onPress={handleOpenLibrary}>
-            <Ionicons name="book-outline" size={24} color={t.text} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleAdd}>
-            <Ionicons name="add-circle-outline" size={26} color={t.text} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ScreenHeader
+        title="My Shells"
+        actions={
+          <>
+            <TouchableOpacity onPress={handleOpenLibrary} accessibilityLabel="Species library">
+              <Ionicons name="book-outline" size={24} color={t.text} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleAdd} accessibilityLabel="Log a find">
+              <Ionicons name="add-circle-outline" size={26} color={t.text} />
+            </TouchableOpacity>
+          </>
+        }
+      />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.searchBox, { backgroundColor: t.surfaceInset, borderColor: t.borderSoftAlpha }]}>
           <Text style={{ color: t.muted }}>🔍</Text>
@@ -252,9 +253,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2, paddingHorizontal: 8, borderWidth: 1, overflow: 'hidden',
   },
   screen: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  title: { fontFamily: fonts.display, fontSize: 19 },
-  headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   content: { paddingHorizontal: 14, paddingBottom: 16 },
   emptyText: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 20, textAlign: 'center' },
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12, marginBottom: 10 },

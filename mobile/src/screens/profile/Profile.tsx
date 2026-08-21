@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +15,7 @@ import { Badge } from '../../components/Badge';
 import { Btn } from '../../components/Btn';
 import { BadgeType } from '../../components/Badge';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
+import { ScreenHeader } from '../../components/ScreenHeader';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { PhotoViewer } from '../../components/PhotoViewer';
 import { ProfileStackParamList } from '../../navigation/types';
@@ -94,7 +94,6 @@ const HELP_ITEMS = [
 
 export function Profile({ navigation }: Props) {
   const { theme: t } = useTheme();
-  const insets = useSafeAreaInsets();
   const { signOut, changePassword } = useAuth();
   const [expandedFindId, setExpandedFindId] = useState<string | null>(null);
   const [expandedBeachId, setExpandedBeachId] = useState<string | null>(null);
@@ -351,17 +350,19 @@ export function Profile({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={[styles.title, { color: t.text }]}>Profile</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity onPress={() => setHelpOpen(true)}>
-            <Ionicons name="help-circle-outline" size={26} color={t.text} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={openSettings}>
-            <Ionicons name="settings-outline" size={22} color={t.text} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ScreenHeader
+        title="Profile"
+        actions={
+          <>
+            <TouchableOpacity onPress={() => setHelpOpen(true)} accessibilityLabel="How Conchquest works">
+              <Ionicons name="help-circle-outline" size={26} color={t.text} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={openSettings} accessibilityLabel="Settings">
+              <Ionicons name="settings-outline" size={22} color={t.text} />
+            </TouchableOpacity>
+          </>
+        }
+      />
 
       <SlideUpSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} title="Settings">
         <TouchableOpacity
@@ -826,9 +827,6 @@ const styles = StyleSheet.create({
   deletionBannerTitle: { fontSize: 15, fontFamily: fonts.bodySemiBold },
   deletionBannerText: { fontSize: 13, lineHeight: 19 },
   screen: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  title: { fontFamily: fonts.display, fontSize: 19 },
   sheetRow: { paddingVertical: 14 },
   sheetRowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sheetRowText: { fontFamily: fonts.bodySemiBold, fontSize: 15 },

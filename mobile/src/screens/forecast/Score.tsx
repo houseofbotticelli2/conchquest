@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, scoreColor } from '../../theme/tokens';
 import { Card } from '../../components/Card';
@@ -11,6 +10,7 @@ import { Btn } from '../../components/Btn';
 import { ScoreRing } from '../../components/ScoreRing';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { CircleIconButton } from '../../components/CircleIconButton';
+import { ScreenHeader } from '../../components/ScreenHeader';
 import { NowBadge } from '../../components/NowBadge';
 import { ForecastStackParamList } from '../../navigation/types';
 import { getMultiDayScore, MultiDayScoreEntry } from '../../lib/api';
@@ -39,7 +39,6 @@ const DEFAULT_LOCATION = { lat: 26.4615, lon: -82.1867, label: 'Sanibel Island' 
 
 export function Score({ navigation, route }: Props) {
   const { theme: t } = useTheme();
-  const insets = useSafeAreaInsets();
   const [days, setDays] = useState<MultiDayScoreEntry[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -126,20 +125,13 @@ export function Score({ navigation, route }: Props) {
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <ScrollView>
-        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-          {/* The sub-line is always rendered, blank when there's no city.
-              Rendering it conditionally made the header 55 tall with a city
-              and 47 without, so the same screen changed height depending on
-              whether one resolved -- and Shellcast and Map disagreed with the
-              rest of the app whenever it didn't. */}
-          <View style={styles.titleBlock}>
-            <Text style={[styles.place, { color: t.text }]}>{titleLabel}</Text>
-            <Text style={[styles.placeSub, { color: t.muted }]} numberOfLines={1}>
-              {subLabel || ' '}
-            </Text>
-          </View>
-          <CircleIconButton icon="📍" onPress={() => setPickerOpen(true)} accessibilityLabel="Choose a beach" />
-        </View>
+        <ScreenHeader
+          title={titleLabel}
+          subtitle={subLabel}
+          actions={
+            <CircleIconButton icon="📍" onPress={() => setPickerOpen(true)} accessibilityLabel="Choose a beach" />
+          }
+        />
 
         <SlideUpSheet visible={pickerOpen} onClose={() => setPickerOpen(false)} title="Choose a beach">
           <TouchableOpacity style={[styles.pickerRow, { borderTopColor: t.borderSoft }]} onPress={() => selectBeach(null)}>
@@ -355,22 +347,10 @@ export function Score({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 6,
-    minHeight: 47,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  place: { fontFamily: fonts.display, fontSize: 18 },
   // Explicit lineHeight + minHeight so this line occupies the same space
   // whether it holds a city or nothing. A whitespace-only Text collapses,
   // and natural metrics differ by half a pixel between the two, so neither
   // a placeholder space nor the default line box is enough on its own.
-  placeSub: { fontFamily: fonts.data, fontSize: 11, lineHeight: 14, minHeight: 14 },
-  titleBlock: { justifyContent: 'center' },
   centerBox: { paddingVertical: 60, alignItems: 'center', paddingHorizontal: 24 },
   errorText: { fontFamily: fonts.body, fontSize: 14, textAlign: 'center' },
   dayStripWrap: { marginTop: 2, marginBottom: 4 },

@@ -15,6 +15,7 @@ import { BadgeType } from '../../components/Badge';
 import { ShellingMap } from '../../components/ShellingMap';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
 import { CircleIconButton } from '../../components/CircleIconButton';
+import { ScreenHeader } from '../../components/ScreenHeader';
 import { DateRangeSheet } from '../../components/DateRangeSheet';
 import { MapStackParamList } from '../../navigation/types';
 import { useAuth } from '../../auth/AuthProvider';
@@ -231,23 +232,14 @@ export function MapScreen({ navigation }: Props) {
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <View style={{ flex: 1, display: mapExpanded ? 'none' : 'flex' }}>
-        <View
-          style={[styles.header, { paddingTop: insets.top + 12 }]}
+        <ScreenHeader
+          title={titleLabel}
+          subtitle={subLabel}
           onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-        >
-          {/* The sub-line is always rendered, blank when there's no city.
-              Rendering it conditionally made the header 55 tall with a city
-              and 47 without, so the same screen changed height depending on
-              whether one resolved -- and Shellcast and Map disagreed with the
-              rest of the app whenever it didn't. */}
-          <View style={styles.titleBlock}>
-            <Text style={[styles.title, { color: t.text }]}>{titleLabel}</Text>
-            <Text style={[styles.titleSub, { color: t.muted }]} numberOfLines={1}>
-              {subLabel || ' '}
-            </Text>
-          </View>
-          <CircleIconButton icon="📍" onPress={() => setPickerOpen(true)} accessibilityLabel="Choose a beach" />
-        </View>
+          actions={
+            <CircleIconButton icon="📍" onPress={() => setPickerOpen(true)} accessibilityLabel="Choose a beach" />
+          }
+        />
 
         <View style={styles.mapBoxSpacer} />
 
@@ -447,22 +439,10 @@ export function MapScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 6,
-    minHeight: 47,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: { fontFamily: fonts.display, fontSize: 18 },
   // Explicit lineHeight + minHeight so this line occupies the same space
   // whether it holds a city or nothing. A whitespace-only Text collapses,
   // and natural metrics differ by half a pixel between the two, so neither
   // a placeholder space nor the default line box is enough on its own.
-  titleSub: { fontFamily: fonts.data, fontSize: 11, lineHeight: 14, minHeight: 14 },
-  titleBlock: { justifyContent: 'center' },
   // Positioned absolutely (relative to `screen`) rather than sitting inline
   // in the scrollable content, so it can grow from a pinned 270px box into a
   // fullscreen overlay without remounting the underlying MapView.

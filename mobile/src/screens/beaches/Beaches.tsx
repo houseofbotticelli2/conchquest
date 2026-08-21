@@ -2,11 +2,11 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { fonts, tabularNums } from '../../theme/tokens';
 import { Btn } from '../../components/Btn';
+import { ScreenHeader } from '../../components/ScreenHeader';
 import { ListRow } from '../../components/ListRow';
 import { Field } from '../../components/Field';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -41,7 +41,6 @@ const FILTERS: { label: string; favorite?: boolean; hasAlert?: boolean }[] = [
 
 export function Beaches({ navigation }: Props) {
   const { theme: t } = useTheme();
-  const insets = useSafeAreaInsets();
   const [beaches, setBeaches] = useState<SavedLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -163,12 +162,14 @@ export function Beaches({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={[styles.title, { color: t.text }]}>My Beaches</Text>
-        <TouchableOpacity onPress={openAdd}>
-          <Ionicons name="add-circle-outline" size={26} color={t.text} />
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title="My Beaches"
+        actions={
+          <TouchableOpacity onPress={openAdd} accessibilityLabel="Add a beach">
+            <Ionicons name="add-circle-outline" size={26} color={t.text} />
+          </TouchableOpacity>
+        }
+      />
       <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
         {adding && (
           <View style={[styles.addBox, { backgroundColor: t.surfaceCardHi, borderColor: t.borderSoftAlpha }, t.shadowRaised]}>
@@ -330,8 +331,6 @@ const styles = StyleSheet.create({
   },
   expandedDetail: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
   screen: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  title: { fontFamily: fonts.display, fontSize: 19 },
   content: { paddingHorizontal: 14, paddingBottom: 16 },
   addBox: { borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 14 },
   addInput: { fontFamily: fonts.body, fontSize: 13, borderWidth: 1, borderRadius: 6, paddingVertical: 9, paddingHorizontal: 12 },
