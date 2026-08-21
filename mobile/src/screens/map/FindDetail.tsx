@@ -12,6 +12,7 @@ import { ShellingMap } from '../../components/ShellingMap';
 import { PhotoViewer } from '../../components/PhotoViewer';
 import { NavBar } from '../../components/NavBar';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
+import { SheetRow } from '../../components/SheetRow';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { MapStackParamList } from '../../navigation/types';
 import { getFind, FindDetail as FindDetailData, FindCondition, ReportReason, reportFind, blockUser } from '../../lib/api';
@@ -252,35 +253,25 @@ export function FindDetail({ navigation, route }: Props) {
         }}
         title="Find options"
       >
-        <TouchableOpacity
-          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
-          onPress={() => {
+        <SheetRow onPress={() => {
             setPendingAction('report');
             setActionsOpen(false);
-          }}
-        >
+          }}>
           <Text style={[styles.sheetRowText, { color: t.text }]}>Report this find</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
-          onPress={() => {
+        </SheetRow>
+        <SheetRow onPress={() => {
             setPendingAction('block');
             setActionsOpen(false);
-          }}
-        >
+          }}>
           <Text style={[styles.sheetRowText, { color: t.accentDeep }]}>Block this user</Text>
-        </TouchableOpacity>
+        </SheetRow>
       </SlideUpSheet>
 
       <SlideUpSheet visible={reportOpen} onClose={() => setReportOpen(false)} title="Report this find">
         {REPORT_REASONS.map((r) => {
           const active = reportReason === r.value;
           return (
-            <TouchableOpacity
-              key={r.value}
-              style={[styles.sheetRow, styles.sheetRowBetween, { borderTopColor: t.borderSoft }]}
-              onPress={() => setReportReason(r.value)}
-            >
+            <SheetRow key={r.value} onPress={() => setReportReason(r.value)}>
               <Text style={[styles.sheetRowText, { color: t.text }]}>{r.label}</Text>
               <View
                 style={[
@@ -290,7 +281,7 @@ export function FindDetail({ navigation, route }: Props) {
               >
                 {active && <View style={[styles.radioInner, { backgroundColor: t.accent }]} />}
               </View>
-            </TouchableOpacity>
+            </SheetRow>
           );
         })}
         <View style={styles.reportNotesSection}>
@@ -371,8 +362,6 @@ const styles = StyleSheet.create({
   notesBox: { borderWidth: 1, borderRadius: 6, padding: 11, minHeight: 60 },
   libraryBtn: { borderRadius: 6, paddingVertical: 12, alignItems: 'center' },
   libraryBtnText: { fontFamily: fonts.bodySemiBold, fontSize: 14, color: '#fff' },
-  sheetRow: { paddingVertical: 16, borderTopWidth: 1 },
-  sheetRowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sheetRowText: { fontFamily: fonts.body, fontSize: 15 },
   radioOuter: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   radioInner: { width: 10, height: 10, borderRadius: 5 },

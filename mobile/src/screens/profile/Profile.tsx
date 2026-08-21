@@ -15,6 +15,7 @@ import { Badge } from '../../components/Badge';
 import { Btn } from '../../components/Btn';
 import { BadgeType } from '../../components/Badge';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
+import { SheetRow } from '../../components/SheetRow';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { PhotoViewer } from '../../components/PhotoViewer';
@@ -365,86 +366,56 @@ export function Profile({ navigation }: Props) {
       />
 
       <SlideUpSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} title="Settings">
-        <TouchableOpacity
-          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
-          onPress={() => {
+        <SheetRow onPress={() => {
             setSettingsOpen(false);
             startEditingProfile();
-          }}
-        >
+          }}>
           <Text style={[styles.sheetRowText, { color: t.text }]}>Edit profile</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
-          onPress={() => {
+        </SheetRow>
+        <SheetRow onPress={() => {
             setSettingsOpen(false);
             startChangingPassword();
-          }}
-        >
+          }}>
           <Text style={[styles.sheetRowText, { color: t.text }]}>Change password</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
-          onPress={() => {
+        </SheetRow>
+        <SheetRow onPress={() => {
             setSettingsOpen(false);
             openBlockedUsers();
-          }}
-        >
+          }}>
           <Text style={[styles.sheetRowText, { color: t.text }]}>Blocked users</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sheetRow, styles.sheetRowBetween, { borderTopColor: t.borderSoft }]}
-          onPress={handleToggleNotifications}
-        >
+        </SheetRow>
+        <SheetRow onPress={handleToggleNotifications}>
           <Text style={[styles.sheetRowText, { color: t.text }]}>Beach alert notifications</Text>
           <Ionicons name={notificationsEnabled ? 'checkbox' : 'square-outline'} size={20} color={t.text} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sheetRow, styles.sheetRowBetween, { borderTopColor: t.borderSoft }]}
-          onPress={handleToggleDaylightRestriction}
-        >
+        </SheetRow>
+        <SheetRow onPress={handleToggleDaylightRestriction}>
           <View>
             <Text style={[styles.sheetRowText, { color: t.text }]}>Daylight hours only</Text>
             <Text style={[styles.sheetRowSub, { color: t.muted }]}>Off shows shelling windows at any hour, day or night.</Text>
           </View>
           <Ionicons name={profile?.restrictShellingToDaylight ? 'checkbox' : 'square-outline'} size={20} color={t.text} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
-          onPress={() => Linking.openURL(`${WEB_APP_URL}/privacy`)}
-        >
+        </SheetRow>
+        <SheetRow onPress={() => Linking.openURL(`${WEB_APP_URL}/privacy`)}>
           <Text style={[styles.sheetRowText, { color: t.text }]}>Privacy Policy</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
-          onPress={() => Linking.openURL(`${WEB_APP_URL}/terms`)}
-        >
+        </SheetRow>
+        <SheetRow onPress={() => Linking.openURL(`${WEB_APP_URL}/terms`)}>
           <Text style={[styles.sheetRowText, { color: t.text }]}>Terms of Service</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
-          onPress={() => Linking.openURL(`${WEB_APP_URL}/community-guidelines`)}
-        >
+        </SheetRow>
+        <SheetRow onPress={() => Linking.openURL(`${WEB_APP_URL}/community-guidelines`)}>
           <Text style={[styles.sheetRowText, { color: t.text }]}>Community Guidelines</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
-          onPress={() => {
+        </SheetRow>
+        <SheetRow onPress={() => {
             setSettingsOpen(false);
             confirmSignOut();
-          }}
-        >
+          }}>
           <Text style={[styles.sheetRowText, { color: t.accentDeep }]}>Log out</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sheetRow, { borderTopColor: t.borderSoft }]}
-          onPress={() => {
+        </SheetRow>
+        <SheetRow onPress={() => {
             setSettingsOpen(false);
             setDeleteConfirmVisible(true);
-          }}
-        >
+          }}>
           <Text style={[styles.sheetRowText, { color: t.accentDeep }]}>Delete my account</Text>
-        </TouchableOpacity>
+        </SheetRow>
       </SlideUpSheet>
 
       <ConfirmDialog
@@ -704,7 +675,7 @@ export function Profile({ navigation }: Props) {
           <Text style={[styles.sheetRowText, { color: t.muted }]}>You haven't blocked anyone.</Text>
         ) : (
           blockedUsers.map((u) => (
-            <View key={u.userId} style={[styles.sheetRow, styles.sheetRowBetween, { borderTopColor: t.borderSoft }]}>
+            <SheetRow key={u.userId}>
               <Text style={[styles.sheetRowText, { color: t.text }]}>{u.displayName}</Text>
               {unblockingId === u.userId ? (
                 <ActivityIndicator color={t.accent} />
@@ -713,7 +684,7 @@ export function Profile({ navigation }: Props) {
                   <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 13, color: t.accent }}>Unblock</Text>
                 </TouchableOpacity>
               )}
-            </View>
+            </SheetRow>
           ))
         )}
       </SlideUpSheet>
@@ -826,8 +797,6 @@ const styles = StyleSheet.create({
   deletionBannerTitle: { fontSize: 15, fontFamily: fonts.bodySemiBold },
   deletionBannerText: { fontSize: 13, lineHeight: 19 },
   screen: { flex: 1 },
-  sheetRow: { paddingVertical: 14 },
-  sheetRowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sheetRowText: { fontFamily: fonts.bodySemiBold, fontSize: 15 },
   sheetRowSub: { fontFamily: fonts.body, fontSize: 12, marginTop: 2, maxWidth: 240 },
   helpRow: { flexDirection: 'row', gap: 12, paddingVertical: 10, alignItems: 'flex-start' },

@@ -9,6 +9,7 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { Btn } from '../../components/Btn';
 import { ScoreRing } from '../../components/ScoreRing';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
+import { SheetRow } from '../../components/SheetRow';
 import { CircleIconButton } from '../../components/CircleIconButton';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { NowBadge } from '../../components/NowBadge';
@@ -134,18 +135,14 @@ export function Score({ navigation, route }: Props) {
         />
 
         <SlideUpSheet visible={pickerOpen} onClose={() => setPickerOpen(false)} title="Choose a beach">
-          <TouchableOpacity style={[styles.pickerRow, { borderTopColor: t.borderSoft }]} onPress={() => selectBeach(null)}>
+          <SheetRow onPress={() => selectBeach(null)}>
             <Text style={[styles.pickerRowName, { color: t.text }]}>Current Location</Text>
-          </TouchableOpacity>
+          </SheetRow>
           {beaches.length === 0 && (
             <Text style={[styles.emptyPicker, { color: t.muted }]}>No saved beaches yet.</Text>
           )}
           {beaches.map((b) => (
-            <TouchableOpacity
-              key={b.id}
-              style={[styles.pickerRow, { borderTopColor: t.borderSoft }]}
-              onPress={() => selectBeach(b)}
-            >
+            <SheetRow key={b.id} onPress={() => selectBeach(b)}>
               <View style={styles.pickerRowNameLine}>
                 <Text style={[styles.pickerRowName, { color: t.text }]}>{b.name}</Text>
                 {b.isFavorite && (
@@ -155,7 +152,7 @@ export function Score({ navigation, route }: Props) {
                 )}
               </View>
               <Text style={[styles.pickerRowScore, { color: scoreColor(b.score, t) }]}>{b.score}</Text>
-            </TouchableOpacity>
+            </SheetRow>
           ))}
         </SlideUpSheet>
 
@@ -414,13 +411,6 @@ const styles = StyleSheet.create({
   },
   footer: { paddingHorizontal: 16, paddingBottom: 20 },
   emptyPicker: { fontFamily: fonts.body, fontSize: 12, paddingVertical: 12 },
-  pickerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderTopWidth: 1,
-  },
   pickerRowNameLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   pickerRowName: { fontFamily: fonts.bodySemiBold, fontSize: 14 },
   pickerRowScore: { fontFamily: fonts.displayBold, fontSize: 18 },

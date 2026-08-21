@@ -45,6 +45,13 @@ blocks on Signup, Reset password and Log a find, Profile's deletion banner,
 and the hourly tiles on Conditions detail. A box around read-only text is
 not a reason to recess it.
 
+**Inside a sheet the table inverts, and C3 wins.** A `SlideUpSheet` already
+paints `surfaceCardHi`, so a raised control on it disappears — everything
+inside a sheet is recessed regardless of whether it's typeable. The date
+buttons in `DateRangeSheet` are "pick a value" controls and are correctly
+`surfaceInset`; they read as a C2 violation until you notice what they sit
+on. Judge the element against its container, not against the table.
+
 ## C3 — Does any element share its container's tone?
 
 An inset field inside an inset panel disappears. Check parent/child pairs:
@@ -186,6 +193,7 @@ screen above — check them directly rather than through a screen:
 | `ListRow` | leading slot tone, pressed state, expansion, action slot |
 | `ScreenHeader` | header height, title size, action alignment and right inset |
 | `SlideUpSheet` | sheet surface, height cap, scrolling |
+| `SheetRow` | sheet-row divider, padding, pressed state |
 | `Btn` / `CircleIconButton` / `DestructiveLink` | pressed states, action weight |
 
 ## Audit log
@@ -199,3 +207,29 @@ Running this end to end is worth dating, since "we checked" decays.
   lacking a pressed state. **C5 was not audited** — sheets, empty, loading,
   error and non-owner states were skipped, and the checklist says that is
   exactly where misses live. Start there next time.
+
+- **2026-08-20, C5 pass** — every state of every screen. Four findings, all
+  fixed, and all four lived in sheets:
+
+  - Profile passed `borderTopColor` in **eleven** places while its `sheetRow`
+    style never set `borderTopWidth`. All six of its sheets rendered with no
+    dividers — Settings was ten undifferentiated rows with "Log out" flush
+    against "Delete my account". A dead style survives both review and
+    typecheck; only rendering it catches it.
+  - Sheet rows had no pressed state (C10).
+  - `pickerRow` was duplicated byte-for-byte in Shellcast and Map, at
+    `paddingVertical: 12` against the sheet-row standard of 14 (C6).
+  - `sheetRow` was 16 in Find detail and 14 in Profile (C6).
+
+  All now come from `SheetRow`. Verified as passing: 15 empty states (all
+  plain muted text, no container, consistent), 25 loading states (all bare
+  `ActivityIndicator` in `t.accent`), Beaches' add form (raised card, recessed
+  field inside — correct per C1), Log's species results (raised + floating,
+  correct for a dropdown), onboarding's beach selection, and every
+  `ConfirmDialog`, which is shared and therefore uniform.
+
+  Not a depth issue but noted while reading: **Find detail has no owner
+  action.** A non-owner gets the ellipsis and the report/block sheet; an owner
+  gets nothing, and reaches Edit only from a list. That may be intended, but
+  it is the one state where owner and non-owner differ in what's reachable
+  rather than how it looks.
