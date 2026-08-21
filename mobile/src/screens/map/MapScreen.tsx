@@ -14,6 +14,7 @@ import { Badge } from '../../components/Badge';
 import { BadgeType } from '../../components/Badge';
 import { ShellingMap } from '../../components/ShellingMap';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
+import { CircleIconButton } from '../../components/CircleIconButton';
 import { DateRangeSheet } from '../../components/DateRangeSheet';
 import { MapStackParamList } from '../../navigation/types';
 import { useAuth } from '../../auth/AuthProvider';
@@ -238,9 +239,7 @@ export function MapScreen({ navigation }: Props) {
             <Text style={[styles.title, { color: t.text }]}>{titleLabel}</Text>
             {subLabel && <Text style={[styles.titleSub, { color: t.muted }]}>{subLabel}</Text>}
           </View>
-          <TouchableOpacity onPress={() => setPickerOpen(true)}>
-            <Text style={{ fontSize: 20 }}>📍</Text>
-          </TouchableOpacity>
+          <CircleIconButton icon="📍" onPress={() => setPickerOpen(true)} accessibilityLabel="Choose a beach" />
         </View>
 
         <View style={styles.mapBoxSpacer} />

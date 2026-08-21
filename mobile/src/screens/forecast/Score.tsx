@@ -10,6 +10,7 @@ import { Eyebrow } from '../../components/Eyebrow';
 import { Btn } from '../../components/Btn';
 import { ScoreRing } from '../../components/ScoreRing';
 import { SlideUpSheet } from '../../components/SlideUpSheet';
+import { CircleIconButton } from '../../components/CircleIconButton';
 import { NowBadge } from '../../components/NowBadge';
 import { ForecastStackParamList } from '../../navigation/types';
 import { getMultiDayScore, MultiDayScoreEntry } from '../../lib/api';
@@ -130,9 +131,7 @@ export function Score({ navigation, route }: Props) {
             <Text style={[styles.place, { color: t.text }]}>{titleLabel}</Text>
             {subLabel && <Text style={[styles.placeSub, { color: t.muted }]}>{subLabel}</Text>}
           </View>
-          <TouchableOpacity onPress={() => setPickerOpen(true)}>
-            <Text style={{ fontSize: 20 }}>📍</Text>
-          </TouchableOpacity>
+          <CircleIconButton icon="📍" onPress={() => setPickerOpen(true)} accessibilityLabel="Choose a beach" />
         </View>
 
         <SlideUpSheet visible={pickerOpen} onClose={() => setPickerOpen(false)} title="Choose a beach">
