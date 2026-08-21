@@ -45,8 +45,11 @@ const styles = StyleSheet.create({
     width: SIZE,
     height: SIZE,
     borderRadius: SIZE / 2,
-    // Matches the stroke weight of Ionicons' outline glyphs at this size.
-    borderWidth: 1.25,
+    // Ionicons outline glyphs stroke at 32/512 em, so the add-circle-outline
+    // beside this one (rendered at 26) draws a ~1.6pt ring. Matching that
+    // exactly is the whole point -- a hair thinner and the two headers look
+    // like two different families.
+    borderWidth: 1.6,
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
